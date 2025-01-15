@@ -2,58 +2,61 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>About Yash Paudel</title>
+    <title>Yash Paudel - AI Researcher</title>
     <style>
+      @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap");
+
       body {
-        font-family: "Arial", sans-serif;
         margin: 0;
         padding: 0;
-        background: linear-gradient(to bottom right, #141e30, #243b55);
+        overflow: hidden;
+        font-family: "Orbitron", sans-serif;
         color: #fff;
-        text-align: center;
-        line-height: 1.6;
+        background: black;
       }
 
-      header {
-        padding: 2rem 1rem;
+      canvas {
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+
+      .content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        z-index: 10;
+        color: #00c6ff;
+        text-shadow: 0 0 15px #00c6ff, 0 0 30px #00c6ff;
       }
 
       h1 {
-        font-size: 2.5rem;
+        font-size: 4rem;
         margin: 0;
       }
 
       p {
-        margin: 1rem 0;
-        font-size: 1.1rem;
+        font-size: 1.4rem;
         max-width: 600px;
-        margin-left: auto;
-        margin-right: auto;
+        margin: 1rem auto;
+        line-height: 1.6;
       }
 
       .highlight {
-        color: #00c6ff;
-      }
-
-      .skills {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 15px;
-        margin-top: 20px;
-      }
-
-      .skill {
-        background: #1f2937;
-        padding: 10px 20px;
-        border-radius: 20px;
-        border: 1px solid #00c6ff;
+        color: #ff007f;
       }
 
       footer {
-        margin-top: 3rem;
-        font-size: 0.9rem;
-        opacity: 0.8;
+        position: absolute;
+        bottom: 20px;
+        width: 100%;
+        text-align: center;
+        font-size: 1rem;
+        color: #fff;
+        z-index: 10;
       }
 
       footer a {
@@ -67,44 +70,75 @@
     </style>
   </head>
   <body>
-    <header>
+    <canvas id="bgCanvas"></canvas>
+    <div class="content">
       <h1>Yash Paudel</h1>
       <p>
-        A passionate <span class="highlight">AI Researcher</span> and
-        <span class="highlight">Software Engineer</span> specializing in
-        building innovative solutions that connect people, enhance inclusivity,
-        and make technology accessible for all.
+        A <span class="highlight">stargazer</span> shaping the future with
+        intelligent systems.
       </p>
-    </header>
-
-    <section>
-      <h2>What I Do</h2>
       <p>
-        I work on cutting-edge AI systems, from face recognition to responsible
-        AI for financial inclusion. My expertise includes machine learning,
-        backend development, and cloud-native solutions, delivering reliable,
-        scalable systems for real-world applications.
+        From the cosmos to neural networks, merging exploration and innovation.
       </p>
-    </section>
-
-    <section>
-      <h2>Skills & Expertise</h2>
-      <div class="skills">
-        <div class="skill">AI Research</div>
-        <div class="skill">Computer Vision</div>
-        <div class="skill">Node.js</div>
-        <div class="skill">Cloud Computing</div>
-        <div class="skill">Responsible AI</div>
-        <div class="skill">Docker</div>
-      </div>
-    </section>
+    </div>
 
     <footer>
       <p>
-        Let's connect on
-        <a href="https://www.linkedin.com/in/yashpaudel/">LinkedIn</a> or view
-        my work on <a href="https://github.com/h4syy">GitHub</a>.
+        Connect: <a href="https://www.linkedin.com/">LinkedIn</a> |
+        <a href="https://github.com/">GitHub</a>
       </p>
     </footer>
+
+    <script>
+      const canvas = document.getElementById("bgCanvas");
+      const ctx = canvas.getContext("2d");
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      resizeCanvas();
+      window.addEventListener("resize", resizeCanvas);
+
+      const stars = [];
+      for (let i = 0; i < 200; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: Math.random() * 1.5,
+          speed: Math.random() * 0.5 + 0.1,
+        });
+      }
+
+      function drawStars() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+
+        stars.forEach((star) => {
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+
+      function updateStars() {
+        stars.forEach((star) => {
+          star.y += star.speed;
+          if (star.y > canvas.height) {
+            star.y = 0;
+            star.x = Math.random() * canvas.width;
+          }
+        });
+      }
+
+      function animate() {
+        drawStars();
+        updateStars();
+        requestAnimationFrame(animate);
+      }
+
+      animate();
+    </script>
   </body>
 </html>
