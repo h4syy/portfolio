@@ -1,146 +1,814 @@
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Yash Paudel - AI Researcher</title>
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap");
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yash Paudel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-      body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        font-family: "Orbitron", sans-serif;
-        color: #fff;
-        background: black;
-      }
+    :root {
+      --bg: #f5f4f0;
+      --text: #111;
+      --muted: #777;
+      --soft: #444;
+      --accent: #6d28d9;
+      --accent-dim: rgba(109,40,217,0.07);
+    }
 
-      canvas {
-        display: block;
-        position: absolute;
-        top: 0;
-        left: 0;
-      }
+    html { scroll-behavior: smooth; }
 
-      .content {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        text-align: center;
-        z-index: 10;
-        color: #00c6ff;
-        text-shadow: 0 0 15px #00c6ff, 0 0 30px #00c6ff;
-      }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+      cursor: crosshair;
+    }
 
-      h1 {
-        font-size: 4rem;
-        margin: 0;
-      }
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+      padding: 2rem 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+    }
 
-      p {
-        font-size: 1.4rem;
-        max-width: 600px;
-        margin: 1rem auto;
-        line-height: 1.6;
-      }
+    .nav-logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.35em;
+      color: var(--text);
+      text-decoration: none;
+      pointer-events: all;
+    }
 
-      .highlight {
-        color: #ff007f;
-      }
+    .nav-links {
+      display: flex;
+      gap: 2.5rem;
+      list-style: none;
+      pointer-events: all;
+    }
 
-      footer {
-        position: absolute;
-        bottom: 20px;
-        width: 100%;
-        text-align: center;
-        font-size: 1rem;
-        color: #fff;
-        z-index: 10;
-      }
+    .nav-links a {
+      color: var(--soft);
+      text-decoration: none;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      transition: color 0.3s;
+    }
 
-      footer a {
-        color: #00c6ff;
-        text-decoration: none;
-      }
+    .nav-links a:hover { color: var(--text); }
 
-      footer a:hover {
-        text-decoration: underline;
-      }
-    </style>
-  </head>
-  <body>
-    <canvas id="bgCanvas"></canvas>
-    <div class="content">
-      <h1>Yash Paudel</h1>
-      <p>
-        A <span class="highlight">stargazer</span> shaping the future with
-        intelligent systems.
-      </p>
-      <p>
-        From the cosmos to neural networks, merging exploration and innovation.
-      </p>
+    /* ── HERO ── */
+    #hero {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #brainCanvas {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      cursor: grab;
+    }
+
+    #brainCanvas:active { cursor: grabbing; }
+
+    /* Orbiting thought tags */
+    .thought-tag {
+      position: absolute;
+      z-index: 10;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: #111;
+      border: 1px solid rgba(0,0,0,0.18);
+      padding: 0.45rem 1.1rem;
+      border-radius: 100px;
+      cursor: pointer;
+      white-space: nowrap;
+      background: rgba(245,244,240,0.75);
+      backdrop-filter: blur(10px);
+      transform: translate(-50%, -50%);
+      transition: color 0.25s, border-color 0.25s, background 0.25s;
+      user-select: none;
+      pointer-events: auto;
+    }
+
+    .thought-tag:hover {
+      color: var(--accent);
+      border-color: rgba(109,40,217,0.35);
+      background: var(--accent-dim);
+    }
+
+    /* Brain label */
+    .brain-label {
+      position: absolute;
+      z-index: 5;
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(10,10,10,0.15);
+      top: calc(50% + 180px);
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    /* Hero name — bottom left */
+    .hero-identity {
+      position: absolute;
+      bottom: 3rem;
+      left: 3rem;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .hero-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(0.85rem, 1.5vw, 1.1rem);
+      font-weight: 900;
+      letter-spacing: 0.4em;
+      color: var(--text);
+      line-height: 1;
+      margin-bottom: 0.6rem;
+    }
+
+    .hero-sub {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--soft);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    /* Scroll hint — bottom right */
+    .scroll-hint {
+      position: absolute;
+      bottom: 3rem;
+      right: 3rem;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      color: var(--muted);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    .scroll-hint::before {
+      content: '';
+      display: block;
+      width: 40px;
+      height: 1px;
+      background: #ccc;
+    }
+
+    /* ── SECTIONS ── */
+    section.page-section {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 4.5rem 2rem;
+    }
+
+    .sec-label {
+      font-size: 0.62rem;
+      color: var(--muted);
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+    }
+
+    /* ── ABOUT ── */
+    .about-statement {
+      font-size: clamp(1.2rem, 2.8vw, 1.9rem);
+      font-weight: 300;
+      line-height: 1.7;
+      color: #333;
+      max-width: 700px;
+    }
+
+    .about-statement strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .about-statement .dim { color: #666; }
+
+    .about-detail {
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid #e2e1dc;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3rem;
+    }
+
+    .detail-item {}
+
+    .detail-val {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.3rem;
+    }
+
+    .detail-key {
+      font-size: 0.68rem;
+      color: var(--soft);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      line-height: 1.6;
+    }
+
+    /* ── THOUGHTS / BLOG ── */
+    .blog-lead {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.8;
+      max-width: 480px;
+      margin-bottom: 1.8rem;
+    }
+
+    .blog-list { list-style: none; }
+
+    .blog-entry {
+      display: grid;
+      grid-template-columns: 3rem 1fr auto;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 1.4rem 0;
+      border-top: 1px solid #e2e1dc;
+      text-decoration: none;
+      color: inherit;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+
+    .blog-entry:last-child { border-bottom: 1px solid #e2e1dc; }
+
+    .blog-entry:hover .be-title { color: var(--accent); }
+    .blog-entry:hover .be-arrow { transform: translateX(8px); color: var(--accent); }
+
+    .be-num {
+      font-size: 0.68rem;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.05em;
+      padding-top: 3px;
+    }
+
+    .be-content {}
+
+    .be-title {
+      font-size: 0.98rem;
+      font-weight: 400;
+      color: #1a1a1a;
+      margin-bottom: 0.4rem;
+      transition: color 0.2s;
+      line-height: 1.4;
+    }
+
+    .be-meta {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+    }
+
+    .be-tag {
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border: 1px solid #ddd;
+      padding: 0.2rem 0.65rem;
+      border-radius: 100px;
+    }
+
+    .be-soon {
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #ccc;
+    }
+
+    .be-arrow {
+      font-size: 0.9rem;
+      color: #ccc;
+      transition: transform 0.2s, color 0.2s;
+      justify-self: end;
+    }
+
+    /* ── CONTACT ── */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: #e8e8e4;
+      border: 1px solid #e8e8e4;
+    }
+
+    .contact-item {
+      background: var(--bg);
+      padding: 1.8rem 2rem;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+
+    .contact-item:hover { background: #f2f2f0; }
+    .contact-item:hover .ci-arrow { color: var(--accent); }
+
+    .ci-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .ci-name {
+      font-size: 1.2rem;
+      font-weight: 300;
+      color: #999;
+      transition: color 0.2s;
+    }
+
+    .contact-item:hover .ci-name { color: var(--text); }
+
+    .ci-arrow {
+      font-size: 0.8rem;
+      color: #ccc;
+      margin-top: 0.5rem;
+      transition: color 0.2s;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 2.5rem 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #e8e8e4;
+    }
+
+    .footer-l {
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+    }
+
+    .footer-r {
+      font-size: 0.65rem;
+      color: #ccc;
+      letter-spacing: 0.1em;
+    }
+
+    /* ── DIVIDER ── */
+    hr { border: none; border-top: 1px solid #e8e8e4; }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.9s ease, transform 0.9s ease;
+    }
+    .reveal.in { opacity: 1; transform: translateY(0); }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 1px; }
+    ::-webkit-scrollbar-thumb { background: #ddd; }
+
+    @media (max-width: 768px) {
+      nav { padding: 1.5rem; }
+      .nav-links { display: none; }
+      .hero-identity, .scroll-hint { font-size: 0.6rem; }
+      section.page-section { padding: 6rem 1.5rem; }
+      .about-detail { grid-template-columns: 1fr 1fr; gap: 2rem; }
+      .contact-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="#hero" class="nav-logo">YP</a>
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#thoughts">Thoughts</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- ═══ HERO ═══ -->
+  <section id="hero">
+    <canvas id="brainCanvas"></canvas>
+
+    <!-- Thought tags — positioned by JS -->
+    <div class="thought-tag" id="t0">Why Nepal Needs Its Own LLMs</div>
+
+    <div class="brain-label">drag to rotate &nbsp;·&nbsp; click thoughts to explore</div>
+
+    <div class="hero-identity">
+      <div class="hero-name">YASH PAUDEL</div>
+      <div class="hero-sub">AI Researcher &nbsp;·&nbsp; Builder &nbsp;·&nbsp; Nepal</div>
     </div>
 
-    <footer>
-      <p>
-        Connect:
-        <a href="https://www.linkedin.com/in/yashpaudel/">LinkedIn</a> |
-        <a href="https://github.com/h4syy">GitHub</a> |
-        <a href="https://www.instagram.com/paudelyash/">Instagram</a>
-      </p>
-    </footer>
+    <div class="scroll-hint">Scroll</div>
+  </section>
 
-    <script>
-      const canvas = document.getElementById("bgCanvas");
-      const ctx = canvas.getContext("2d");
+  <!-- ═══ ABOUT ═══ -->
+  <section class="page-section" id="about">
+    <div class="sec-label reveal">01 &nbsp;/&nbsp; About</div>
+    <p class="about-statement reveal">
+      I work at the edge of <strong>what AI can actually do</strong> —
+      not in a lab, but in production, in markets that most AI research
+      doesn't know exist. <span class="dim">I fine-tune LLMs, build evaluation pipelines,
+      architect AI systems, and ship things that move real metrics.</span>
+    </p>
+    <div class="about-detail reveal">
+      <div class="detail-item">
+        <div class="detail-val">3+</div>
+        <div class="detail-key">Years deep in AI &amp; ML</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-val">LLM</div>
+        <div class="detail-key">Fine-tune · Eval · Deploy · Repeat</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-val">NP</div>
+        <div class="detail-key">Pushing AI where it's never been</div>
+      </div>
+    </div>
+  </section>
 
-      function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+  <hr>
+
+  <!-- ═══ THOUGHTS / BLOG ═══ -->
+  <section class="page-section" id="thoughts">
+    <div class="sec-label reveal">02 &nbsp;/&nbsp; Thoughts</div>
+    <p class="blog-lead reveal">
+      Writing soon. Things I've spent real time figuring out —
+      not takes, but conclusions from the work.
+    </p>
+
+    <ul class="blog-list reveal">
+      <li>
+        <a href="blog/why-nepal-needs-its-own-llms.html" class="blog-entry" data-idx="0">
+          <span class="be-num">01</span>
+          <div class="be-content">
+            <div class="be-title">Why Nepal's Fintech Needs Its Own LLMs</div>
+            <div class="be-meta">
+              <span class="be-tag">GenAI</span>
+              <span class="be-soon">April 2026</span>
+            </div>
+          </div>
+          <span class="be-arrow">→</span>
+        </a>
+      </li>
+    </ul>
+  </section>
+
+  <hr>
+
+  <!-- ═══ CONTACT ═══ -->
+  <section class="page-section" id="contact">
+    <div class="sec-label reveal">03 &nbsp;/&nbsp; Contact</div>
+    <div class="contact-grid reveal">
+      <a href="https://www.linkedin.com/in/yashpaudel/" target="_blank" class="contact-item">
+        <span class="ci-label">Professional</span>
+        <span class="ci-name">LinkedIn</span>
+        <span class="ci-arrow">↗</span>
+      </a>
+      <a href="https://github.com/h4syy" target="_blank" class="contact-item">
+        <span class="ci-label">Code</span>
+        <span class="ci-name">GitHub</span>
+        <span class="ci-arrow">↗</span>
+      </a>
+      <a href="https://www.instagram.com/paudelyash/" target="_blank" class="contact-item">
+        <span class="ci-label">Personal</span>
+        <span class="ci-name">Instagram</span>
+        <span class="ci-arrow">↗</span>
+      </a>
+      <a href="mailto:yashpaudel10@gmail.com" class="contact-item">
+        <span class="ci-label">Direct</span>
+        <span class="ci-name">yashpaudel10@gmail.com</span>
+        <span class="ci-arrow">↗</span>
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    <span class="footer-l">© 2026 Yash Paudel</span>
+    <span class="footer-r">Bhaktapur, Nepal</span>
+  </footer>
+
+  <script>
+  // ═══════════════════════════════════════════════════════
+  //  PERLIN NOISE (Ken Perlin's reference implementation)
+  // ═══════════════════════════════════════════════════════
+  (function() {
+    const perm = new Uint8Array(512);
+    const base = [];
+    for (let i = 0; i < 256; i++) base[i] = i;
+    for (let i = 255; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [base[i], base[j]] = [base[j], base[i]];
+    }
+    for (let i = 0; i < 512; i++) perm[i] = base[i & 255];
+    window._perm = perm;
+  })();
+
+  function fade(t) { return t * t * t * (t * (t * 6 - 15) + 10); }
+  function lerp(a, b, t) { return a + t * (b - a); }
+  function grad(h, x, y, z) {
+    h &= 15;
+    const u = h < 8 ? x : y;
+    const v = h < 4 ? y : (h === 12 || h === 14 ? x : z);
+    return ((h & 1) ? -u : u) + ((h & 2) ? -v : v);
+  }
+
+  function noise3(x, y, z) {
+    const p = window._perm;
+    const X = Math.floor(x) & 255, Y = Math.floor(y) & 255, Z = Math.floor(z) & 255;
+    x -= Math.floor(x); y -= Math.floor(y); z -= Math.floor(z);
+    const u = fade(x), v = fade(y), w = fade(z);
+    const A = p[X]+Y, AA = p[A]+Z, AB = p[A+1]+Z;
+    const B = p[X+1]+Y, BA = p[B]+Z, BB = p[B+1]+Z;
+    return lerp(
+      lerp(lerp(grad(p[AA],x,y,z), grad(p[BA],x-1,y,z), u),
+           lerp(grad(p[AB],x,y-1,z), grad(p[BB],x-1,y-1,z), u), v),
+      lerp(lerp(grad(p[AA+1],x,y,z-1), grad(p[BA+1],x-1,y,z-1), u),
+           lerp(grad(p[AB+1],x,y-1,z-1), grad(p[BB+1],x-1,y-1,z-1), u), v), w);
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  BRAIN CANVAS
+  // ═══════════════════════════════════════════════════════
+  const canvas = document.getElementById('brainCanvas');
+  const ctx    = canvas.getContext('2d');
+
+  let W, H, CX, CY, BRAIN_R, ORBIT_R;
+
+  function setSizes() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    CX = W / 2; CY = H / 2;
+    BRAIN_R = Math.min(W, H) * 0.20;
+    ORBIT_R = Math.min(W, H) * 0.34;
+  }
+  setSizes();
+  window.addEventListener('resize', () => { setSizes(); buildBrain(); });
+
+  // ── Build brain point cloud ──────────────────────────
+  const N = 2400;
+  let pts = [];   // { ox, oy, oz, s, op }
+
+  function buildBrain() {
+    pts = [];
+    const R = BRAIN_R;
+    for (let i = 0; i < N; i++) {
+      // Fibonacci sphere for uniform distribution
+      const phi   = Math.acos(1 - 2 * (i + 0.5) / N);
+      const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+      const sx = Math.sin(phi) * Math.cos(theta);
+      const sy = Math.sin(phi) * Math.sin(theta);
+      const sz = Math.cos(phi);
+
+      // Multi-octave noise for brain-like surface
+      const sc = 2.0;
+      const n1 = noise3(sx * sc,       sy * sc,       sz * sc);
+      const n2 = noise3(sx * sc * 2.3 + 5, sy * sc * 2.3, sz * sc * 2.3) * 0.45;
+      const n3 = noise3(sx * sc * 4.7 + 11, sy * sc * 4.7, sz * sc * 4.7) * 0.2;
+      const disp = 1 + (n1 + n2 + n3) * 0.36;
+
+      // Two-lobe brain shape: squish center
+      const lobeFactor = 1 - 0.18 * Math.exp(-sx * sx * 12);
+
+      pts.push({
+        ox: sx * R * disp * lobeFactor,
+        oy: sy * R * disp * 0.85,
+        oz: sz * R * disp * 0.80,
+        s:  0.7 + Math.random() * 1.4,
+        op: 0.25 + Math.random() * 0.55,
+      });
+    }
+  }
+  buildBrain();
+
+  // ── Rotation state ───────────────────────────────────
+  let rotX = 0.18, rotY = 0.0, autoY = 0;
+  let dragging = false, lastMx = 0, lastMy = 0;
+  let velX = 0, velY = 0;
+
+  canvas.addEventListener('mousedown', e => {
+    dragging = true; lastMx = e.clientX; lastMy = e.clientY;
+    velX = velY = 0;
+  });
+  window.addEventListener('mouseup', () => { dragging = false; });
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const dx = e.clientX - lastMx, dy = e.clientY - lastMy;
+    velY = dx * 0.006; velX = dy * 0.006;
+    rotY += velY; rotX += velX;
+    lastMx = e.clientX; lastMy = e.clientY;
+  });
+
+  // Touch support
+  canvas.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    dragging = true; lastMx = t.clientX; lastMy = t.clientY; velX = velY = 0;
+  }, { passive: true });
+  window.addEventListener('touchend', () => { dragging = false; });
+  window.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    const t = e.touches[0];
+    velY = (t.clientX - lastMx) * 0.006;
+    velX = (t.clientY - lastMy) * 0.006;
+    rotY += velY; rotX += velX;
+    lastMx = t.clientX; lastMy = t.clientY;
+  }, { passive: true });
+
+  // ── 3D math ──────────────────────────────────────────
+  function rotate(px, py, pz, rx, ry) {
+    // X rotation
+    let y1 =  py * Math.cos(rx) - pz * Math.sin(rx);
+    let z1 =  py * Math.sin(rx) + pz * Math.cos(rx);
+    // Y rotation
+    let x2 =  px * Math.cos(ry) + z1 * Math.sin(ry);
+    let z2 = -px * Math.sin(ry) + z1 * Math.cos(ry);
+    return [x2, y1, z2];
+  }
+
+  function project(x, y, z) {
+    const f = 900 / (900 + z);
+    return [CX + x * f, CY + y * f, f];
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  ORBITAL TAGS
+  // ═══════════════════════════════════════════════════════
+  const tagEls = [0,1,2,3,4,5].map(i => document.getElementById('t' + i));
+
+  // 3 rings × 2 tags, each ring has different tilt
+  const rings = [
+    { tiltX: 0.30, tiltZ: 0.10, speed:  0.0038 },
+    { tiltX: 0.90, tiltZ: 0.50, speed: -0.0028 },
+    { tiltX: 1.45, tiltZ: 0.90, speed:  0.0045 },
+  ];
+
+  // Assign two tags per ring, offset by π
+  const tagOrbits = [
+    { ring: 0, angle: 0 },
+    { ring: 0, angle: Math.PI },
+    { ring: 1, angle: Math.PI * 0.4 },
+    { ring: 1, angle: Math.PI * 1.4 },
+    { ring: 2, angle: Math.PI * 0.7 },
+    { ring: 2, angle: Math.PI * 1.7 },
+  ];
+
+  function getTagPos3d(orbit, R) {
+    const { tiltX, tiltZ } = rings[orbit.ring];
+    const a = orbit.angle;
+
+    // Point on XZ plane
+    let px = R * Math.cos(a), py = 0, pz = R * Math.sin(a);
+
+    // Tilt ring around X axis
+    let py1 =  py * Math.cos(tiltX) - pz * Math.sin(tiltX);
+    let pz1 =  py * Math.sin(tiltX) + pz * Math.cos(tiltX);
+
+    // Tilt ring around Z axis
+    let px2 =  px * Math.cos(tiltZ) - py1 * Math.sin(tiltZ);
+    let py2 =  px * Math.sin(tiltZ) + py1 * Math.cos(tiltZ);
+
+    return [px2, py2, pz1];
+  }
+
+  // Blog URLs — same order as the thought tags
+  const blogUrls = [
+    'blog/why-nepal-needs-its-own-llms.html',
+  ];
+
+  // Click tag → navigate directly to blog post
+  tagEls.forEach((el, i) => {
+    if (!el) return;
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      window.location.href = blogUrls[i];
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════
+  //  RENDER LOOP
+  // ═══════════════════════════════════════════════════════
+  let raf, lastT = 0;
+
+  function render(t) {
+    raf = requestAnimationFrame(render);
+    const dt = Math.min(t - lastT, 32); lastT = t;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Inertia & auto-rotate
+    if (!dragging) {
+      rotY += velY; rotX += velX;
+      velY *= 0.94; velX *= 0.94;
+      autoY = t * 0.00018;
+    }
+
+    const ry = rotY + autoY;
+    const rx = rotX;
+
+    // ── Project brain points ────────────────────────────
+    const projected = pts.map(p => {
+      const [x, y, z] = rotate(p.ox, p.oy, p.oz, rx, ry);
+      const [sx, sy, f] = project(x, y, z);
+      return { sx, sy, z, f, s: p.s, op: p.op };
+    });
+
+    // Sort back-to-front
+    projected.sort((a, b) => a.z - b.z);
+
+    const maxZ = BRAIN_R * 1.1;
+
+    for (const p of projected) {
+      const depth = (p.z + maxZ) / (2 * maxZ);  // 0=back, 1=front
+      const opacity = p.op * (0.15 + depth * 0.85);
+      const size = Math.max(0.3, p.s * p.f);
+
+      // Color gradient: light lavender (back) → deep indigo (front)
+      const rr = Math.round(lerp(200,  60, depth));
+      const gg = Math.round(lerp(190,  20, depth));
+      const bb = Math.round(lerp(235, 160, depth));
+
+      ctx.beginPath();
+      ctx.arc(p.sx, p.sy, size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${rr},${gg},${bb},${opacity.toFixed(2)})`;
+      ctx.fill();
+    }
+
+    // ── Position orbital tags ────────────────────────────
+    const R = ORBIT_R;
+    const scrolled = window.scrollY > H * 0.15;
+
+    tagOrbits.forEach((orbit, i) => {
+      rings[orbit.ring].speed && (orbit.angle += rings[orbit.ring].speed);
+      const [px, py, pz] = getTagPos3d(orbit, R);
+      const [rx2, ry2, rz2] = rotate(px, py, pz, rx, ry);
+      const [sx, sy, f] = project(rx2, ry2, rz2);
+
+      const el = tagEls[i];
+      if (!el) return;
+
+      const depth = (rz2 + R) / (2 * R);
+      const op = scrolled ? 0 : (0.2 + depth * 0.8);
+      const sc = 0.82 + depth * 0.18;
+
+      el.style.left    = sx + 'px';
+      el.style.top     = sy + 'px';
+      el.style.opacity = op.toFixed(3);
+      el.style.transform = `translate(-50%, -50%) scale(${sc.toFixed(3)})`;
+      el.style.zIndex  = Math.round(depth * 15) + 5;
+      el.style.pointerEvents = scrolled ? 'none' : 'auto';
+    });
+  }
+  requestAnimationFrame(render);
+
+  // ═══════════════════════════════════════════════════════
+  //  SCROLL REVEAL
+  // ═══════════════════════════════════════════════════════
+  const revealObs = new IntersectionObserver(entries => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('in'), i * 100);
       }
+    });
+  }, { threshold: 0.12 });
 
-      resizeCanvas();
-      window.addEventListener("resize", resizeCanvas);
-
-      const stars = [];
-      for (let i = 0; i < 200; i++) {
-        stars.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          radius: Math.random() * 1.5,
-          speed: Math.random() * 0.5 + 0.1,
-        });
-      }
-
-      function drawStars() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-
-        stars.forEach((star) => {
-          ctx.beginPath();
-          ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-          ctx.fill();
-        });
-      }
-
-      function updateStars() {
-        stars.forEach((star) => {
-          star.y += star.speed;
-          if (star.y > canvas.height) {
-            star.y = 0;
-            star.x = Math.random() * canvas.width;
-          }
-        });
-      }
-
-      function animate() {
-        drawStars();
-        updateStars();
-        requestAnimationFrame(animate);
-      }
-
-      animate();
-    </script>
-  </body>
+  document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+  </script>
+</body>
 </html>
