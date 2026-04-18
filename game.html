@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Synapse · Yash Paudel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07070c;
+      --bg2: #0e0f1a;
+      --cy: #00e5ff;
+      --cy-dim: rgba(0,229,255,0.35);
+      --ink: #eaf4ff;
+      --ink-dim: rgba(234,244,255,0.55);
+      --line: rgba(0,229,255,0.18);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%;
+      background: radial-gradient(ellipse at center, var(--bg2), var(--bg));
+      color: var(--ink);
+      font-family: 'JetBrains Mono', monospace;
+      overflow: hidden;
+      cursor: none;
+    }
+    canvas#world {
+      position: fixed; inset: 0;
+      width: 100vw; height: 100vh;
+      display: block;
+    }
+
+    /* HUD layout */
+    #hud {
+      position: fixed; inset: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+    #hud > * { pointer-events: auto; }
+
+    /* Top-left: minimap */
+    .hud-panel {
+      position: fixed;
+      background: rgba(7,7,12,0.65);
+      border: 1px solid var(--line);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 10px 12px;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-dim);
+    }
+    #map-wrap { top: 22px; left: 22px; padding: 10px; }
+    #map-wrap .label {
+      display: flex; justify-content: space-between;
+      margin-bottom: 6px; color: var(--cy);
+      font-size: 9px; letter-spacing: 0.2em;
+    }
+    #minimap {
+      display: block;
+      border: 1px solid rgba(0,229,255,0.22);
+      background: rgba(0,0,0,0.6);
+    }
+    #map-wrap.hidden { opacity: 0.15; }
+
+    /* Top-right: title + back */
+    #top-right {
+      top: 22px; right: 22px;
+      display: flex; flex-direction: column;
+      align-items: flex-end; gap: 6px;
+    }
+    #title {
+      font-family: 'Orbitron', monospace;
+      font-weight: 900;
+      font-size: 16px;
+      letter-spacing: 0.4em;
+      color: var(--cy);
+      text-shadow: 0 0 14px rgba(0,229,255,0.5);
+    }
+    #subtitle {
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--ink-dim);
+    }
+    #back {
+      pointer-events: auto;
+      margin-top: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--ink-dim);
+      text-decoration: none;
+      padding: 8px 14px;
+      border: 1px solid var(--line);
+      background: rgba(7,7,12,0.65);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: all 0.18s ease;
+    }
+    #back:hover { color: var(--cy); border-color: var(--cy-dim); }
+
+    /* Bottom-left: stats */
+    #stats {
+      bottom: 22px; left: 22px;
+      min-width: 200px;
+    }
+    .stat {
+      display: flex; justify-content: space-between;
+      padding: 4px 0;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+    }
+    .stat .k { color: var(--ink-dim); }
+    .stat .v { color: var(--cy); font-weight: 500; }
+
+    /* Bottom-right: hints */
+    #hints {
+      bottom: 22px; right: 22px;
+      display: flex; flex-direction: column;
+      gap: 4px;
+      text-align: right;
+    }
+    .hint { font-size: 10px; color: var(--ink-dim); letter-spacing: 0.1em; }
+    kbd {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      background: rgba(0,229,255,0.08);
+      color: var(--cy);
+      border: 1px solid var(--line);
+      padding: 1px 6px;
+      margin-right: 4px;
+      min-width: 22px;
+      text-align: center;
+    }
+
+    /* Interact prompt */
+    #prompt {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, 120px);
+      padding: 8px 16px;
+      background: rgba(0,229,255,0.08);
+      border: 1px solid var(--cy-dim);
+      color: var(--cy);
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      opacity: 0;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      pointer-events: none;
+    }
+    #prompt.on { opacity: 1; transform: translate(-50%, 90px); }
+
+    /* Modal */
+    #modal {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(7,7,12,0.82);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      z-index: 50;
+    }
+    #modal.on { opacity: 1; pointer-events: auto; }
+    .card {
+      width: min(560px, 92vw);
+      background: linear-gradient(180deg, rgba(14,15,26,0.95), rgba(7,7,12,0.95));
+      border: 1px solid var(--cy-dim);
+      padding: 36px 36px 28px;
+      box-shadow: 0 0 80px rgba(0,229,255,0.18), inset 0 0 40px rgba(0,229,255,0.04);
+      transform: scale(0.95);
+      transition: transform 0.25s ease;
+    }
+    #modal.on .card { transform: scale(1); }
+    .m-tag {
+      font-size: 10px; letter-spacing: 0.35em; text-transform: uppercase;
+      color: var(--cy); margin-bottom: 12px;
+    }
+    .m-title {
+      font-family: 'Orbitron', monospace;
+      font-weight: 700;
+      font-size: 22px;
+      color: var(--ink);
+      margin-bottom: 16px;
+      letter-spacing: 0.04em;
+    }
+    .m-body {
+      font-size: 13px; line-height: 1.7;
+      color: var(--ink-dim);
+      margin-bottom: 24px;
+    }
+    .m-actions {
+      display: flex; gap: 10px; justify-content: flex-end;
+    }
+    .m-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 10px 18px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--ink-dim);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.18s ease;
+    }
+    .m-btn:hover { color: var(--cy); border-color: var(--cy-dim); background: rgba(0,229,255,0.05); }
+    .m-btn.primary { color: var(--cy); border-color: var(--cy-dim); }
+    .m-btn.primary:hover { background: rgba(0,229,255,0.12); }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      top: 40%; left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 14px 26px;
+      background: rgba(0,229,255,0.08);
+      border: 1px solid var(--cy-dim);
+      color: var(--cy);
+      font-size: 12px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+      z-index: 40;
+    }
+    #toast.on { opacity: 1; }
+
+    /* Intro overlay */
+    #intro {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(7,7,12,0.88);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 60;
+      transition: opacity 0.4s ease;
+    }
+    #intro.off { opacity: 0; pointer-events: none; }
+    .intro-card { text-align: center; max-width: 520px; padding: 20px; }
+    .intro-title {
+      font-family: 'Orbitron', monospace; font-weight: 900;
+      font-size: 42px; letter-spacing: 0.3em;
+      color: var(--cy); margin-bottom: 20px;
+      text-shadow: 0 0 30px rgba(0,229,255,0.5);
+    }
+    .intro-sub {
+      font-size: 12px; color: var(--ink-dim);
+      line-height: 1.9; letter-spacing: 0.08em;
+      margin-bottom: 32px;
+    }
+    .intro-keys {
+      display: grid; grid-template-columns: auto 1fr;
+      gap: 8px 18px; text-align: left;
+      font-size: 11px; color: var(--ink-dim);
+      margin-bottom: 32px;
+      justify-content: center;
+      max-width: 260px; margin-left: auto; margin-right: auto;
+    }
+    .intro-keys kbd { margin: 0; }
+    .intro-start {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; letter-spacing: 0.35em; text-transform: uppercase;
+      padding: 12px 28px; color: var(--cy);
+      border: 1px solid var(--cy-dim);
+      background: transparent; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .intro-start:hover { background: rgba(0,229,255,0.12); }
+
+    /* Custom cursor */
+    #cur-dot, #cur-ring {
+      position: fixed; top: 0; left: 0;
+      pointer-events: none;
+      z-index: 100;
+      transform: translate(-100px, -100px);
+    }
+    #cur-dot {
+      width: 4px; height: 4px;
+      background: var(--cy);
+      border-radius: 50%;
+      margin: -2px 0 0 -2px;
+      box-shadow: 0 0 8px var(--cy);
+    }
+    #cur-ring {
+      width: 26px; height: 26px;
+      border: 1px solid var(--cy-dim);
+      border-radius: 50%;
+      margin: -13px 0 0 -13px;
+      transition: width 0.18s, height 0.18s, margin 0.18s;
+    }
+    #cur-ring.hover { width: 40px; height: 40px; margin: -20px 0 0 -20px; border-color: var(--cy); }
+
+    @media (max-width: 700px) {
+      #title { font-size: 13px; }
+      #map-wrap { padding: 7px; }
+      #minimap { width: 100px; height: 100px; }
+      #hints { display: none; }
+      .intro-title { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="world"></canvas>
+
+  <div id="hud">
+    <div id="map-wrap" class="hud-panel">
+      <div class="label"><span>map</span><span id="coord">0,0</span></div>
+      <canvas id="minimap" width="140" height="140"></canvas>
+    </div>
+
+    <div id="top-right">
+      <div id="title">SYNAPSE</div>
+      <div id="subtitle">neural substrate · v1</div>
+      <a href="index.html" id="back">← leave</a>
+    </div>
+
+    <div id="stats" class="hud-panel">
+      <div class="stat"><span class="k">fragments</span><span class="v" id="frag">0 / 12</span></div>
+      <div class="stat"><span class="k">nodes</span><span class="v" id="node">0 / 5</span></div>
+      <div class="stat"><span class="k">uptime</span><span class="v" id="time">00:00</span></div>
+    </div>
+
+    <div id="hints">
+      <div class="hint"><kbd>WASD</kbd> move</div>
+      <div class="hint"><kbd>E</kbd> connect</div>
+      <div class="hint"><kbd>M</kbd> map</div>
+      <div class="hint"><kbd>Esc</kbd> leave</div>
+    </div>
+  </div>
+
+  <div id="prompt">press <kbd>E</kbd> to connect</div>
+
+  <div id="modal">
+    <div class="card">
+      <div class="m-tag"></div>
+      <div class="m-title"></div>
+      <div class="m-body"></div>
+      <div class="m-actions">
+        <a class="m-btn primary" id="m-link" target="_blank" rel="noopener">open →</a>
+        <button class="m-btn" id="m-close">close [esc]</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <div id="intro">
+    <div class="intro-card">
+      <div class="intro-title">SYNAPSE</div>
+      <div class="intro-sub">
+        a small neural substrate to explore.<br>
+        collect memory fragments, connect to nodes,<br>
+        find the observatory.
+      </div>
+      <div class="intro-keys">
+        <kbd>WASD</kbd><span>drift through space</span>
+        <kbd>E</kbd><span>connect to nearby node</span>
+        <kbd>M</kbd><span>toggle minimap</span>
+        <kbd>Esc</kbd><span>return to portfolio</span>
+      </div>
+      <button class="intro-start" id="intro-start">enter</button>
+    </div>
+  </div>
+
+  <div id="cur-dot"></div>
+  <div id="cur-ring"></div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════
+//  CUSTOM CURSOR
+// ═══════════════════════════════════════════════════════
+(() => {
+  const dot  = document.getElementById('cur-dot');
+  const ring = document.getElementById('cur-ring');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    dot.style.transform = `translate(${mx}px,${my}px)`;
+  });
+  const lerpCur = (a, b, t) => a + (b - a) * t;
+  (function tick() {
+    rx = lerpCur(rx, mx, 0.18); ry = lerpCur(ry, my, 0.18);
+    ring.style.transform = `translate(${rx}px,${ry}px)`;
+    requestAnimationFrame(tick);
+  })();
+  const bind = () => document.querySelectorAll('a, button').forEach(el => {
+    el.addEventListener('mouseenter', () => ring.classList.add('hover'));
+    el.addEventListener('mouseleave', () => ring.classList.remove('hover'));
+  });
+  bind();
+})();
+
+// ═══════════════════════════════════════════════════════
+//  PERLIN NOISE
+// ═══════════════════════════════════════════════════════
+const _perm = new Uint8Array(512);
+(() => {
+  const base = Array.from({ length: 256 }, (_, i) => i);
+  for (let i = 255; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [base[i], base[j]] = [base[j], base[i]];
+  }
+  for (let i = 0; i < 512; i++) _perm[i] = base[i & 255];
+})();
+function fade(t) { return t * t * t * (t * (t * 6 - 15) + 10); }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function grad2(h, x, y) {
+  h &= 7;
+  const u = h < 4 ? x : y, v = h < 4 ? y : x;
+  return ((h & 1) ? -u : u) + ((h & 2) ? -2 * v : 2 * v);
+}
+function noise2(x, y) {
+  const X = Math.floor(x) & 255, Y = Math.floor(y) & 255;
+  x -= Math.floor(x); y -= Math.floor(y);
+  const u = fade(x), v = fade(y);
+  const A = _perm[X] + Y, B = _perm[X + 1] + Y;
+  return lerp(
+    lerp(grad2(_perm[A],     x,     y),     grad2(_perm[B],     x - 1, y),     u),
+    lerp(grad2(_perm[A + 1], x,     y - 1), grad2(_perm[B + 1], x - 1, y - 1), u),
+    v
+  ) * 0.5;
+}
+
+// ═══════════════════════════════════════════════════════
+//  WORLD SETUP
+// ═══════════════════════════════════════════════════════
+const WORLD = { w: 2600, h: 2600 };
+const canvas = document.getElementById('world');
+const ctx = canvas.getContext('2d');
+let VW = window.innerWidth, VH = window.innerHeight;
+
+function resize() {
+  VW = window.innerWidth; VH = window.innerHeight;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width  = VW * dpr;
+  canvas.height = VH * dpr;
+  canvas.style.width  = VW + 'px';
+  canvas.style.height = VH + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resize);
+resize();
+
+// Ambient background particles (don't move — spatial landmarks)
+const AMBIENT = [];
+for (let i = 0; i < 420; i++) {
+  AMBIENT.push({
+    x: Math.random() * WORLD.w,
+    y: Math.random() * WORLD.h,
+    s: 0.4 + Math.random() * 1.6,
+    op: 0.08 + Math.random() * 0.32,
+    hue: Math.random() < 0.15 ? 'warm' : 'cool',
+  });
+}
+
+// Slow-drifting motes
+const MOTES = [];
+for (let i = 0; i < 60; i++) {
+  MOTES.push({
+    x: Math.random() * WORLD.w,
+    y: Math.random() * WORLD.h,
+    vx: (Math.random() - 0.5) * 12,
+    vy: (Math.random() - 0.5) * 12,
+    s: 0.6 + Math.random() * 1.2,
+    op: 0.25 + Math.random() * 0.4,
+    t: Math.random() * 1000,
+  });
+}
+
+// Nodes — points of interest tied to real portfolio content
+const NODES = [
+  {
+    x: 460, y: 720,
+    tag: 'thought · 01',
+    title: 'Why Nepal Needs Its Own LLMs',
+    body: 'A case for building sovereign language infrastructure — why imported models won\'t serve the financial, linguistic, and cultural reality of Nepal, and what it takes to close the gap.',
+    link: 'blog/why-nepal-needs-its-own-llms.html',
+    linkLabel: 'read post →',
+    visited: false, color: '#00e5ff',
+  },
+  {
+    x: 1900, y: 620,
+    tag: 'archive · code',
+    title: 'Codex',
+    body: 'Open-source work, experiments, and the raw code behind the research. Some finished, some deliberately abandoned — all in the open.',
+    link: 'https://github.com/h4syy',
+    linkLabel: 'github →',
+    visited: false, color: '#9d5cff',
+  },
+  {
+    x: 2100, y: 1880,
+    tag: 'relay · signal',
+    title: 'Signal Tower',
+    body: 'Professional frequency. AI research, production ML, and the work that moves real metrics in markets research papers forget about.',
+    link: 'https://www.linkedin.com/in/yashpaudel/',
+    linkLabel: 'linkedin →',
+    visited: false, color: '#5ac8fa',
+  },
+  {
+    x: 700, y: 2020,
+    tag: 'core · memory',
+    title: 'About The Builder',
+    body: 'Yash Paudel — AI researcher, builder, based in Bhaktapur. Three years deep in LLMs, evaluation pipelines, and shipping models that have to survive contact with Nepali production traffic.',
+    link: null,
+    linkLabel: null,
+    visited: false, color: '#ff6bd6',
+  },
+  {
+    x: 1300, y: 1300,
+    tag: 'observatory · locked',
+    title: 'Observatory',
+    body: 'Collect all 12 memory fragments to unlock.',
+    link: null,
+    linkLabel: null,
+    locked: true,
+    visited: false, color: '#ffb347',
+  },
+];
+
+// Memory fragments — collectibles scattered around
+const FRAGMENTS = [];
+const fragSeeds = [
+  [820, 380], [1480, 540], [2280, 1020], [1780, 1280],
+  [560, 1320], [340, 1740], [1160, 1800], [2060, 1640],
+  [1720, 2140], [940, 2260], [1500, 2300], [2320, 380],
+];
+for (const [x, y] of fragSeeds) {
+  FRAGMENTS.push({ x, y, taken: false, t: Math.random() * 100 });
+}
+
+// Player — spawn a bit below observatory so it's visible as a landmark, not on top of it
+const player = {
+  x: WORLD.w / 2, y: WORLD.h / 2 + 260,
+  vx: 0, vy: 0,
+  r: 6,
+  speed: 280,
+  trail: [],
+};
+
+// Camera
+const cam = { x: player.x, y: player.y };
+
+// ═══════════════════════════════════════════════════════
+//  STATE + HUD REFS
+// ═══════════════════════════════════════════════════════
+const GAME = {
+  fragmentsCollected: 0,
+  nodesVisited: 0,
+  startT: performance.now(),
+  modalOpen: false,
+  running: false,
+  nearest: null,
+  mapVisible: true,
+  won: false,
+};
+
+const fragEl = document.getElementById('frag');
+const nodeEl = document.getElementById('node');
+const timeEl = document.getElementById('time');
+const coordEl = document.getElementById('coord');
+const promptEl = document.getElementById('prompt');
+const modal = document.getElementById('modal');
+const mTitle = modal.querySelector('.m-title');
+const mTag   = modal.querySelector('.m-tag');
+const mBody  = modal.querySelector('.m-body');
+const mLink  = document.getElementById('m-link');
+const mClose = document.getElementById('m-close');
+const toast  = document.getElementById('toast');
+const mapWrap = document.getElementById('map-wrap');
+const mini   = document.getElementById('minimap');
+const mctx   = mini.getContext('2d');
+const intro  = document.getElementById('intro');
+
+fragEl.textContent = `0 / ${FRAGMENTS.length}`;
+nodeEl.textContent = `0 / ${NODES.length}`;
+
+// ═══════════════════════════════════════════════════════
+//  INPUT
+// ═══════════════════════════════════════════════════════
+const keys = Object.create(null);
+window.addEventListener('keydown', e => {
+  if (e.repeat) return;
+  const k = e.key.toLowerCase();
+  keys[k] = true;
+  if (k === 'escape') {
+    if (GAME.modalOpen) closeModal();
+    else window.location.href = 'index.html';
+  } else if (k === 'e' && !GAME.modalOpen && GAME.running) {
+    if (GAME.nearest) openNode(GAME.nearest);
+  } else if (k === 'm' && !GAME.modalOpen) {
+    GAME.mapVisible = !GAME.mapVisible;
+    mapWrap.classList.toggle('hidden', !GAME.mapVisible);
+  }
+});
+window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+
+// ═══════════════════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════════════════
+function openNode(node) {
+  if (node.locked) {
+    showToast(`locked · ${GAME.fragmentsCollected} / ${FRAGMENTS.length}`);
+    return;
+  }
+  GAME.modalOpen = true;
+  modal.classList.add('on');
+  mTag.textContent = node.tag;
+  mTitle.textContent = node.title;
+  mBody.textContent = node.body;
+  if (node.link) {
+    mLink.href = node.link;
+    mLink.textContent = node.linkLabel || 'open →';
+    mLink.style.display = '';
+    if (/^https?:/.test(node.link)) mLink.target = '_blank';
+    else mLink.removeAttribute('target');
+  } else {
+    mLink.style.display = 'none';
+  }
+  if (!node.visited) {
+    node.visited = true;
+    GAME.nodesVisited++;
+    updateNodeCount();
+  }
+}
+function closeModal() {
+  GAME.modalOpen = false;
+  modal.classList.remove('on');
+}
+mClose.addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+function updateNodeCount() {
+  nodeEl.textContent = `${GAME.nodesVisited} / ${NODES.length}`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════
+let toastTimer = null;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('on'), 2400);
+}
+
+// ═══════════════════════════════════════════════════════
+//  INTRO
+// ═══════════════════════════════════════════════════════
+function startGame() {
+  intro.classList.add('off');
+  GAME.running = true;
+  GAME.startT = performance.now();
+}
+document.getElementById('intro-start').addEventListener('click', startGame);
+window.addEventListener('keydown', e => {
+  if (!GAME.running && (e.key === 'Enter' || e.key === ' ')) {
+    e.preventDefault();
+    startGame();
+  }
+}, { once: false });
+
+// ═══════════════════════════════════════════════════════
+//  UPDATE
+// ═══════════════════════════════════════════════════════
+function update(dt) {
+  if (!GAME.running || GAME.modalOpen) {
+    player.vx *= 0.9; player.vy *= 0.9;
+    return;
+  }
+
+  // Input → accel
+  let ax = 0, ay = 0;
+  if (keys['w'] || keys['arrowup'])    ay -= 1;
+  if (keys['s'] || keys['arrowdown'])  ay += 1;
+  if (keys['a'] || keys['arrowleft'])  ax -= 1;
+  if (keys['d'] || keys['arrowright']) ax += 1;
+  const mag = Math.hypot(ax, ay);
+  if (mag > 0) { ax /= mag; ay /= mag; }
+
+  const accel = 1800;
+  player.vx += ax * accel * dt;
+  player.vy += ay * accel * dt;
+
+  // Cap to max speed
+  const vmag = Math.hypot(player.vx, player.vy);
+  if (vmag > player.speed) {
+    player.vx = (player.vx / vmag) * player.speed;
+    player.vy = (player.vy / vmag) * player.speed;
+  }
+  // Friction
+  const fric = mag > 0 ? 0.995 : 0.88;
+  player.vx *= Math.pow(fric, dt * 60);
+  player.vy *= Math.pow(fric, dt * 60);
+
+  player.x += player.vx * dt;
+  player.y += player.vy * dt;
+
+  // World bounds
+  const pad = 40;
+  if (player.x < pad)              { player.x = pad;              player.vx = Math.abs(player.vx) * 0.3; }
+  if (player.x > WORLD.w - pad)    { player.x = WORLD.w - pad;    player.vx = -Math.abs(player.vx) * 0.3; }
+  if (player.y < pad)              { player.y = pad;              player.vy = Math.abs(player.vy) * 0.3; }
+  if (player.y > WORLD.h - pad)    { player.y = WORLD.h - pad;    player.vy = -Math.abs(player.vy) * 0.3; }
+
+  // Trail
+  player.trail.push({ x: player.x, y: player.y, t: 1 });
+  if (player.trail.length > 28) player.trail.shift();
+  for (const p of player.trail) p.t -= dt * 1.4;
+
+  // Camera smooth follow
+  cam.x += (player.x - cam.x) * Math.min(1, dt * 5);
+  cam.y += (player.y - cam.y) * Math.min(1, dt * 5);
+
+  // Fragment pickup
+  for (const f of FRAGMENTS) {
+    if (f.taken) continue;
+    f.t += dt * 3;
+    const d2 = (f.x - player.x) ** 2 + (f.y - player.y) ** 2;
+    if (d2 < 34 * 34) {
+      f.taken = true;
+      GAME.fragmentsCollected++;
+      fragEl.textContent = `${GAME.fragmentsCollected} / ${FRAGMENTS.length}`;
+      spawnBurst(f.x, f.y);
+      if (GAME.fragmentsCollected === FRAGMENTS.length) {
+        unlockObservatory();
+      } else {
+        showToast(`fragment · ${GAME.fragmentsCollected} / ${FRAGMENTS.length}`);
+      }
+    }
+  }
+
+  // Drifting motes
+  for (const m of MOTES) {
+    m.t += dt;
+    m.x += m.vx * dt;
+    m.y += m.vy * dt;
+    if (m.x < 0) m.x += WORLD.w;
+    if (m.x > WORLD.w) m.x -= WORLD.w;
+    if (m.y < 0) m.y += WORLD.h;
+    if (m.y > WORLD.h) m.y -= WORLD.h;
+  }
+
+  // Nearest interactable node
+  let nearest = null, bestD = 120 * 120;
+  for (const n of NODES) {
+    const d2 = (n.x - player.x) ** 2 + (n.y - player.y) ** 2;
+    if (d2 < bestD) { bestD = d2; nearest = n; }
+  }
+  GAME.nearest = nearest;
+  if (nearest && !GAME.modalOpen) {
+    promptEl.classList.add('on');
+    promptEl.innerHTML = nearest.locked
+      ? `locked &middot; <kbd>E</kbd> for status`
+      : `press <kbd>E</kbd> to connect`;
+  } else {
+    promptEl.classList.remove('on');
+  }
+
+  // HUD updates
+  coordEl.textContent = `${Math.round(player.x)}·${Math.round(player.y)}`;
+  const elapsed = Math.floor((performance.now() - GAME.startT) / 1000);
+  const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
+  const ss = String(elapsed % 60).padStart(2, '0');
+  timeEl.textContent = `${mm}:${ss}`;
+}
+
+function unlockObservatory() {
+  const obs = NODES.find(n => n.tag.startsWith('observatory'));
+  if (!obs) return;
+  obs.locked = false;
+  obs.tag = 'observatory · online';
+  obs.title = 'Observatory';
+  obs.body = 'All fragments gathered. The signal clears — this is just a portfolio, but you explored it like a world. Reach out if you want to build something. Thanks for playing.';
+  obs.link = 'mailto:yashpaudel10@gmail.com';
+  obs.linkLabel = 'say hello →';
+  showToast('observatory · unlocked');
+  GAME.won = true;
+}
+
+// Burst particles on pickup
+const BURSTS = [];
+function spawnBurst(x, y) {
+  for (let i = 0; i < 14; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const s = 40 + Math.random() * 120;
+    BURSTS.push({
+      x, y,
+      vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+      life: 1,
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════
+function worldToScreen(wx, wy) {
+  return [wx - cam.x + VW / 2, wy - cam.y + VH / 2];
+}
+
+function drawGrid() {
+  const step = 120;
+  const halfW = VW / 2, halfH = VH / 2;
+  const x0 = cam.x - halfW, y0 = cam.y - halfH;
+  const startX = Math.floor(x0 / step) * step;
+  const startY = Math.floor(y0 / step) * step;
+
+  ctx.lineWidth = 1;
+  for (let gx = startX; gx < x0 + VW + step; gx += step) {
+    const alpha = 0.04 + 0.06 * noise2(gx * 0.002, cam.y * 0.001);
+    ctx.strokeStyle = `rgba(0,229,255,${Math.max(0.02, alpha).toFixed(3)})`;
+    const [sx] = worldToScreen(gx, 0);
+    ctx.beginPath();
+    ctx.moveTo(sx, 0); ctx.lineTo(sx, VH);
+    ctx.stroke();
+  }
+  for (let gy = startY; gy < y0 + VH + step; gy += step) {
+    const alpha = 0.04 + 0.06 * noise2(cam.x * 0.001, gy * 0.002);
+    ctx.strokeStyle = `rgba(0,229,255,${Math.max(0.02, alpha).toFixed(3)})`;
+    const [, sy] = worldToScreen(0, gy);
+    ctx.beginPath();
+    ctx.moveTo(0, sy); ctx.lineTo(VW, sy);
+    ctx.stroke();
+  }
+}
+
+function drawBounds() {
+  const [x0, y0] = worldToScreen(0, 0);
+  const [x1, y1] = worldToScreen(WORLD.w, WORLD.h);
+  ctx.strokeStyle = 'rgba(0,229,255,0.25)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+  // Soft edge fog
+  ctx.fillStyle = 'rgba(7,7,12,0.5)';
+  if (x0 > 0)    ctx.fillRect(0, 0, x0, VH);
+  if (x1 < VW)   ctx.fillRect(x1, 0, VW - x1, VH);
+  if (y0 > 0)    ctx.fillRect(0, 0, VW, y0);
+  if (y1 < VH)   ctx.fillRect(0, y1, VW, VH - y1);
+}
+
+function drawAmbient(t) {
+  const halfW = VW / 2 + 100, halfH = VH / 2 + 100;
+  for (const p of AMBIENT) {
+    const dx = p.x - cam.x, dy = p.y - cam.y;
+    if (Math.abs(dx) > halfW || Math.abs(dy) > halfH) continue;
+    const [sx, sy] = worldToScreen(p.x, p.y);
+    const flicker = 0.8 + 0.2 * Math.sin(t * 0.001 + p.x * 0.01);
+    ctx.fillStyle = p.hue === 'warm'
+      ? `rgba(255,200,180,${(p.op * flicker * 0.8).toFixed(3)})`
+      : `rgba(140,200,255,${(p.op * flicker).toFixed(3)})`;
+    ctx.beginPath();
+    ctx.arc(sx, sy, p.s, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawMotes(t) {
+  ctx.shadowColor = 'rgba(0,229,255,0.6)';
+  for (const m of MOTES) {
+    const [sx, sy] = worldToScreen(m.x, m.y);
+    if (sx < -20 || sx > VW + 20 || sy < -20 || sy > VH + 20) continue;
+    const pulse = 0.7 + 0.3 * Math.sin(m.t * 1.5);
+    ctx.shadowBlur = 6 * pulse;
+    ctx.fillStyle = `rgba(0,229,255,${(m.op * pulse).toFixed(3)})`;
+    ctx.beginPath();
+    ctx.arc(sx, sy, m.s, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+}
+
+function drawFragments(t) {
+  ctx.shadowColor = 'rgba(157,92,255,0.8)';
+  for (const f of FRAGMENTS) {
+    if (f.taken) continue;
+    const [sx, sy] = worldToScreen(f.x, f.y);
+    if (sx < -40 || sx > VW + 40 || sy < -40 || sy > VH + 40) continue;
+    const pulse = 0.6 + 0.4 * Math.sin(f.t * 1.4);
+    ctx.shadowBlur = 16 * pulse;
+
+    // Outer ring
+    ctx.strokeStyle = `rgba(157,92,255,${(0.35 * pulse).toFixed(3)})`;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(sx, sy, 11 + 3 * Math.sin(f.t * 2), 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Core
+    ctx.fillStyle = `rgba(220,180,255,${(0.9 * pulse).toFixed(3)})`;
+    ctx.beginPath();
+    ctx.arc(sx, sy, 3.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+}
+
+function drawNodes(t) {
+  for (const n of NODES) {
+    const [sx, sy] = worldToScreen(n.x, n.y);
+    if (sx < -80 || sx > VW + 80 || sy < -80 || sy > VH + 80) continue;
+
+    const d2 = (n.x - player.x) ** 2 + (n.y - player.y) ** 2;
+    const near = d2 < 120 * 120;
+    const active = GAME.nearest === n;
+    const color = n.locked ? 'rgba(120,120,140,1)' : n.color;
+
+    const pulse = 0.7 + 0.3 * Math.sin(t * 0.002 + n.x);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = active ? 32 * pulse : (near ? 22 * pulse : 12 * pulse);
+
+    const baseAlpha = active ? 0.9 : (near ? 0.65 : 0.4);
+    ctx.globalAlpha = baseAlpha;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(sx, sy, 32 + 4 * Math.sin(t * 0.003 + n.x), 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Inner ring
+    ctx.beginPath();
+    ctx.arc(sx, sy, 18, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Core
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(sx, sy, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Tick marks around ring
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 + t * 0.0006;
+      const r1 = 40, r2 = 46;
+      ctx.beginPath();
+      ctx.moveTo(sx + Math.cos(a) * r1, sy + Math.sin(a) * r1);
+      ctx.lineTo(sx + Math.cos(a) * r2, sy + Math.sin(a) * r2);
+      ctx.stroke();
+    }
+
+    // Label below
+    if (near && !n.visited && !n.locked) {
+      ctx.globalAlpha = baseAlpha;
+      ctx.fillStyle = color;
+      ctx.font = '10px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.shadowBlur = 0;
+      ctx.fillText(n.title.toUpperCase(), sx, sy + 68);
+      ctx.fillStyle = 'rgba(234,244,255,0.55)';
+      ctx.fillText(n.tag, sx, sy + 82);
+    }
+
+    ctx.globalAlpha = 1;
+  }
+  ctx.shadowBlur = 0;
+}
+
+function drawPlayer(t) {
+  // Trail
+  for (let i = 0; i < player.trail.length; i++) {
+    const p = player.trail[i];
+    const frac = i / player.trail.length;
+    const a = Math.max(0, p.t) * frac * 0.5;
+    if (a <= 0) continue;
+    const [sx, sy] = worldToScreen(p.x, p.y);
+    ctx.fillStyle = `rgba(0,229,255,${a.toFixed(3)})`;
+    ctx.beginPath();
+    ctx.arc(sx, sy, 2 + frac * 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const [sx, sy] = worldToScreen(player.x, player.y);
+  ctx.shadowColor = 'rgba(0,229,255,0.9)';
+  ctx.shadowBlur = 22;
+  ctx.fillStyle = 'rgba(180,250,255,1)';
+  ctx.beginPath();
+  ctx.arc(sx, sy, player.r, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Outer halo ring
+  ctx.shadowBlur = 8;
+  ctx.strokeStyle = 'rgba(0,229,255,0.5)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(sx, sy, 14, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.shadowBlur = 0;
+}
+
+function drawBursts(dt) {
+  for (let i = BURSTS.length - 1; i >= 0; i--) {
+    const b = BURSTS[i];
+    b.life -= dt * 1.4;
+    if (b.life <= 0) { BURSTS.splice(i, 1); continue; }
+    b.x += b.vx * dt; b.y += b.vy * dt;
+    b.vx *= 0.9; b.vy *= 0.9;
+    const [sx, sy] = worldToScreen(b.x, b.y);
+    ctx.fillStyle = `rgba(220,180,255,${(b.life * 0.8).toFixed(3)})`;
+    ctx.beginPath();
+    ctx.arc(sx, sy, 2 * b.life, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawMinimap() {
+  if (!GAME.mapVisible) return;
+  const W = mini.width, H = mini.height;
+  mctx.clearRect(0, 0, W, H);
+
+  const sx = W / WORLD.w, sy = H / WORLD.h;
+
+  // Bounds
+  mctx.strokeStyle = 'rgba(0,229,255,0.35)';
+  mctx.lineWidth = 1;
+  mctx.strokeRect(0.5, 0.5, W - 1, H - 1);
+
+  // Fragments
+  for (const f of FRAGMENTS) {
+    if (f.taken) continue;
+    mctx.fillStyle = 'rgba(157,92,255,0.85)';
+    mctx.beginPath();
+    mctx.arc(f.x * sx, f.y * sy, 1.5, 0, Math.PI * 2);
+    mctx.fill();
+  }
+
+  // Nodes
+  for (const n of NODES) {
+    mctx.fillStyle = n.locked ? 'rgba(120,120,140,0.9)' : n.color;
+    mctx.beginPath();
+    mctx.arc(n.x * sx, n.y * sy, 3, 0, Math.PI * 2);
+    mctx.fill();
+    if (n.visited) {
+      mctx.strokeStyle = 'rgba(255,255,255,0.5)';
+      mctx.lineWidth = 1;
+      mctx.beginPath();
+      mctx.arc(n.x * sx, n.y * sy, 5, 0, Math.PI * 2);
+      mctx.stroke();
+    }
+  }
+
+  // Player
+  mctx.fillStyle = 'rgba(180,250,255,1)';
+  mctx.beginPath();
+  mctx.arc(player.x * sx, player.y * sy, 2.5, 0, Math.PI * 2);
+  mctx.fill();
+  mctx.strokeStyle = 'rgba(0,229,255,0.6)';
+  mctx.beginPath();
+  mctx.arc(player.x * sx, player.y * sy, 5, 0, Math.PI * 2);
+  mctx.stroke();
+}
+
+// ═══════════════════════════════════════════════════════
+//  MAIN LOOP
+// ═══════════════════════════════════════════════════════
+let lastT = performance.now();
+function frame(t) {
+  requestAnimationFrame(frame);
+  const dt = Math.min((t - lastT) / 1000, 0.05);
+  lastT = t;
+
+  update(dt);
+
+  ctx.clearRect(0, 0, VW, VH);
+  drawGrid();
+  drawBounds();
+  drawAmbient(t);
+  drawMotes(t);
+  drawFragments(t);
+  drawBursts(dt);
+  drawNodes(t);
+  drawPlayer(t);
+  drawMinimap();
+}
+requestAnimationFrame(t => { lastT = t; frame(t); });
+
+// Pause on tab hidden
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    for (const k in keys) keys[k] = false;
+  } else {
+    lastT = performance.now();
+  }
+});
+
+// Expose for testing
+window.__game = { GAME, player, NODES, FRAGMENTS, keys, startGame, closeModal, WORLD };
+</script>
+</body>
+</html>

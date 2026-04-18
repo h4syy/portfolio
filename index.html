@@ -5,17 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Yash Paudel</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Orbitron:wght@700;900&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --bg: #f5f4f0;
-      --text: #111;
-      --muted: #777;
-      --soft: #444;
-      --accent: #6d28d9;
-      --accent-dim: rgba(109,40,217,0.07);
+      --bg:       #030309;
+      --bg2:      #07071a;
+      --surface:  rgba(255,255,255,0.04);
+      --border:   rgba(100,130,255,0.12);
+      --cyan:     #00e5ff;
+      --purple:   #a855f7;
+      --pink:     #ff2d78;
+      --text:     #c8d8ff;
+      --muted:    #3e4870;
+      --soft:     #7080aa;
+      --glow-c:   0 0 28px rgba(0,229,255,0.45);
+      --glow-p:   0 0 28px rgba(168,85,247,0.45);
     }
 
     html { scroll-behavior: smooth; }
@@ -26,49 +32,97 @@
       font-family: 'Inter', system-ui, sans-serif;
       font-weight: 300;
       overflow-x: hidden;
-      cursor: crosshair;
     }
+
+    /* ── CUSTOM CURSOR ── */
+    #cur-dot, #cur-ring {
+      position: fixed;
+      top: 0; left: 0;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      will-change: transform;
+    }
+    #cur-dot {
+      width: 5px; height: 5px;
+      background: var(--cyan);
+      margin: -2.5px 0 0 -2.5px;
+      box-shadow: 0 0 8px var(--cyan);
+    }
+    #cur-ring {
+      width: 32px; height: 32px;
+      border: 1px solid rgba(0,229,255,0.5);
+      margin: -16px 0 0 -16px;
+      transition: width 0.25s, height 0.25s, margin 0.25s, border-color 0.25s;
+    }
+    #cur-ring.hover {
+      width: 52px; height: 52px;
+      margin: -26px 0 0 -26px;
+      border-color: var(--cyan);
+      box-shadow: 0 0 16px rgba(0,229,255,0.3);
+    }
+    @media (hover: none) { #cur-dot, #cur-ring { display: none; } }
 
     /* ── NAV ── */
     nav {
       position: fixed;
-      top: 0; left: 0; right: 0;
+      top: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
       z-index: 200;
-      padding: 2rem 3rem;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      pointer-events: none;
+      gap: 3rem;
+      padding: 0.8rem 2.2rem;
+      background: rgba(3,3,15,0.65);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border);
+      border-radius: 100px;
     }
 
     .nav-logo {
       font-family: 'Orbitron', sans-serif;
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       font-weight: 900;
-      letter-spacing: 0.35em;
-      color: var(--text);
+      letter-spacing: 0.3em;
+      color: var(--cyan);
       text-decoration: none;
-      pointer-events: all;
+      text-shadow: var(--glow-c);
     }
 
     .nav-links {
       display: flex;
-      gap: 2.5rem;
+      gap: 2.2rem;
       list-style: none;
-      pointer-events: all;
     }
 
     .nav-links a {
       color: var(--soft);
       text-decoration: none;
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 0.2em;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 400;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      transition: color 0.3s;
+      transition: color 0.25s, text-shadow 0.25s;
     }
 
-    .nav-links a:hover { color: var(--text); }
+    .nav-links a:hover {
+      color: var(--cyan);
+      text-shadow: 0 0 14px rgba(0,229,255,0.6);
+    }
+
+    .nav-links a.nav-play {
+      color: var(--cyan);
+      border: 1px solid rgba(0,229,255,0.35);
+      padding: 5px 12px;
+      margin-left: 0.6rem;
+    }
+    .nav-links a.nav-play:hover {
+      background: rgba(0,229,255,0.1);
+      border-color: var(--cyan);
+    }
 
     /* ── HERO ── */
     #hero {
@@ -81,58 +135,139 @@
       justify-content: center;
     }
 
+    /* Aurora background */
+    #aurora {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    #aurora::before, #aurora::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      animation: aurora-drift 14s ease-in-out infinite alternate;
+    }
+    #aurora::before {
+      width: 60vw; height: 60vh;
+      top: 10%; left: 15%;
+      background: radial-gradient(ellipse, rgba(0,100,180,0.12) 0%, transparent 70%);
+    }
+    #aurora::after {
+      width: 50vw; height: 50vh;
+      bottom: 5%; right: 10%;
+      background: radial-gradient(ellipse, rgba(120,20,200,0.09) 0%, transparent 70%);
+      animation-duration: 18s;
+      animation-direction: alternate-reverse;
+    }
+
+    @keyframes aurora-drift {
+      0%   { transform: translate(0,0) scale(1); }
+      50%  { transform: translate(5%,-8%) scale(1.1); }
+      100% { transform: translate(-3%,6%) scale(0.95); }
+    }
+
+    /* Noise texture overlay */
+    #hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      opacity: 0.025;
+    }
+
     #brainCanvas {
       position: absolute;
       inset: 0;
-      z-index: 1;
-      cursor: grab;
+      z-index: 2;
+      cursor: none;
     }
 
-    #brainCanvas:active { cursor: grabbing; }
-
-    /* Orbiting thought tags */
+    /* Thought tags */
     .thought-tag {
       position: absolute;
       z-index: 10;
-      font-size: 0.68rem;
-      font-weight: 500;
-      letter-spacing: 0.06em;
-      color: #111;
-      border: 1px solid rgba(0,0,0,0.18);
-      padding: 0.45rem 1.1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      color: rgba(200,220,255,0.9);
+      border: 1px solid rgba(0,229,255,0.25);
+      padding: 0.5rem 1.2rem;
       border-radius: 100px;
-      cursor: pointer;
+      cursor: none;
       white-space: nowrap;
-      background: rgba(245,244,240,0.75);
-      backdrop-filter: blur(10px);
+      background: rgba(3,3,20,0.7);
+      backdrop-filter: blur(12px);
       transform: translate(-50%, -50%);
-      transition: color 0.25s, border-color 0.25s, background 0.25s;
+      transition: color 0.3s, border-color 0.3s, box-shadow 0.3s, background 0.3s;
       user-select: none;
       pointer-events: auto;
     }
 
     .thought-tag:hover {
-      color: var(--accent);
-      border-color: rgba(109,40,217,0.35);
-      background: var(--accent-dim);
+      color: var(--cyan);
+      border-color: rgba(0,229,255,0.6);
+      box-shadow: 0 0 20px rgba(0,229,255,0.25), inset 0 0 20px rgba(0,229,255,0.06);
+      background: rgba(0,229,255,0.06);
     }
 
     /* Brain label */
     .brain-label {
       position: absolute;
       z-index: 5;
-      font-size: 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem;
       letter-spacing: 0.3em;
       text-transform: uppercase;
-      color: rgba(10,10,10,0.15);
-      top: calc(50% + 180px);
+      color: rgba(100,130,200,0.2);
+      top: calc(50% + 190px);
       left: 50%;
       transform: translateX(-50%);
       white-space: nowrap;
       pointer-events: none;
     }
 
-    /* Hero name — bottom left */
+    .play-cta {
+      position: absolute;
+      z-index: 6;
+      top: calc(50% + 230px);
+      left: 50%;
+      transform: translateX(-50%);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.55rem 1.1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(0,229,255,0.75);
+      text-decoration: none;
+      border: 1px solid rgba(0,229,255,0.3);
+      background: rgba(7,7,12,0.35);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+    .play-cta:hover {
+      color: var(--cyan);
+      border-color: var(--cyan);
+      background: rgba(0,229,255,0.1);
+      box-shadow: 0 0 24px rgba(0,229,255,0.25);
+    }
+    .play-cta .arrow {
+      font-size: 0.7rem;
+      transition: transform 0.25s ease;
+    }
+    .play-cta:hover .arrow { transform: translateX(3px); }
+
+    /* Hero identity */
     .hero-identity {
       position: absolute;
       bottom: 3rem;
@@ -143,67 +278,215 @@
 
     .hero-name {
       font-family: 'Orbitron', sans-serif;
-      font-size: clamp(0.85rem, 1.5vw, 1.1rem);
+      font-size: clamp(0.9rem, 1.6vw, 1.2rem);
       font-weight: 900;
-      letter-spacing: 0.4em;
-      color: var(--text);
+      letter-spacing: 0.45em;
+      background: linear-gradient(90deg, var(--cyan), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       line-height: 1;
-      margin-bottom: 0.6rem;
+      margin-bottom: 0.65rem;
     }
 
     .hero-sub {
-      font-size: 0.68rem;
-      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      font-weight: 300;
       color: var(--soft);
-      letter-spacing: 0.2em;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
     }
 
-    /* Scroll hint — bottom right */
+    .hero-sub .sep { color: var(--muted); margin: 0 0.5rem; }
+
+    /* Scroll hint */
     .scroll-hint {
       position: absolute;
       bottom: 3rem;
       right: 3rem;
       z-index: 10;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 1rem;
+      gap: 0.6rem;
       color: var(--muted);
-      font-size: 0.65rem;
-      letter-spacing: 0.2em;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.3em;
       text-transform: uppercase;
       pointer-events: none;
     }
 
-    .scroll-hint::before {
+    .scroll-hint::after {
       content: '';
-      display: block;
-      width: 40px;
-      height: 1px;
-      background: #ccc;
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, var(--cyan), transparent);
+      animation: scroll-pulse 2s ease-in-out infinite;
     }
 
-    /* ── SECTIONS ── */
+    @keyframes scroll-pulse {
+      0%, 100% { opacity: 0.3; transform: scaleY(1); }
+      50%       { opacity: 1;   transform: scaleY(0.6); }
+    }
+
+    /* ── HUD ── */
+    .hud {
+      position: absolute;
+      top: 5.5rem;
+      right: 2rem;
+      z-index: 15;
+      padding: 0.7rem 0.9rem 0.6rem;
+      background: rgba(3,3,15,0.55);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.12em;
+      min-width: 170px;
+      pointer-events: none;
+      opacity: 0.9;
+    }
+
+    .hud-header {
+      font-size: 0.5rem;
+      color: var(--muted);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      padding-bottom: 0.55rem;
+      margin-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .hud-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+      animation: hud-dot-pulse 2.2s ease-in-out infinite;
+    }
+
+    @keyframes hud-dot-pulse {
+      0%,100% { opacity: 0.35; }
+      50%     { opacity: 1; }
+    }
+
+    .hud-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 1.2rem;
+      padding: 0.18rem 0;
+    }
+
+    .hud-k { color: var(--muted); text-transform: uppercase; }
+
+    .hud-v {
+      color: var(--cyan);
+      font-variant-numeric: tabular-nums;
+      transition: color 0.3s, text-shadow 0.3s;
+    }
+
+    .hud-v.pulse { animation: hud-pulse 0.7s ease; }
+
+    @keyframes hud-pulse {
+      0%   { color: #fff; text-shadow: 0 0 12px var(--cyan); }
+      100% { color: var(--cyan); text-shadow: none; }
+    }
+
+    .hud-hint {
+      font-size: 0.48rem;
+      color: var(--muted);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding-top: 0.55rem;
+      margin-top: 0.45rem;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      opacity: 0.75;
+    }
+
+    .hud-hint kbd {
+      font-family: inherit;
+      color: var(--soft);
+      padding: 0 0.25rem;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      margin: 0 0.1rem;
+      font-size: 0.9em;
+    }
+
+    /* Toasts */
+    .toast-stack {
+      position: absolute;
+      top: calc(5.5rem + 180px);
+      right: 2rem;
+      z-index: 15;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      pointer-events: none;
+      align-items: flex-end;
+    }
+
+    .toast {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      background: rgba(3,3,15,0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(0,229,255,0.3);
+      border-radius: 4px;
+      padding: 0.5rem 0.85rem;
+      box-shadow: 0 0 20px rgba(0,229,255,0.15);
+      animation: toast-in 3.2s ease forwards;
+      white-space: nowrap;
+    }
+
+    @keyframes toast-in {
+      0%   { opacity: 0; transform: translateX(18px); }
+      8%   { opacity: 1; transform: translateX(0); }
+      85%  { opacity: 1; transform: translateX(0); }
+      100% { opacity: 0; transform: translateX(-12px); }
+    }
+
+    /* ── PAGE SECTIONS ── */
     section.page-section {
       max-width: 860px;
       margin: 0 auto;
-      padding: 4.5rem 2rem;
+      padding: 5rem 2rem;
+      position: relative;
     }
 
     .sec-label {
-      font-size: 0.62rem;
-      color: var(--muted);
-      letter-spacing: 0.35em;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--cyan);
+      letter-spacing: 0.3em;
       text-transform: uppercase;
-      margin-bottom: 2rem;
+      margin-bottom: 2.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      opacity: 0.7;
     }
+
+    .sec-label::before { content: '//'; color: var(--muted); }
 
     /* ── ABOUT ── */
     .about-statement {
-      font-size: clamp(1.2rem, 2.8vw, 1.9rem);
+      font-size: clamp(1.15rem, 2.6vw, 1.8rem);
       font-weight: 300;
-      line-height: 1.7;
-      color: #333;
+      line-height: 1.75;
+      color: rgba(180,200,255,0.7);
       max-width: 700px;
     }
 
@@ -212,42 +495,55 @@
       font-weight: 500;
     }
 
-    .about-statement .dim { color: #666; }
+    .about-statement .hi {
+      color: var(--cyan);
+      font-weight: 400;
+    }
 
     .about-detail {
-      margin-top: 2rem;
-      padding-top: 2rem;
-      border-top: 1px solid #e2e1dc;
+      margin-top: 2.5rem;
+      padding-top: 2.5rem;
+      border-top: 1px solid;
+      border-image: linear-gradient(90deg, rgba(0,229,255,0.3), transparent) 1;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 3rem;
     }
 
-    .detail-item {}
-
     .detail-val {
       font-family: 'Orbitron', sans-serif;
-      font-size: 1.4rem;
+      font-size: 1.5rem;
       font-weight: 700;
-      color: var(--text);
-      margin-bottom: 0.3rem;
+      color: var(--cyan);
+      text-shadow: var(--glow-c);
+      margin-bottom: 0.35rem;
     }
 
     .detail-key {
-      font-size: 0.68rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
       color: var(--soft);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      line-height: 1.6;
+      letter-spacing: 0.07em;
+      line-height: 1.7;
     }
 
-    /* ── THOUGHTS / BLOG ── */
+    /* ── DIVIDER ── */
+    hr {
+      border: none;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    /* ── THOUGHTS ── */
     .blog-lead {
       font-size: 0.88rem;
-      color: var(--muted);
-      line-height: 1.8;
+      color: var(--soft);
+      line-height: 1.9;
       max-width: 480px;
-      margin-bottom: 1.8rem;
+      margin-bottom: 2rem;
+      font-style: italic;
     }
 
     .blog-list { list-style: none; }
@@ -257,65 +553,80 @@
       grid-template-columns: 3rem 1fr auto;
       align-items: center;
       gap: 1.5rem;
-      padding: 1.4rem 0;
-      border-top: 1px solid #e2e1dc;
+      padding: 1.5rem 1.2rem;
+      border-top: 1px solid rgba(100,130,255,0.08);
       text-decoration: none;
       color: inherit;
-      transition: background 0.2s;
-      cursor: pointer;
+      transition: background 0.3s, border-color 0.3s;
+      cursor: none;
+      border-radius: 6px;
+      position: relative;
+      overflow: hidden;
     }
 
-    .blog-entry:last-child { border-bottom: 1px solid #e2e1dc; }
+    .blog-entry:last-child { border-bottom: 1px solid rgba(100,130,255,0.08); }
 
-    .blog-entry:hover .be-title { color: var(--accent); }
-    .blog-entry:hover .be-arrow { transform: translateX(8px); color: var(--accent); }
+    .blog-entry::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 2px;
+      background: var(--cyan);
+      transform: scaleY(0);
+      transform-origin: bottom;
+      transition: transform 0.3s ease;
+    }
+
+    .blog-entry:hover { background: rgba(0,229,255,0.04); }
+    .blog-entry:hover::before { transform: scaleY(1); }
+    .blog-entry:hover .be-title { color: var(--cyan); }
+    .blog-entry:hover .be-arrow { transform: translateX(6px); color: var(--cyan); }
 
     .be-num {
-      font-size: 0.68rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
       color: var(--muted);
-      font-variant-numeric: tabular-nums;
       letter-spacing: 0.05em;
-      padding-top: 3px;
     }
 
-    .be-content {}
-
     .be-title {
-      font-size: 0.98rem;
+      font-size: 0.96rem;
       font-weight: 400;
-      color: #1a1a1a;
-      margin-bottom: 0.4rem;
-      transition: color 0.2s;
-      line-height: 1.4;
+      color: var(--text);
+      margin-bottom: 0.45rem;
+      transition: color 0.25s;
+      line-height: 1.45;
     }
 
     .be-meta {
       display: flex;
       align-items: center;
-      gap: 1.2rem;
+      gap: 1rem;
     }
 
     .be-tag {
-      font-size: 0.62rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: var(--muted);
-      border: 1px solid #ddd;
-      padding: 0.2rem 0.65rem;
+      color: var(--purple);
+      border: 1px solid rgba(168,85,247,0.3);
+      padding: 0.2rem 0.7rem;
       border-radius: 100px;
     }
 
     .be-soon {
-      font-size: 0.62rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: #ccc;
+      color: var(--muted);
     }
 
     .be-arrow {
       font-size: 0.9rem;
-      color: #ccc;
-      transition: transform 0.2s, color 0.2s;
+      color: var(--muted);
+      transition: transform 0.25s, color 0.25s;
       justify-self: end;
     }
 
@@ -324,46 +635,74 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1px;
-      background: #e8e8e4;
-      border: 1px solid #e8e8e4;
+      background: rgba(100,130,255,0.08);
+      border: 1px solid rgba(100,130,255,0.08);
+      border-radius: 12px;
+      overflow: hidden;
     }
 
     .contact-item {
-      background: var(--bg);
-      padding: 1.8rem 2rem;
+      background: var(--bg2);
+      padding: 2rem 2.2rem;
       text-decoration: none;
       display: flex;
       flex-direction: column;
-      gap: 0.4rem;
-      transition: background 0.2s;
-      cursor: pointer;
+      gap: 0.45rem;
+      transition: background 0.3s;
+      cursor: none;
+      position: relative;
+      overflow: hidden;
     }
 
-    .contact-item:hover { background: #f2f2f0; }
-    .contact-item:hover .ci-arrow { color: var(--accent); }
+    .contact-item::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .contact-item[data-color="cyan"]::after  { background: radial-gradient(ellipse at bottom left, rgba(0,229,255,0.08) 0%, transparent 70%); }
+    .contact-item[data-color="purple"]::after { background: radial-gradient(ellipse at bottom left, rgba(168,85,247,0.08) 0%, transparent 70%); }
+    .contact-item[data-color="pink"]::after  { background: radial-gradient(ellipse at bottom left, rgba(255,45,120,0.08) 0%, transparent 70%); }
+    .contact-item[data-color="blue"]::after  { background: radial-gradient(ellipse at bottom left, rgba(60,130,255,0.08) 0%, transparent 70%); }
+
+    .contact-item:hover::after { opacity: 1; }
 
     .ci-label {
-      font-size: 0.65rem;
-      letter-spacing: 0.2em;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem;
+      letter-spacing: 0.22em;
       text-transform: uppercase;
       color: var(--muted);
     }
 
     .ci-name {
-      font-size: 1.2rem;
+      font-size: 1.15rem;
       font-weight: 300;
-      color: #999;
-      transition: color 0.2s;
+      color: rgba(150,170,220,0.5);
+      transition: color 0.25s;
     }
 
     .contact-item:hover .ci-name { color: var(--text); }
 
     .ci-arrow {
-      font-size: 0.8rem;
-      color: #ccc;
-      margin-top: 0.5rem;
-      transition: color 0.2s;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+      transition: color 0.25s, transform 0.25s;
+      display: inline-block;
     }
+
+    .contact-item[data-color="cyan"]:hover .ci-name  { color: var(--cyan); }
+    .contact-item[data-color="purple"]:hover .ci-name { color: var(--purple); }
+    .contact-item[data-color="pink"]:hover .ci-name  { color: var(--pink); }
+    .contact-item[data-color="blue"]:hover .ci-name  { color: #4da6ff; }
+
+    .contact-item[data-color="cyan"]:hover .ci-arrow  { color: var(--cyan); transform: translate(3px,-3px); }
+    .contact-item[data-color="purple"]:hover .ci-arrow { color: var(--purple); transform: translate(3px,-3px); }
+    .contact-item[data-color="pink"]:hover .ci-arrow  { color: var(--pink); transform: translate(3px,-3px); }
+    .contact-item[data-color="blue"]:hover .ci-arrow  { color: #4da6ff; transform: translate(3px,-3px); }
 
     /* ── FOOTER ── */
     footer {
@@ -371,47 +710,65 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-top: 1px solid #e8e8e4;
+      border-top: 1px solid rgba(100,130,255,0.08);
+      max-width: 100%;
     }
 
     .footer-l {
-      font-size: 0.65rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
       color: var(--muted);
       letter-spacing: 0.15em;
     }
 
     .footer-r {
-      font-size: 0.65rem;
-      color: #ccc;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--muted);
       letter-spacing: 0.1em;
     }
-
-    /* ── DIVIDER ── */
-    hr { border: none; border-top: 1px solid #e8e8e4; }
 
     /* ── SCROLL REVEAL ── */
     .reveal {
       opacity: 0;
-      transform: translateY(24px);
-      transition: opacity 0.9s ease, transform 0.9s ease;
+      transform: translateY(22px);
+      transition: opacity 0.85s ease, transform 0.85s ease;
     }
     .reveal.in { opacity: 1; transform: translateY(0); }
 
     /* ── SCROLLBAR ── */
-    ::-webkit-scrollbar { width: 1px; }
-    ::-webkit-scrollbar-thumb { background: #ddd; }
+    ::-webkit-scrollbar { width: 2px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.25); }
 
     @media (max-width: 768px) {
-      nav { padding: 1.5rem; }
+      nav {
+        gap: 1.5rem;
+        padding: 0.7rem 1.5rem;
+        top: 1rem;
+      }
       .nav-links { display: none; }
-      .hero-identity, .scroll-hint { font-size: 0.6rem; }
-      section.page-section { padding: 6rem 1.5rem; }
+      section.page-section { padding: 5rem 1.5rem; }
       .about-detail { grid-template-columns: 1fr 1fr; gap: 2rem; }
       .contact-grid { grid-template-columns: 1fr; }
+      .hero-identity { left: 1.5rem; bottom: 2rem; }
+      .scroll-hint { right: 1.5rem; bottom: 2rem; }
+      .hud {
+        top: 4.5rem;
+        right: 1rem;
+        min-width: 130px;
+        font-size: 0.48rem;
+        padding: 0.55rem 0.7rem 0.5rem;
+      }
+      .toast-stack { top: calc(4.5rem + 155px); right: 1rem; }
+      .toast { font-size: 0.52rem; padding: 0.4rem 0.7rem; }
     }
   </style>
 </head>
 <body>
+
+  <div id="cur-dot"></div>
+  <div id="cur-ring"></div>
 
   <nav>
     <a href="#hero" class="nav-logo">YP</a>
@@ -419,21 +776,48 @@
       <li><a href="#about">About</a></li>
       <li><a href="#thoughts">Thoughts</a></li>
       <li><a href="#contact">Contact</a></li>
+      <li><a href="game.html" class="nav-play">▸ Play</a></li>
     </ul>
   </nav>
 
   <!-- ═══ HERO ═══ -->
   <section id="hero">
+    <div id="aurora"></div>
     <canvas id="brainCanvas"></canvas>
 
-    <!-- Thought tags — positioned by JS -->
     <div class="thought-tag" id="t0">Why Nepal Needs Its Own LLMs</div>
 
-    <div class="brain-label">drag to rotate &nbsp;·&nbsp; click thoughts to explore</div>
+    <div class="brain-label">drag to rotate &nbsp;·&nbsp; click to fire a synapse</div>
+
+    <a href="game.html" class="play-cta">▸ play synapse <span class="arrow">→</span></a>
+
+    <div class="hud" aria-hidden="true">
+      <div class="hud-header">
+        <span class="hud-dot"></span>
+        Neural.Sys
+      </div>
+      <div class="hud-row">
+        <span class="hud-k">synapses</span>
+        <span class="hud-v" id="hud-syn">00</span>
+      </div>
+      <div class="hud-row">
+        <span class="hud-k">rotations</span>
+        <span class="hud-v" id="hud-rot">0.00</span>
+      </div>
+      <div class="hud-row">
+        <span class="hud-k">uptime</span>
+        <span class="hud-v" id="hud-time">00:00</span>
+      </div>
+      <div class="hud-hint"><kbd>click</kbd> <kbd>space</kbd></div>
+    </div>
+
+    <div class="toast-stack" id="toasts"></div>
 
     <div class="hero-identity">
       <div class="hero-name">YASH PAUDEL</div>
-      <div class="hero-sub">AI Researcher &nbsp;·&nbsp; Builder &nbsp;·&nbsp; Nepal</div>
+      <div class="hero-sub">
+        AI Researcher<span class="sep">/</span>Builder<span class="sep">/</span>Nepal
+      </div>
     </div>
 
     <div class="scroll-hint">Scroll</div>
@@ -441,12 +825,12 @@
 
   <!-- ═══ ABOUT ═══ -->
   <section class="page-section" id="about">
-    <div class="sec-label reveal">01 &nbsp;/&nbsp; About</div>
+    <div class="sec-label reveal">01 &nbsp; About</div>
     <p class="about-statement reveal">
       I work at the edge of <strong>what AI can actually do</strong> —
       not in a lab, but in production, in markets that most AI research
-      doesn't know exist. <span class="dim">I fine-tune LLMs, build evaluation pipelines,
-      architect AI systems, and ship things that move real metrics.</span>
+      doesn't know exist. <span>I fine-tune LLMs, build evaluation pipelines,
+      architect AI systems, and ship things that <span class="hi">move real metrics.</span></span>
     </p>
     <div class="about-detail reveal">
       <div class="detail-item">
@@ -466,9 +850,9 @@
 
   <hr>
 
-  <!-- ═══ THOUGHTS / BLOG ═══ -->
+  <!-- ═══ THOUGHTS ═══ -->
   <section class="page-section" id="thoughts">
-    <div class="sec-label reveal">02 &nbsp;/&nbsp; Thoughts</div>
+    <div class="sec-label reveal">02 &nbsp; Thoughts</div>
     <p class="blog-lead reveal">
       Writing soon. Things I've spent real time figuring out —
       not takes, but conclusions from the work.
@@ -495,24 +879,24 @@
 
   <!-- ═══ CONTACT ═══ -->
   <section class="page-section" id="contact">
-    <div class="sec-label reveal">03 &nbsp;/&nbsp; Contact</div>
+    <div class="sec-label reveal">03 &nbsp; Contact</div>
     <div class="contact-grid reveal">
-      <a href="https://www.linkedin.com/in/yashpaudel/" target="_blank" class="contact-item">
+      <a href="https://www.linkedin.com/in/yashpaudel/" target="_blank" class="contact-item" data-color="blue">
         <span class="ci-label">Professional</span>
         <span class="ci-name">LinkedIn</span>
         <span class="ci-arrow">↗</span>
       </a>
-      <a href="https://github.com/h4syy" target="_blank" class="contact-item">
+      <a href="https://github.com/h4syy" target="_blank" class="contact-item" data-color="purple">
         <span class="ci-label">Code</span>
         <span class="ci-name">GitHub</span>
         <span class="ci-arrow">↗</span>
       </a>
-      <a href="https://www.instagram.com/paudelyash/" target="_blank" class="contact-item">
+      <a href="https://www.instagram.com/paudelyash/" target="_blank" class="contact-item" data-color="pink">
         <span class="ci-label">Personal</span>
         <span class="ci-name">Instagram</span>
         <span class="ci-arrow">↗</span>
       </a>
-      <a href="mailto:yashpaudel10@gmail.com" class="contact-item">
+      <a href="mailto:yashpaudel10@gmail.com" class="contact-item" data-color="cyan">
         <span class="ci-label">Direct</span>
         <span class="ci-name">yashpaudel10@gmail.com</span>
         <span class="ci-arrow">↗</span>
@@ -527,7 +911,36 @@
 
   <script>
   // ═══════════════════════════════════════════════════════
-  //  PERLIN NOISE (Ken Perlin's reference implementation)
+  //  CUSTOM CURSOR
+  // ═══════════════════════════════════════════════════════
+  (function () {
+    const dot  = document.getElementById('cur-dot');
+    const ring = document.getElementById('cur-ring');
+    if (!dot || !ring) return;
+
+    let mx = 0, my = 0, rx = 0, ry = 0;
+
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      dot.style.transform = `translate(${mx}px,${my}px)`;
+    });
+
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    (function tick() {
+      rx = lerp(rx, mx, 0.13);
+      ry = lerp(ry, my, 0.13);
+      ring.style.transform = `translate(${rx}px,${ry}px)`;
+      requestAnimationFrame(tick);
+    })();
+
+    document.querySelectorAll('a, button, .thought-tag, .blog-entry, .contact-item, .nav-logo').forEach(el => {
+      el.addEventListener('mouseenter', () => ring.classList.add('hover'));
+      el.addEventListener('mouseleave', () => ring.classList.remove('hover'));
+    });
+  })();
+
+  // ═══════════════════════════════════════════════════════
+  //  PERLIN NOISE
   // ═══════════════════════════════════════════════════════
   (function() {
     const perm = new Uint8Array(512);
@@ -576,88 +989,164 @@
     W = canvas.width  = window.innerWidth;
     H = canvas.height = window.innerHeight;
     CX = W / 2; CY = H / 2;
-    BRAIN_R = Math.min(W, H) * 0.20;
-    ORBIT_R = Math.min(W, H) * 0.34;
+    BRAIN_R = Math.min(W, H) * 0.21;
+    ORBIT_R = Math.min(W, H) * 0.35;
   }
   setSizes();
   window.addEventListener('resize', () => { setSizes(); buildBrain(); });
 
-  // ── Build brain point cloud ──────────────────────────
-  const N = 2400;
-  let pts = [];   // { ox, oy, oz, s, op }
+  let pts = [];
 
+  //  Builds an anatomically-shaped brain:
+  //  cerebrum with longitudinal fissure + gyri noise,
+  //  bilateral cerebellum lobes, small brainstem.
   function buildBrain() {
     pts = [];
     const R = BRAIN_R;
-    for (let i = 0; i < N; i++) {
-      // Fibonacci sphere for uniform distribution
-      const phi   = Math.acos(1 - 2 * (i + 0.5) / N);
+
+    // ── CEREBRUM ──
+    // Every sample is kept (full surface coverage). Ridge field drives
+    // brightness + size + outward displacement, so gyri *glow* while
+    // sulci remain as dim fill — the brain reads as 100% solid.
+    const TARGET = 7200;
+    for (let i = 0; i < TARGET; i++) {
+      const phi   = Math.acos(1 - 2 * (i + 0.5) / TARGET);
       const theta = Math.PI * (1 + Math.sqrt(5)) * i;
       const sx = Math.sin(phi) * Math.cos(theta);
       const sy = Math.sin(phi) * Math.sin(theta);
       const sz = Math.cos(phi);
 
-      // Multi-octave noise for brain-like surface
-      const sc = 2.0;
-      const n1 = noise3(sx * sc,       sy * sc,       sz * sc);
-      const n2 = noise3(sx * sc * 2.3 + 5, sy * sc * 2.3, sz * sc * 2.3) * 0.45;
-      const n3 = noise3(sx * sc * 4.7 + 11, sy * sc * 4.7, sz * sc * 4.7) * 0.2;
-      const disp = 1 + (n1 + n2 + n3) * 0.36;
+      // Longitudinal fissure — surface groove between hemispheres.
+      // Displace points inward instead of culling them, so the cleft never
+      // opens into a through-hole when viewed edge-on.
+      const topness  = Math.max(0, -sy);
+      const fissureW = 0.085 + 0.10 * topness;
+      const fissureMask = sy < 0.30
+        ? Math.max(0, 1 - Math.abs(sx) / fissureW)
+        : 0;
+      const fissureDip = fissureMask * fissureMask * 0.16;
 
-      // Two-lobe brain shape: squish center
-      const lobeFactor = 1 - 0.18 * Math.exp(-sx * sx * 12);
+      // Domain-warped ridge noise → organic, rolled gyri
+      const wAmp = 0.36;
+      const wx = sx + noise3(sx*2.2,       sy*2.2,       sz*2.2)       * wAmp;
+      const wy = sy + noise3(sx*2.2 + 100, sy*2.2 + 100, sz*2.2 + 100) * wAmp;
+      const wz = sz + noise3(sx*2.2 + 200, sy*2.2 + 200, sz*2.2 + 200) * wAmp;
 
+      // Ridge noise (1-|noise|): spikes near zero-crossings → fold lines
+      const r1 = 1 - Math.abs(noise3(wx*2.4,      wy*2.4,      wz*2.4));
+      const r2 = 1 - Math.abs(noise3(wx*4.8 + 7,  wy*4.8,      wz*4.8));
+      const r3 = 1 - Math.abs(noise3(wx*9.0 + 13, wy*9.0,      wz*9.0));
+      const ridgeField = r1 * 0.55 + r2 * 0.30 + r3 * 0.15;
+
+      // Ridge peaks bulge outward; displacement amplifies fold silhouette
+      const gyri = (ridgeField - 0.55) * 0.24;
+
+      // Ventral flattening — brains are flat on the bottom
+      const ventral = Math.max(0, sy) * 0.14;
+
+      // Frontal lobe bulge — push the front out to break sphere symmetry
+      const frontBulge = Math.max(0, -sz) * Math.max(0, 0.4 - sy) * 0.10;
+
+      const AX = 0.96, AY = 0.74, AZ = 1.02;
+      const rScale = 1 + gyri - ventral - fissureDip;
+
+      // Brightness curve: ridges pop, sulci fade but remain visible
+      const ridgeLit = Math.pow(ridgeField, 1.5);
       pts.push({
-        ox: sx * R * disp * lobeFactor,
-        oy: sy * R * disp * 0.85,
-        oz: sz * R * disp * 0.80,
-        s:  0.7 + Math.random() * 1.4,
-        op: 0.25 + Math.random() * 0.55,
+        ox: sx * AX * rScale * R,
+        oy: sy * AY * rScale * R,
+        oz: (sz - frontBulge) * AZ * rScale * R,
+        s:  0.45 + ridgeLit * 1.55 + Math.random() * 0.45,
+        op: 0.22 + ridgeLit * 0.65 + Math.random() * 0.12,
       });
+    }
+
+    // ── CEREBELLUM ── two bilateral lobes with horizontal folia
+    const LOBE = 620;
+    for (const side of [-0.19, 0.19]) {
+      for (let i = 0; i < LOBE; i++) {
+        const phi   = Math.acos(1 - 2 * (i + 0.5) / LOBE);
+        const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+        const sx = Math.sin(phi) * Math.cos(theta);
+        const sy = Math.sin(phi) * Math.sin(theta);
+        const sz = Math.cos(phi);
+
+        // Folia: brightness modulated by |sin| bands → ridges glow,
+        // valleys remain present as dim fill.
+        const warp = noise3(sx*3.5, sy*3.5, sz*3.5) * 2.4;
+        const band = Math.abs(Math.sin(sy * 26 + warp));
+        const lit  = Math.pow(1 - band, 1.3);
+        const rad  = 0.26;
+        const bump = (1 - band) * 0.045;
+
+        pts.push({
+          ox: (side + sx * (rad + bump)) * R,
+          oy: (0.54 + sy * rad * 0.72) * R,
+          oz: (0.78 + sz * (rad + bump)) * R,
+          s:  0.45 + lit * 1.1 + Math.random() * 0.35,
+          op: 0.24 + lit * 0.5 + Math.random() * 0.1,
+        });
+      }
     }
   }
   buildBrain();
 
-  // ── Rotation state ───────────────────────────────────
-  let rotX = 0.18, rotY = 0.0, autoY = 0;
-  let dragging = false, lastMx = 0, lastMy = 0;
-  let velX = 0, velY = 0;
+  // Resting pose — side view. Brain smoothly returns here when drag ends.
+  const REST_X = 0.18, REST_Y = Math.PI / 2;
+
+  let rotX = REST_X, rotY = REST_Y;
+  let targetX = REST_X, targetY = REST_Y;
+  let dragging = false;
+  let lastMx = 0, lastMy = 0;
 
   canvas.addEventListener('mousedown', e => {
-    dragging = true; lastMx = e.clientX; lastMy = e.clientY;
-    velX = velY = 0;
-  });
-  window.addEventListener('mouseup', () => { dragging = false; });
-  window.addEventListener('mousemove', e => {
-    if (!dragging) return;
-    const dx = e.clientX - lastMx, dy = e.clientY - lastMy;
-    velY = dx * 0.006; velX = dy * 0.006;
-    rotY += velY; rotX += velX;
+    dragging = true;
     lastMx = e.clientX; lastMy = e.clientY;
   });
+  window.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    targetX = REST_X; targetY = REST_Y;
+  });
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const dx = e.clientX - lastMx;
+    const dy = e.clientY - lastMy;
+    lastMx = e.clientX; lastMy = e.clientY;
+    targetY += dx * 0.006;
+    targetX += dy * 0.006;
+    targetX = Math.max(-1.2, Math.min(1.2, targetX));
+  });
+  window.addEventListener('blur', () => {
+    dragging = false;
+    targetX = REST_X; targetY = REST_Y;
+  });
 
-  // Touch support
   canvas.addEventListener('touchstart', e => {
     const t = e.touches[0];
-    dragging = true; lastMx = t.clientX; lastMy = t.clientY; velX = velY = 0;
+    dragging = true;
+    lastMx = t.clientX; lastMy = t.clientY;
   }, { passive: true });
-  window.addEventListener('touchend', () => { dragging = false; });
+  window.addEventListener('touchend', () => {
+    if (!dragging) return;
+    dragging = false;
+    targetX = REST_X; targetY = REST_Y;
+  });
   window.addEventListener('touchmove', e => {
     if (!dragging) return;
     const t = e.touches[0];
-    velY = (t.clientX - lastMx) * 0.006;
-    velX = (t.clientY - lastMy) * 0.006;
-    rotY += velY; rotX += velX;
+    const dx = t.clientX - lastMx;
+    const dy = t.clientY - lastMy;
     lastMx = t.clientX; lastMy = t.clientY;
+    targetY += dx * 0.006;
+    targetX += dy * 0.006;
+    targetX = Math.max(-1.2, Math.min(1.2, targetX));
   }, { passive: true });
 
-  // ── 3D math ──────────────────────────────────────────
   function rotate(px, py, pz, rx, ry) {
-    // X rotation
-    let y1 =  py * Math.cos(rx) - pz * Math.sin(rx);
-    let z1 =  py * Math.sin(rx) + pz * Math.cos(rx);
-    // Y rotation
-    let x2 =  px * Math.cos(ry) + z1 * Math.sin(ry);
+    let y1 = py * Math.cos(rx) - pz * Math.sin(rx);
+    let z1 = py * Math.sin(rx) + pz * Math.cos(rx);
+    let x2 = px * Math.cos(ry) + z1 * Math.sin(ry);
     let z2 = -px * Math.sin(ry) + z1 * Math.cos(ry);
     return [x2, y1, z2];
   }
@@ -672,14 +1161,12 @@
   // ═══════════════════════════════════════════════════════
   const tagEls = [0,1,2,3,4,5].map(i => document.getElementById('t' + i));
 
-  // 3 rings × 2 tags, each ring has different tilt
   const rings = [
     { tiltX: 0.30, tiltZ: 0.10, speed:  0.0038 },
     { tiltX: 0.90, tiltZ: 0.50, speed: -0.0028 },
     { tiltX: 1.45, tiltZ: 0.90, speed:  0.0045 },
   ];
 
-  // Assign two tags per ring, offset by π
   const tagOrbits = [
     { ring: 0, angle: 0 },
     { ring: 0, angle: Math.PI },
@@ -692,27 +1179,16 @@
   function getTagPos3d(orbit, R) {
     const { tiltX, tiltZ } = rings[orbit.ring];
     const a = orbit.angle;
-
-    // Point on XZ plane
     let px = R * Math.cos(a), py = 0, pz = R * Math.sin(a);
-
-    // Tilt ring around X axis
-    let py1 =  py * Math.cos(tiltX) - pz * Math.sin(tiltX);
-    let pz1 =  py * Math.sin(tiltX) + pz * Math.cos(tiltX);
-
-    // Tilt ring around Z axis
-    let px2 =  px * Math.cos(tiltZ) - py1 * Math.sin(tiltZ);
-    let py2 =  px * Math.sin(tiltZ) + py1 * Math.cos(tiltZ);
-
+    let py1 = py * Math.cos(tiltX) - pz * Math.sin(tiltX);
+    let pz1 = py * Math.sin(tiltX) + pz * Math.cos(tiltX);
+    let px2 = px * Math.cos(tiltZ) - py1 * Math.sin(tiltZ);
+    let py2 = px * Math.sin(tiltZ) + py1 * Math.cos(tiltZ);
     return [px2, py2, pz1];
   }
 
-  // Blog URLs — same order as the thought tags
-  const blogUrls = [
-    'blog/why-nepal-needs-its-own-llms.html',
-  ];
+  const blogUrls = ['blog/why-nepal-needs-its-own-llms.html'];
 
-  // Click tag → navigate directly to blog post
   tagEls.forEach((el, i) => {
     if (!el) return;
     el.addEventListener('click', e => {
@@ -722,47 +1198,182 @@
   });
 
   // ═══════════════════════════════════════════════════════
+  //  GAMIFICATION — neural playground
+  // ═══════════════════════════════════════════════════════
+  const GAME = {
+    synapses: 0,
+    totalRot: 0,
+    lastRY: rotY,
+    lastRX: rotX,
+    startT: performance.now(),
+    unlocked: new Set(),
+    _lastRotDisp: 0,
+  };
+  const liveSyn = [];
+
+  const synEl   = document.getElementById('hud-syn');
+  const rotElH  = document.getElementById('hud-rot');
+  const timeEl  = document.getElementById('hud-time');
+  const toastEl = document.getElementById('toasts');
+
+  function showToast(text) {
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = '+ ' + text;
+    toastEl.appendChild(el);
+    setTimeout(() => el.remove(), 3200);
+  }
+
+  function pulseEl(el) {
+    el.classList.remove('pulse');
+    void el.offsetWidth;
+    el.classList.add('pulse');
+  }
+
+  function checkAchievements() {
+    const u = GAME.unlocked;
+    if (!u.has('first') && GAME.synapses >= 1)  { u.add('first'); showToast('first spark'); }
+    if (!u.has('warm')  && GAME.synapses >= 5)  { u.add('warm');  showToast('warming up'); }
+    if (!u.has('ten')   && GAME.synapses >= 20) { u.add('ten');   showToast('20 synapses'); }
+    if (!u.has('storm') && GAME.synapses >= 50) { u.add('storm'); showToast('neural storm'); }
+    if (!u.has('rot')   && GAME.totalRot >= Math.PI * 2) { u.add('rot'); showToast('full rotation'); }
+  }
+
+  function fireSynapse(cx, cy) {
+    const ry = rotY;
+    const rx = rotX;
+    const projs = pts.map((p, idx) => {
+      const [x, y, z] = rotate(p.ox, p.oy, p.oz, rx, ry);
+      const [sx, sy]  = project(x, y, z);
+      return { idx, sx, sy, dist: (sx - cx) * (sx - cx) + (sy - cy) * (sy - cy) };
+    });
+    projs.sort((a, b) => a.dist - b.dist);
+    const chosen = projs.slice(0, 6).map(p => p.idx);
+
+    liveSyn.push({ indices: chosen, life: 1 });
+
+    GAME.synapses++;
+    synEl.textContent = String(GAME.synapses).padStart(2, '0');
+    pulseEl(synEl);
+    checkAchievements();
+  }
+
+  function drawSynapses(dt, rx, ry) {
+    for (let i = liveSyn.length - 1; i >= 0; i--) {
+      const s = liveSyn[i];
+      s.life -= dt / 1000;
+      if (s.life <= 0) { liveSyn.splice(i, 1); continue; }
+
+      const screen = s.indices.map(idx => {
+        const p = pts[idx];
+        const [x, y, z] = rotate(p.ox, p.oy, p.oz, rx, ry);
+        const [sx, sy]  = project(x, y, z);
+        return { sx, sy };
+      });
+
+      const a = Math.max(0, s.life);
+      ctx.strokeStyle = `rgba(0,229,255,${(a * 0.7).toFixed(3)})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      const ep = screen[0];
+      for (let j = 1; j < screen.length; j++) {
+        ctx.moveTo(ep.sx, ep.sy);
+        ctx.lineTo(screen[j].sx, screen[j].sy);
+      }
+      ctx.stroke();
+
+      ctx.shadowColor = 'rgba(0,229,255,0.85)';
+      for (const p of screen) {
+        ctx.shadowBlur = 12 * a;
+        ctx.beginPath();
+        ctx.arc(p.sx, p.sy, 3 * a, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${(a * 0.9).toFixed(3)})`;
+        ctx.fill();
+      }
+      ctx.shadowBlur = 0;
+    }
+  }
+
+  // Click vs drag discrimination
+  let clickSt = null;
+  canvas.addEventListener('mousedown', e => {
+    clickSt = { x: e.clientX, y: e.clientY, t: performance.now() };
+  });
+  canvas.addEventListener('mouseup', e => {
+    if (!clickSt) return;
+    const dx = e.clientX - clickSt.x;
+    const dy = e.clientY - clickSt.y;
+    const dur = performance.now() - clickSt.t;
+    if (Math.abs(dx) < 5 && Math.abs(dy) < 5 && dur < 300) {
+      fireSynapse(e.clientX, e.clientY);
+    }
+    clickSt = null;
+  });
+
+  // Space — fire at a random brain point
+  window.addEventListener('keydown', e => {
+    if (e.code === 'Space' && !e.repeat && (e.target === document.body || e.target.tagName === 'CANVAS')) {
+      e.preventDefault();
+      const p = pts[Math.floor(Math.random() * pts.length)];
+      const [x, y, z] = rotate(p.ox, p.oy, p.oz, rotX, rotY);
+      const [sx, sy]  = project(x, y, z);
+      fireSynapse(sx, sy);
+    }
+  });
+
+  // Uptime ticker
+  setInterval(() => {
+    const s = Math.floor((performance.now() - GAME.startT) / 1000);
+    const m = Math.floor(s / 60);
+    timeEl.textContent = String(m).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+  }, 1000);
+
+  // ═══════════════════════════════════════════════════════
   //  RENDER LOOP
   // ═══════════════════════════════════════════════════════
-  let raf, lastT = 0;
+  let lastT = 0;
 
   function render(t) {
-    raf = requestAnimationFrame(render);
+    requestAnimationFrame(render);
     const dt = Math.min(t - lastT, 32); lastT = t;
 
     ctx.clearRect(0, 0, W, H);
 
-    // Inertia & auto-rotate
-    if (!dragging) {
-      rotY += velY; rotX += velX;
-      velY *= 0.94; velX *= 0.94;
-      autoY = t * 0.00018;
-    }
+    // Critically-damped easing toward target pose, frame-rate independent.
+    const k = 1 - Math.exp(-dt * 0.009);
+    rotX += (targetX - rotX) * k;
+    rotY += (targetY - rotY) * k;
 
-    const ry = rotY + autoY;
+    GAME.totalRot += Math.abs(rotY - GAME.lastRY) + Math.abs(rotX - GAME.lastRX);
+    GAME.lastRY = rotY; GAME.lastRX = rotX;
+    if (t - GAME._lastRotDisp > 150) {
+      rotElH.textContent = (GAME.totalRot / (2 * Math.PI)).toFixed(2);
+      GAME._lastRotDisp = t;
+    }
+    checkAchievements();
+
+    const ry = rotY;
     const rx = rotX;
 
-    // ── Project brain points ────────────────────────────
     const projected = pts.map(p => {
       const [x, y, z] = rotate(p.ox, p.oy, p.oz, rx, ry);
       const [sx, sy, f] = project(x, y, z);
       return { sx, sy, z, f, s: p.s, op: p.op };
     });
 
-    // Sort back-to-front
     projected.sort((a, b) => a.z - b.z);
 
-    const maxZ = BRAIN_R * 1.1;
+    const maxZ = BRAIN_R * 1.2;
 
     for (const p of projected) {
-      const depth = (p.z + maxZ) / (2 * maxZ);  // 0=back, 1=front
-      const opacity = p.op * (0.15 + depth * 0.85);
+      const depth = (p.z + maxZ) / (2 * maxZ);
+      const opacity = p.op * (0.08 + depth * 0.92);
       const size = Math.max(0.3, p.s * p.f);
 
-      // Color gradient: light lavender (back) → deep indigo (front)
-      const rr = Math.round(lerp(200,  60, depth));
-      const gg = Math.round(lerp(190,  20, depth));
-      const bb = Math.round(lerp(235, 160, depth));
+      // deep purple (back) → electric cyan (front)
+      const rr = Math.round(lerp(80,   0, depth));
+      const gg = Math.round(lerp( 0, 229, depth));
+      const bb = Math.round(lerp(140, 255, depth));
 
       ctx.beginPath();
       ctx.arc(p.sx, p.sy, size, 0, Math.PI * 2);
@@ -770,28 +1381,38 @@
       ctx.fill();
     }
 
-    // ── Position orbital tags ────────────────────────────
+    // Subtle brain core glow
+    const coreGrad = ctx.createRadialGradient(CX, CY, 0, CX, CY, BRAIN_R * 0.7);
+    coreGrad.addColorStop(0, 'rgba(0,180,255,0.04)');
+    coreGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = coreGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Synapse flashes (drawn on top of dots + glow)
+    drawSynapses(dt, rx, ry);
+
+    // Orbital tags
     const R = ORBIT_R;
     const scrolled = window.scrollY > H * 0.15;
 
     tagOrbits.forEach((orbit, i) => {
-      rings[orbit.ring].speed && (orbit.angle += rings[orbit.ring].speed);
+      if (rings[orbit.ring].speed) orbit.angle += rings[orbit.ring].speed;
       const [px, py, pz] = getTagPos3d(orbit, R);
       const [rx2, ry2, rz2] = rotate(px, py, pz, rx, ry);
-      const [sx, sy, f] = project(rx2, ry2, rz2);
+      const [sx, sy] = project(rx2, ry2, rz2);
 
       const el = tagEls[i];
       if (!el) return;
 
       const depth = (rz2 + R) / (2 * R);
-      const op = scrolled ? 0 : (0.2 + depth * 0.8);
+      const op = scrolled ? 0 : (0.15 + depth * 0.85);
       const sc = 0.82 + depth * 0.18;
 
-      el.style.left    = sx + 'px';
-      el.style.top     = sy + 'px';
+      el.style.left   = sx + 'px';
+      el.style.top    = sy + 'px';
       el.style.opacity = op.toFixed(3);
       el.style.transform = `translate(-50%, -50%) scale(${sc.toFixed(3)})`;
-      el.style.zIndex  = Math.round(depth * 15) + 5;
+      el.style.zIndex = Math.round(depth * 15) + 5;
       el.style.pointerEvents = scrolled ? 'none' : 'auto';
     });
   }
@@ -802,9 +1423,7 @@
   // ═══════════════════════════════════════════════════════
   const revealObs = new IntersectionObserver(entries => {
     entries.forEach((e, i) => {
-      if (e.isIntersecting) {
-        setTimeout(() => e.target.classList.add('in'), i * 100);
-      }
+      if (e.isIntersecting) setTimeout(() => e.target.classList.add('in'), i * 100);
     });
   }, { threshold: 0.12 });
 
