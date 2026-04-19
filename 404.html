@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 · signal lost</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07070c;
+      --bg2: #0e0f1a;
+      --cy: #00e5ff;
+      --cy-dim: rgba(0,229,255,0.35);
+      --ink: #eaf4ff;
+      --ink-dim: rgba(234,244,255,0.55);
+      --muted: rgba(234,244,255,0.28);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; min-height: 100%;
+      background: radial-gradient(ellipse at center, var(--bg2), var(--bg));
+      color: var(--ink);
+      font-family: 'JetBrains Mono', monospace;
+      overflow: hidden;
+    }
+
+    canvas#static {
+      position: fixed; inset: 0;
+      z-index: 0;
+      opacity: 0.45;
+    }
+
+    .wrap {
+      position: relative; z-index: 2;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 2rem;
+    }
+
+    .code {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: clamp(5rem, 20vw, 12rem);
+      letter-spacing: 0.05em;
+      color: var(--cy);
+      text-shadow: 0 0 30px rgba(0,229,255,0.5), 0 0 60px rgba(0,229,255,0.2);
+      line-height: 1;
+      position: relative;
+      animation: glitch 5s infinite steps(1);
+    }
+    .code::before, .code::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+    }
+    .code::before {
+      color: rgba(255, 60, 150, 0.6);
+      transform: translate(-3px, 0);
+      mix-blend-mode: screen;
+      animation: glitch-a 3.2s infinite steps(1);
+    }
+    .code::after {
+      color: rgba(120, 220, 255, 0.6);
+      transform: translate(3px, 0);
+      mix-blend-mode: screen;
+      animation: glitch-b 2.8s infinite steps(1);
+    }
+    @keyframes glitch {
+      0%, 94%, 100% { transform: translate(0,0); }
+      95% { transform: translate(-2px, 1px); }
+      96% { transform: translate(2px, -1px); }
+      97% { transform: translate(0, 0); }
+    }
+    @keyframes glitch-a {
+      0%, 92%, 100% { opacity: 0.3; transform: translate(-3px, 0); }
+      93% { opacity: 1; transform: translate(-6px, 2px); }
+      94% { opacity: 0.3; transform: translate(-3px, 0); }
+    }
+    @keyframes glitch-b {
+      0%, 92%, 100% { opacity: 0.3; transform: translate(3px, 0); }
+      93% { opacity: 1; transform: translate(6px, -2px); }
+      94% { opacity: 0.3; transform: translate(3px, 0); }
+    }
+
+    .label {
+      margin-top: 1rem;
+      font-size: 0.7rem;
+      color: var(--cy);
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+    }
+    .msg {
+      margin-top: 2.5rem;
+      text-align: center;
+      max-width: 520px;
+      color: var(--ink-dim);
+      font-size: 0.85rem;
+      line-height: 1.8;
+      letter-spacing: 0.06em;
+    }
+    .msg b { color: var(--ink); font-weight: 500; }
+    .trace {
+      margin-top: 2.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-align: left;
+      max-width: 420px;
+      background: rgba(14,15,26,0.5);
+      border: 1px solid rgba(0,229,255,0.15);
+      padding: 1rem 1.2rem;
+      line-height: 1.9;
+    }
+    .trace .ok  { color: rgba(120, 255, 180, 0.8); }
+    .trace .err { color: rgba(255, 90, 130, 0.85); }
+    .trace .dim { color: var(--muted); }
+
+    .cta {
+      margin-top: 2.5rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.8rem 1.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--cy);
+      text-decoration: none;
+      border: 1px solid var(--cy-dim);
+      background: rgba(0,229,255,0.04);
+      transition: all 0.22s ease;
+    }
+    .cta:hover {
+      background: rgba(0,229,255,0.12);
+      border-color: var(--cy);
+      box-shadow: 0 0 28px rgba(0,229,255,0.3);
+    }
+    .cta .arr { transition: transform 0.22s ease; }
+    .cta:hover .arr { transform: translateX(4px); }
+
+    @media (max-width: 600px) {
+      .code { font-size: 5rem; }
+      .msg { font-size: 0.78rem; }
+      .trace { font-size: 0.6rem; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="static"></canvas>
+
+  <div class="wrap">
+    <div class="code" data-text="404">404</div>
+    <div class="label">signal lost</div>
+
+    <div class="msg">
+      the neuron you were trying to reach didn't fire.
+      <br><br>
+      <b>either it never existed, or it was pruned</b>
+    </div>
+
+    <div class="trace">
+      <div><span class="ok">✓</span> dns resolved</div>
+      <div><span class="ok">✓</span> tcp handshake</div>
+      <div><span class="ok">✓</span> tls negotiated</div>
+      <div><span class="err">✗</span> neural path: <span class="dim">no gradient</span></div>
+      <div><span class="err">✗</span> fallback: <span class="dim">404</span></div>
+    </div>
+
+    <a href="/" class="cta">go home <span class="arr">→</span></a>
+  </div>
+
+<script>
+// Static / scanline noise canvas
+(() => {
+  const c = document.getElementById('static');
+  const ctx = c.getContext('2d');
+  let W, H, buf;
+  function resize() {
+    W = c.width  = window.innerWidth;
+    H = c.height = window.innerHeight;
+    buf = ctx.createImageData(W, H);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function draw() {
+    requestAnimationFrame(draw);
+    const d = buf.data;
+    const len = W * H;
+    for (let i = 0; i < len; i++) {
+      const v = Math.random() < 0.03 ? (Math.random() * 255) | 0 : 0;
+      const j = i * 4;
+      d[j] = 0;                // r
+      d[j+1] = v * 0.9 | 0;    // g (cyan-ish)
+      d[j+2] = v | 0;          // b
+      d[j+3] = v ? 120 : 0;
+    }
+    ctx.putImageData(buf, 0, 0);
+
+    // Scanline
+    const y = (performance.now() * 0.12) % H;
+    ctx.fillStyle = 'rgba(0, 229, 255, 0.04)';
+    ctx.fillRect(0, y, W, 2);
+  }
+  requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>
