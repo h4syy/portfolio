@@ -612,6 +612,18 @@
       font-weight: 400;
     }
 
+    /* Word-by-word reveal on scroll */
+    .about-statement .word {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .about-statement .word.in {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
     .about-detail {
       margin-top: 2.5rem;
       padding-top: 2.5rem;
@@ -1858,6 +1870,30 @@
   }, { threshold: 0.12 });
 
   document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+  // ═══════════════════════════════════════════════════════
+  //  ABOUT TYPEWRITER  —  word-by-word reveal when scrolled into view
+  // ═══════════════════════════════════════════════════════
+  (() => {
+    const target = document.querySelector('.about-statement');
+    if (!target) return;
+    // Wrap each whitespace-separated token (outside HTML tags) in <span class="word">.
+    // This preserves existing <strong>/<span class="hi">… markup.
+    const original = target.innerHTML;
+    const wrapped = original.replace(/([^\s<>]+)/g, '<span class="word">$1</span>');
+    target.innerHTML = wrapped;
+
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const words = target.querySelectorAll('.word');
+          words.forEach((w, i) => setTimeout(() => w.classList.add('in'), i * 42));
+          obs.unobserve(target);
+        }
+      });
+    }, { threshold: 0.25 });
+    obs.observe(target);
+  })();
 
   // ═══════════════════════════════════════════════════════
   //  SCROLL PARALLAX  —  brain drifts down + dissolves as you scroll
