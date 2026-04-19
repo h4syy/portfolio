@@ -337,6 +337,42 @@
       50%, 100% { opacity: 0; }
     }
 
+    /* ── NOW WIDGET ── */
+    .now-widget {
+      position: absolute;
+      top: 5.2rem;
+      left: 3rem;
+      z-index: 9;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .now-dot {
+      width: 5px; height: 5px;
+      background: var(--cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(0,229,255,0.6);
+      animation: now-pulse 2s ease-in-out infinite;
+    }
+    .now-label { color: var(--cyan); }
+    .now-text {
+      color: var(--soft);
+      transition: opacity 0.4s ease;
+      min-width: 170px;
+      display: inline-block;
+    }
+    @keyframes now-pulse { 50% { opacity: 0.3; transform: scale(0.8); } }
+
+    @media (max-width: 768px) {
+      .now-widget { top: 4rem; left: 1.5rem; font-size: 0.48rem; gap: 0.45rem; }
+      .now-text { min-width: 0; max-width: 50vw; }
+    }
+
     /* Scroll hint */
     .scroll-hint {
       position: absolute;
@@ -900,6 +936,12 @@
   <section id="hero">
     <div id="aurora"></div>
     <canvas id="brainCanvas"></canvas>
+
+    <div class="now-widget" aria-hidden="true">
+      <span class="now-dot"></span>
+      <span class="now-label">now:</span>
+      <span class="now-text">fine-tuning llama-3 for nepali</span>
+    </div>
 
     <div class="thought-tag" id="t0">Why Nepal Needs Its Own LLMs</div>
 
@@ -1773,6 +1815,36 @@
   }, { threshold: 0.12 });
 
   document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+  // ═══════════════════════════════════════════════════════
+  //  NOW WIDGET  —  rotating status
+  // ═══════════════════════════════════════════════════════
+  (() => {
+    const el = document.querySelector('.now-text');
+    if (!el) return;
+    const STATES = [
+      'fine-tuning llama-3 for nepali',
+      'running eval on synthetic data',
+      'reading kaplan et al. again',
+      'staring at loss curves',
+      'debugging a vllm crash',
+      'writing about sovereign llms',
+      'shipping ai to prod, terrified',
+      'rlhf-ing a stubborn model',
+      'arguing with a 7b about nepali grammar',
+      'shipping',
+    ];
+    let i = Math.floor(Math.random() * STATES.length);
+    el.textContent = STATES[i];
+    setInterval(() => {
+      el.style.opacity = '0';
+      setTimeout(() => {
+        i = (i + 1) % STATES.length;
+        el.textContent = STATES[i];
+        el.style.opacity = '1';
+      }, 420);
+    }, 5200);
+  })();
 
   // ═══════════════════════════════════════════════════════
   //  HERO NAME TYPE-IN
