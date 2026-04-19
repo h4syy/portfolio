@@ -1873,21 +1873,42 @@
 
   // ═══════════════════════════════════════════════════════
   //  ABOUT TYPEWRITER  —  word-by-word reveal when scrolled into view
+  //  Walk real text nodes so inline <strong>/<span class="hi">…
+  //  markup is preserved (a regex over innerHTML breaks tags).
   // ═══════════════════════════════════════════════════════
   (() => {
     const target = document.querySelector('.about-statement');
     if (!target) return;
-    // Wrap each whitespace-separated token (outside HTML tags) in <span class="word">.
-    // This preserves existing <strong>/<span class="hi">… markup.
-    const original = target.innerHTML;
-    const wrapped = original.replace(/([^\s<>]+)/g, '<span class="word">$1</span>');
-    target.innerHTML = wrapped;
+
+    const walker = document.createTreeWalker(target, NodeFilter.SHOW_TEXT);
+    const textNodes = [];
+    let n; while ((n = walker.nextNode())) textNodes.push(n);
+
+    const wordSpans = [];
+    for (const tn of textNodes) {
+      const text = tn.nodeValue;
+      if (!text || !text.trim()) continue;
+      const parts = text.split(/(\s+)/);
+      const frag = document.createDocumentFragment();
+      for (const part of parts) {
+        if (part === '') continue;
+        if (/^\s+$/.test(part)) {
+          frag.appendChild(document.createTextNode(part));
+        } else {
+          const span = document.createElement('span');
+          span.className = 'word';
+          span.textContent = part;
+          frag.appendChild(span);
+          wordSpans.push(span);
+        }
+      }
+      tn.parentNode.replaceChild(frag, tn);
+    }
 
     const obs = new IntersectionObserver(entries => {
       entries.forEach(e => {
         if (e.isIntersecting) {
-          const words = target.querySelectorAll('.word');
-          words.forEach((w, i) => setTimeout(() => w.classList.add('in'), i * 42));
+          wordSpans.forEach((w, i) => setTimeout(() => w.classList.add('in'), i * 42));
           obs.unobserve(target);
         }
       });
