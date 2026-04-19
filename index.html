@@ -1759,6 +1759,52 @@
   document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
 
   // ═══════════════════════════════════════════════════════
+  //  KONAMI CODE  ↑ ↑ ↓ ↓ ← → ← → b a  →  brain storm
+  // ═══════════════════════════════════════════════════════
+  (() => {
+    const SEQ = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+    let idx = 0;
+    window.addEventListener('keydown', e => {
+      // ignore if typing in an input
+      if (['INPUT','TEXTAREA'].includes(e.target.tagName)) { idx = 0; return; }
+      const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      if (key === SEQ[idx]) {
+        idx++;
+        if (idx === SEQ.length) {
+          idx = 0;
+          triggerStorm();
+        }
+      } else {
+        idx = (key === SEQ[0]) ? 1 : 0;
+      }
+    });
+
+    function triggerStorm() {
+      const canvas = document.getElementById('brainCanvas');
+      if (!canvas) return;
+      const r = canvas.getBoundingClientRect();
+      // Fire 14 cascades from random positions across the brain over 1.6s
+      for (let i = 0; i < 14; i++) {
+        setTimeout(() => {
+          const cx = r.left + r.width/2 + (Math.random() - 0.5) * r.width * 0.35;
+          const cy = r.top  + r.height/2 + (Math.random() - 0.5) * r.height * 0.35;
+          canvas.dispatchEvent(new MouseEvent('mousedown', { clientX: cx, clientY: cy, bubbles: true }));
+          canvas.dispatchEvent(new MouseEvent('mouseup',   { clientX: cx, clientY: cy, bubbles: true }));
+        }, i * 110);
+      }
+      // Show a toast (matches existing toast-stack styling)
+      const toasts = document.getElementById('toasts');
+      if (toasts) {
+        const t = document.createElement('div');
+        t.className = 'toast';
+        t.textContent = '⚡ neural storm unlocked';
+        toasts.appendChild(t);
+        setTimeout(() => t.remove(), 3200);
+      }
+    }
+  })();
+
+  // ═══════════════════════════════════════════════════════
   //  COMMAND PALETTE  (⌘K or / to open)
   // ═══════════════════════════════════════════════════════
   (() => {
