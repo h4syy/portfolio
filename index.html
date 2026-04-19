@@ -337,6 +337,16 @@
       50%, 100% { opacity: 0; }
     }
 
+    /* ── CURSOR TRAIL ── */
+    #trailCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw; height: 100vh;
+      pointer-events: none;
+      z-index: 99;
+      mix-blend-mode: screen;
+    }
+
     /* ── NOW WIDGET ── */
     .now-widget {
       position: absolute;
@@ -909,6 +919,8 @@
   </style>
 </head>
 <body>
+
+  <canvas id="trailCanvas"></canvas>
 
   <div id="cur-dot"></div>
   <div id="cur-ring"></div>
@@ -1815,6 +1827,71 @@
   }, { threshold: 0.12 });
 
   document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+  // ═══════════════════════════════════════════════════════
+  //  CURSOR TRAIL  —  subtle cyan particles follow the pointer
+  // ═══════════════════════════════════════════════════════
+  (() => {
+    const c = document.getElementById('trailCanvas');
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    let W = 0, H = 0;
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      c.width = W * dpr; c.height = H * dpr;
+      c.style.width = W + 'px'; c.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    const particles = [];
+    const MAX = 140;
+    let lx = -999, ly = -999;
+
+    window.addEventListener('mousemove', e => {
+      const x = e.clientX, y = e.clientY;
+      const dx = x - lx, dy = y - ly;
+      if (dx*dx + dy*dy < 5) return;
+      lx = x; ly = y;
+      for (let i = 0; i < 2; i++) {
+        particles.push({
+          x: x + (Math.random() - 0.5) * 4,
+          y: y + (Math.random() - 0.5) * 4,
+          vx: (Math.random() - 0.5) * 0.6,
+          vy: (Math.random() - 0.5) * 0.6 - 0.2,
+          life: 1,
+          size: 0.8 + Math.random() * 1.4,
+        });
+      }
+      if (particles.length > MAX) particles.splice(0, particles.length - MAX);
+    });
+
+    let lastT = performance.now();
+    function frame(t) {
+      requestAnimationFrame(frame);
+      const dt = Math.min((t - lastT) / 1000, 0.05);
+      lastT = t;
+      ctx.clearRect(0, 0, W, H);
+      ctx.shadowColor = 'rgba(0,229,255,0.7)';
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.life -= dt * 1.5;
+        if (p.life <= 0) { particles.splice(i, 1); continue; }
+        p.x += p.vx; p.y += p.vy;
+        p.vx *= 0.95; p.vy *= 0.95;
+        const a = Math.max(0, p.life);
+        ctx.shadowBlur = 5 * a;
+        ctx.fillStyle = `rgba(0,229,255,${(a * 0.45).toFixed(3)})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * a, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.shadowBlur = 0;
+    }
+    requestAnimationFrame(frame);
+  })();
 
   // ═══════════════════════════════════════════════════════
   //  NOW WIDGET  —  rotating status

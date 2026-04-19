@@ -278,6 +278,16 @@
     }
     .intro-start:hover { background: rgba(0,229,255,0.12); }
 
+    /* Cursor trail */
+    #trailCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw; height: 100vh;
+      pointer-events: none;
+      z-index: 99;
+      mix-blend-mode: screen;
+    }
+
     /* Custom cursor */
     #cur-dot, #cur-ring {
       position: fixed; top: 0; left: 0;
@@ -435,6 +445,8 @@
       <button class="intro-start" id="intro-start">enter</button>
     </div>
   </div>
+
+  <canvas id="trailCanvas"></canvas>
 
   <div id="cur-dot"></div>
   <div id="cur-ring"></div>
@@ -1172,6 +1184,68 @@ document.addEventListener('visibilitychange', () => {
 
 // Expose for testing
 window.__game = { GAME, player, NODES, FRAGMENTS, keys, startGame, closeModal, WORLD };
+
+// ═══════════════════════════════════════════════════════
+//  CURSOR TRAIL
+// ═══════════════════════════════════════════════════════
+(() => {
+  const c = document.getElementById('trailCanvas');
+  if (!c) return;
+  const tctx = c.getContext('2d');
+  let tW = 0, tH = 0;
+  function resizeTr() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    tW = window.innerWidth; tH = window.innerHeight;
+    c.width = tW * dpr; c.height = tH * dpr;
+    c.style.width = tW + 'px'; c.style.height = tH + 'px';
+    tctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resizeTr();
+  window.addEventListener('resize', resizeTr);
+  const trP = [];
+  const TR_MAX = 140;
+  let tlx = -999, tly = -999;
+  window.addEventListener('mousemove', e => {
+    const x = e.clientX, y = e.clientY;
+    const dx = x - tlx, dy = y - tly;
+    if (dx*dx + dy*dy < 5) return;
+    tlx = x; tly = y;
+    for (let i = 0; i < 2; i++) {
+      trP.push({
+        x: x + (Math.random() - 0.5) * 4,
+        y: y + (Math.random() - 0.5) * 4,
+        vx: (Math.random() - 0.5) * 0.6,
+        vy: (Math.random() - 0.5) * 0.6 - 0.2,
+        life: 1,
+        size: 0.8 + Math.random() * 1.4,
+      });
+    }
+    if (trP.length > TR_MAX) trP.splice(0, trP.length - TR_MAX);
+  });
+  let trT = performance.now();
+  function trFrame(t) {
+    requestAnimationFrame(trFrame);
+    const dt = Math.min((t - trT) / 1000, 0.05);
+    trT = t;
+    tctx.clearRect(0, 0, tW, tH);
+    tctx.shadowColor = 'rgba(0,229,255,0.7)';
+    for (let i = trP.length - 1; i >= 0; i--) {
+      const p = trP[i];
+      p.life -= dt * 1.5;
+      if (p.life <= 0) { trP.splice(i, 1); continue; }
+      p.x += p.vx; p.y += p.vy;
+      p.vx *= 0.95; p.vy *= 0.95;
+      const a = Math.max(0, p.life);
+      tctx.shadowBlur = 5 * a;
+      tctx.fillStyle = `rgba(0,229,255,${(a * 0.45).toFixed(3)})`;
+      tctx.beginPath();
+      tctx.arc(p.x, p.y, p.size * a, 0, Math.PI * 2);
+      tctx.fill();
+    }
+    tctx.shadowBlur = 0;
+  }
+  requestAnimationFrame(trFrame);
+})();
 
 // ═══════════════════════════════════════════════════════
 //  COMMAND PALETTE
