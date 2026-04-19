@@ -185,6 +185,8 @@
       inset: 0;
       z-index: 2;
       cursor: none;
+      will-change: transform, opacity;
+      transform-origin: 50% 55%;
     }
 
     /* Spine — starts behind the brain and extends down through the about section */
@@ -1856,6 +1858,34 @@
   }, { threshold: 0.12 });
 
   document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+  // ═══════════════════════════════════════════════════════
+  //  SCROLL PARALLAX  —  brain drifts down + dissolves as you scroll
+  // ═══════════════════════════════════════════════════════
+  (() => {
+    const brain  = document.getElementById('brainCanvas');
+    const hero   = document.getElementById('hero');
+    const aurora = document.getElementById('aurora');
+    if (!brain) return;
+    let ticking = false;
+    function apply() {
+      const sy = window.scrollY;
+      const vh = window.innerHeight;
+      const p  = Math.min(1, sy / vh);
+      const eased = 1 - Math.pow(1 - p, 2);
+      const scale = 1 - eased * 0.28;
+      const ty    = eased * 70;
+      const op    = 1 - eased * 0.72;
+      brain.style.transform = `translateY(${ty.toFixed(1)}px) scale(${scale.toFixed(3)})`;
+      brain.style.opacity   = op.toFixed(3);
+      if (aurora) aurora.style.opacity = (1 - eased * 0.85).toFixed(3);
+      ticking = false;
+    }
+    window.addEventListener('scroll', () => {
+      if (!ticking) { requestAnimationFrame(apply); ticking = true; }
+    }, { passive: true });
+    apply();
+  })();
 
   // ═══════════════════════════════════════════════════════
   //  AUDIO  —  soft WebAudio tones for synapses + UI hovers
