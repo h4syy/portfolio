@@ -422,6 +422,8 @@
       <div class="stat"><span class="k">fragments</span><span class="v" id="frag">0 / 12</span></div>
       <div class="stat"><span class="k">nodes</span><span class="v" id="node">0 / 5</span></div>
       <div class="stat"><span class="k">uptime</span><span class="v" id="time">00:00</span></div>
+      <div class="stat"><span class="k">best</span><span class="v" id="best">—</span></div>
+      <div class="stat"><span class="k">runs</span><span class="v" id="runs">0</span></div>
     </div>
 
     <div id="hints">
@@ -894,9 +896,47 @@ function unlockObservatory() {
   obs.body = 'All fragments gathered. The signal clears — this is just a portfolio, but you explored it like a world. Reach out if you want to build something. Thanks for playing.';
   obs.link = 'mailto:yashpaudel10@gmail.com';
   obs.linkLabel = 'say hello →';
-  showToast('observatory · unlocked');
+
+  // Persist run to localStorage — best time + lifetime totals
+  const elapsedSec = Math.floor((performance.now() - GAME.startT) / 1000);
+  try {
+    const prevBest = parseInt(localStorage.getItem('synapse:best') || '999999', 10);
+    let msg;
+    if (elapsedSec < prevBest) {
+      localStorage.setItem('synapse:best', String(elapsedSec));
+      msg = `new best · ${fmtTime(elapsedSec)}`;
+    } else {
+      msg = `observatory · unlocked`;
+    }
+    const lifetimeFrags = parseInt(localStorage.getItem('synapse:lifetime_frags') || '0', 10) + FRAGMENTS.length;
+    const lifetimeRuns  = parseInt(localStorage.getItem('synapse:lifetime_runs')  || '0', 10) + 1;
+    localStorage.setItem('synapse:lifetime_frags', String(lifetimeFrags));
+    localStorage.setItem('synapse:lifetime_runs',  String(lifetimeRuns));
+    refreshPersistHUD();
+    showToast(msg);
+  } catch (e) {
+    showToast('observatory · unlocked');
+  }
   GAME.won = true;
 }
+
+function fmtTime(sec) {
+  const m = String(Math.floor(sec / 60)).padStart(2, '0');
+  const s = String(sec % 60).padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+function refreshPersistHUD() {
+  try {
+    const best = localStorage.getItem('synapse:best');
+    const runs = localStorage.getItem('synapse:lifetime_runs') || '0';
+    const bestEl = document.getElementById('best');
+    const runsEl = document.getElementById('runs');
+    if (bestEl) bestEl.textContent = best ? fmtTime(parseInt(best, 10)) : '—';
+    if (runsEl) runsEl.textContent = runs;
+  } catch (e) {}
+}
+refreshPersistHUD();
 
 // Burst particles on pickup
 const BURSTS = [];
