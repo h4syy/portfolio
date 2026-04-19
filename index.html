@@ -321,6 +321,22 @@
 
     .hero-sub .sep { color: var(--muted); margin: 0 0.5rem; }
 
+    .type-caret {
+      display: inline-block;
+      width: 0.45em;
+      height: 0.9em;
+      background: var(--cyan);
+      vertical-align: -0.08em;
+      margin-left: 0.12em;
+      animation: caret-blink 1s step-end infinite;
+      opacity: 1;
+      box-shadow: 0 0 6px rgba(0,229,255,0.6);
+    }
+    @keyframes caret-blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+
     /* Scroll hint */
     .scroll-hint {
       position: absolute;
@@ -1757,6 +1773,47 @@
   }, { threshold: 0.12 });
 
   document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+  // ═══════════════════════════════════════════════════════
+  //  HERO NAME TYPE-IN
+  // ═══════════════════════════════════════════════════════
+  (() => {
+    const nameEl = document.querySelector('.hero-name');
+    const subEl  = document.querySelector('.hero-sub');
+    if (!nameEl || !subEl) return;
+
+    const nameText = nameEl.textContent.trim();
+    const subHTML  = subEl.innerHTML;            // keep the .sep spans for restore
+    const subText  = subEl.textContent.trim();   // strip tags for typing
+
+    const CARET = '<span class="type-caret"></span>';
+    nameEl.innerHTML = CARET;
+    subEl.innerHTML  = '';
+
+    let i = 0, j = 0;
+    const NAME_MS = 85, SUB_MS = 38, START_DELAY = 700, GAP = 350;
+
+    function typeName() {
+      if (i <= nameText.length) {
+        nameEl.innerHTML = nameText.slice(0, i) + CARET;
+        i++;
+        setTimeout(typeName, NAME_MS);
+      } else {
+        nameEl.innerHTML = nameText;                // settle
+        setTimeout(() => { subEl.innerHTML = CARET; typeSub(); }, GAP);
+      }
+    }
+    function typeSub() {
+      if (j <= subText.length) {
+        subEl.innerHTML = subText.slice(0, j) + CARET;
+        j++;
+        setTimeout(typeSub, SUB_MS);
+      } else {
+        subEl.innerHTML = subHTML;                  // restore styled separators
+      }
+    }
+    setTimeout(typeName, START_DELAY);
+  })();
 
   // ═══════════════════════════════════════════════════════
   //  KONAMI CODE  ↑ ↑ ↓ ↓ ← → ← → b a  →  brain storm
