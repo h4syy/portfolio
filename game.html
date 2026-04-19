@@ -278,6 +278,26 @@
     }
     .intro-start:hover { background: rgba(0,229,255,0.12); }
 
+    /* Audio toggle */
+    .audio-toggle {
+      position: fixed;
+      bottom: 22px; left: 240px;
+      z-index: 50;
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(7,7,12,0.6);
+      border: 1px solid rgba(0,229,255,0.25);
+      color: var(--ink-dim);
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .audio-toggle:hover { color: var(--cy); border-color: var(--cy); }
+    .audio-toggle.muted { opacity: 0.45; }
+
     /* Cursor trail */
     #trailCanvas {
       position: fixed;
@@ -447,6 +467,8 @@
   </div>
 
   <canvas id="trailCanvas"></canvas>
+
+  <button class="audio-toggle" id="audio-toggle" aria-label="toggle sound">♪</button>
 
   <div id="cur-dot"></div>
   <div id="cur-ring"></div>
@@ -1184,6 +1206,74 @@ document.addEventListener('visibilitychange', () => {
 
 // Expose for testing
 window.__game = { GAME, player, NODES, FRAGMENTS, keys, startGame, closeModal, WORLD };
+
+// ═══════════════════════════════════════════════════════
+//  AUDIO
+// ═══════════════════════════════════════════════════════
+window.__audio = (() => {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  let actx = null;
+  let muted = localStorage.getItem('neural:audio') !== '1';
+  function ctxA() {
+    if (!actx) actx = new AC();
+    if (actx.state === 'suspended') actx.resume();
+    return actx;
+  }
+  function tone(freq, dur, vol = 0.04, type = 'sine') {
+    if (muted) return;
+    const c = ctxA();
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = type; osc.frequency.value = freq;
+    g.gain.setValueAtTime(0, c.currentTime);
+    g.gain.linearRampToValueAtTime(vol, c.currentTime + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+    osc.connect(g).connect(c.destination);
+    osc.start();
+    osc.stop(c.currentTime + dur + 0.01);
+  }
+  const hover = () => tone(760 + Math.random() * 60, 0.05, 0.012, 'sine');
+  const chime = () => { tone(784, 0.14, 0.04, 'sine'); setTimeout(() => tone(1047, 0.18, 0.035, 'sine'), 90); };
+  const connect = () => { tone(523, 0.1, 0.035); setTimeout(() => tone(659, 0.12, 0.035), 80); setTimeout(() => tone(784, 0.18, 0.035), 170); };
+
+  const btn = document.getElementById('audio-toggle');
+  function render() {
+    if (!btn) return;
+    btn.classList.toggle('muted', muted);
+    btn.textContent = muted ? '♪' : '♫';
+  }
+  render();
+  btn?.addEventListener('click', () => {
+    muted = !muted;
+    localStorage.setItem('neural:audio', muted ? '0' : '1');
+    if (!muted) tone(660, 0.12, 0.03);
+    render();
+  });
+
+  document.querySelectorAll('a, button').forEach(el => el.addEventListener('mouseenter', hover));
+
+  return { hover, chime, connect, isMuted: () => muted };
+})();
+
+// Hook game events — watch fragment count + modal state
+(() => {
+  const fragEl = document.getElementById('frag');
+  const modal  = document.getElementById('modal');
+  if (fragEl) {
+    let lastText = fragEl.textContent;
+    new MutationObserver(() => {
+      if (fragEl.textContent !== lastText) {
+        lastText = fragEl.textContent;
+        window.__audio?.chime();
+      }
+    }).observe(fragEl, { childList: true, characterData: true, subtree: true });
+  }
+  if (modal) {
+    new MutationObserver(() => {
+      if (modal.classList.contains('on')) window.__audio?.connect();
+    }).observe(modal, { attributes: true, attributeFilter: ['class'] });
+  }
+})();
 
 // ═══════════════════════════════════════════════════════
 //  CURSOR TRAIL

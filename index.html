@@ -337,6 +337,33 @@
       50%, 100% { opacity: 0; }
     }
 
+    /* ── AUDIO TOGGLE ── */
+    .audio-toggle {
+      position: fixed;
+      bottom: 1.6rem;
+      left: 1.6rem;
+      z-index: 50;
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(7,7,12,0.6);
+      border: 1px solid rgba(0,229,255,0.25);
+      color: var(--soft);
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .audio-toggle:hover {
+      color: var(--cyan);
+      border-color: var(--cyan);
+    }
+    .audio-toggle.muted { opacity: 0.45; }
+    @media (max-width: 768px) {
+      .audio-toggle { bottom: 1rem; left: 1rem; }
+    }
+
     /* ── CURSOR TRAIL ── */
     #trailCanvas {
       position: fixed;
@@ -921,6 +948,8 @@
 <body>
 
   <canvas id="trailCanvas"></canvas>
+
+  <button class="audio-toggle" id="audio-toggle" aria-label="toggle sound">♪</button>
 
   <div id="cur-dot"></div>
   <div id="cur-ring"></div>
@@ -1827,6 +1856,80 @@
   }, { threshold: 0.12 });
 
   document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+
+  // ═══════════════════════════════════════════════════════
+  //  AUDIO  —  soft WebAudio tones for synapses + UI hovers
+  //  Off by default until the user flips the toggle (browsers block
+  //  audio until a gesture anyway).
+  // ═══════════════════════════════════════════════════════
+  window.__audio = (() => {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    let actx = null;
+    let muted = localStorage.getItem('neural:audio') !== '1';   // default: muted
+
+    function ctx() {
+      if (!actx) actx = new AC();
+      if (actx.state === 'suspended') actx.resume();
+      return actx;
+    }
+    function tone(freq, dur, vol = 0.04, type = 'sine') {
+      if (muted) return;
+      const c = ctx();
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      osc.type = type; osc.frequency.value = freq;
+      g.gain.setValueAtTime(0, c.currentTime);
+      g.gain.linearRampToValueAtTime(vol, c.currentTime + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+      osc.connect(g).connect(c.destination);
+      osc.start();
+      osc.stop(c.currentTime + dur + 0.01);
+    }
+
+    const spark = () => {
+      tone(380 + Math.random() * 140, 0.22, 0.035, 'triangle');
+      tone(820 + Math.random() * 200, 0.12, 0.018, 'sine');
+    };
+    const hover = () => tone(760 + Math.random() * 60, 0.05, 0.012, 'sine');
+    const chime = () => { tone(784, 0.14, 0.04, 'sine'); setTimeout(() => tone(1047, 0.18, 0.035, 'sine'), 90); };
+
+    // Toggle UI
+    const btn = document.getElementById('audio-toggle');
+    function render() {
+      if (!btn) return;
+      btn.classList.toggle('muted', muted);
+      btn.textContent = muted ? '♪' : '♫';
+      btn.title = muted ? 'sound off — click to enable' : 'sound on';
+    }
+    render();
+    btn?.addEventListener('click', () => {
+      muted = !muted;
+      localStorage.setItem('neural:audio', muted ? '0' : '1');
+      if (!muted) { tone(660, 0.12, 0.03); }  // confirmation beep
+      render();
+    });
+
+    // Hook into nav/link hovers site-wide
+    document.querySelectorAll('.nav-links a, .contact-item, .blog-entry, .play-cta').forEach(el => {
+      el.addEventListener('mouseenter', hover);
+    });
+
+    return { spark, hover, chime, isMuted: () => muted };
+  })();
+
+  // Wire synapse fires to audio — patch the existing fireSynapse by
+  // observing the synapse counter element and playing on change.
+  (() => {
+    const syn = document.getElementById('hud-syn');
+    if (!syn) return;
+    let last = syn.textContent;
+    new MutationObserver(() => {
+      if (syn.textContent !== last) {
+        last = syn.textContent;
+        window.__audio?.spark();
+      }
+    }).observe(syn, { childList: true, characterData: true, subtree: true });
+  })();
 
   // ═══════════════════════════════════════════════════════
   //  CURSOR TRAIL  —  subtle cyan particles follow the pointer
