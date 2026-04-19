@@ -308,6 +308,69 @@
       #hints { display: none; }
       .intro-title { font-size: 28px; }
     }
+
+    /* ── COMMAND PALETTE ── */
+    #cmd-overlay {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; padding-top: 18vh;
+      background: rgba(7,7,12,0.82);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 900;
+      opacity: 1;
+      transition: opacity 0.18s ease;
+    }
+    #cmd-overlay.cmd-hidden { opacity: 0; pointer-events: none; }
+    .cmd-box {
+      display: flex; align-items: center; gap: 0.8rem;
+      width: min(540px, 85vw);
+      padding: 1rem 1.4rem;
+      background: rgba(14,15,26,0.96);
+      border: 1px solid rgba(0,229,255,0.38);
+      box-shadow: 0 0 48px rgba(0,229,255,0.18);
+    }
+    .cmd-prompt { color: var(--cy); font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; }
+    #cmd-input {
+      flex: 1;
+      background: transparent; border: none; outline: none;
+      color: var(--ink);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      caret-color: var(--cy);
+    }
+    .cmd-kbd {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.4);
+      border: 1px solid rgba(0,229,255,0.2);
+      padding: 2px 6px;
+      margin-left: 6px;
+    }
+    #cmd-hints {
+      width: min(540px, 85vw);
+      max-height: 42vh;
+      overflow-y: auto;
+      padding: 0.5rem 0.5rem;
+      background: rgba(14,15,26,0.88);
+      border: 1px solid rgba(0,229,255,0.22);
+      border-top: none;
+    }
+    .cmd-hint {
+      display: flex; justify-content: space-between; align-items: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      padding: 0.45rem 0.85rem;
+      cursor: pointer;
+      color: var(--ink-dim);
+      letter-spacing: 0.05em;
+    }
+    .cmd-hint.selected, .cmd-hint:hover {
+      background: rgba(0,229,255,0.08);
+      color: var(--cy);
+    }
+    .cmd-hint .cmd-key { color: var(--cy); }
+    .cmd-hint .cmd-desc { color: var(--ink-dim); font-size: 0.72rem; }
   </style>
 </head>
 <body>
@@ -375,6 +438,15 @@
 
   <div id="cur-dot"></div>
   <div id="cur-ring"></div>
+
+  <div id="cmd-overlay" class="cmd-hidden">
+    <div class="cmd-box">
+      <span class="cmd-prompt">$</span>
+      <input id="cmd-input" autocomplete="off" spellcheck="false" placeholder="type a command…">
+      <span class="cmd-kbd">esc</span>
+    </div>
+    <div id="cmd-hints"></div>
+  </div>
 
 <script>
 'use strict';
@@ -1100,6 +1172,91 @@ document.addEventListener('visibilitychange', () => {
 
 // Expose for testing
 window.__game = { GAME, player, NODES, FRAGMENTS, keys, startGame, closeModal, WORLD };
+
+// ═══════════════════════════════════════════════════════
+//  COMMAND PALETTE
+// ═══════════════════════════════════════════════════════
+(() => {
+  const commands = [
+    { k: 'home',       d: '→ back to portfolio',         run: () => { location.href = 'index.html'; } },
+    { k: 'leave',      d: '→ back to portfolio',         run: () => { location.href = 'index.html'; } },
+    { k: 'blog',       d: '→ why nepal needs its own llms', run: () => { location.href = 'blog/why-nepal-needs-its-own-llms.html'; } },
+    { k: 'github',     d: '↗ github.com/h4syy',          run: () => { window.open('https://github.com/h4syy', '_blank'); } },
+    { k: 'linkedin',   d: '↗ linkedin/yashpaudel',       run: () => { window.open('https://www.linkedin.com/in/yashpaudel/', '_blank'); } },
+    { k: 'email',      d: '✉ yashpaudel10@gmail.com',    run: () => { location.href = 'mailto:yashpaudel10@gmail.com'; } },
+    { k: 'teleport',   d: '⚡ warp to a random node',    run: () => {
+      if (!window.__game) return;
+      const n = window.__game.NODES[Math.floor(Math.random() * window.__game.NODES.length)];
+      window.__game.player.x = n.x; window.__game.player.y = n.y + 60;
+      window.__game.player.vx = 0; window.__game.player.vy = 0;
+    } },
+    { k: 'collect-all',d: '☄ harvest every fragment',    run: () => {
+      if (!window.__game) return;
+      for (const f of window.__game.FRAGMENTS) {
+        if (!f.taken) {
+          f.taken = true;
+          window.__game.GAME.fragmentsCollected++;
+        }
+      }
+      document.getElementById('frag').textContent =
+        `${window.__game.GAME.fragmentsCollected} / ${window.__game.FRAGMENTS.length}`;
+    } },
+    { k: 'reset',      d: '↻ new game',                  run: () => { localStorage.removeItem('synapse:best'); location.reload(); } },
+    { k: 'help',       d: '? list everything',           run: () => null },
+  ];
+
+  const overlay = document.getElementById('cmd-overlay');
+  const input = document.getElementById('cmd-input');
+  const hints = document.getElementById('cmd-hints');
+  let selected = 0;
+
+  function isOpen() { return !overlay.classList.contains('cmd-hidden'); }
+  function openP() {
+    overlay.classList.remove('cmd-hidden');
+    input.value = ''; selected = 0; render();
+    setTimeout(() => input.focus(), 20);
+  }
+  function closeP() { overlay.classList.add('cmd-hidden'); input.blur(); }
+  function filter() {
+    const q = input.value.trim().toLowerCase();
+    if (!q) return commands;
+    return commands.filter(c => c.k.includes(q) || c.d.toLowerCase().includes(q));
+  }
+  function render() {
+    const list = filter();
+    if (selected >= list.length) selected = Math.max(0, list.length - 1);
+    hints.innerHTML = '';
+    if (!list.length) {
+      const d = document.createElement('div');
+      d.className = 'cmd-hint';
+      d.innerHTML = '<span class="cmd-desc">no matches · try "help"</span>';
+      hints.appendChild(d); return;
+    }
+    list.forEach((c, i) => {
+      const el = document.createElement('div');
+      el.className = 'cmd-hint' + (i === selected ? ' selected' : '');
+      el.innerHTML = `<span class="cmd-key">${c.k}</span><span class="cmd-desc">${c.d}</span>`;
+      el.addEventListener('click', () => runCmd(c));
+      hints.appendChild(el);
+    });
+  }
+  function runCmd(cmd) { closeP(); if (cmd && cmd.run) cmd.run(); }
+
+  document.addEventListener('keydown', e => {
+    const meta = e.metaKey || e.ctrlKey;
+    if (meta && e.key.toLowerCase() === 'k') { e.preventDefault(); isOpen() ? closeP() : openP(); return; }
+    if (!isOpen()) {
+      if (e.key === '/' && !['INPUT','TEXTAREA'].includes(e.target.tagName)) { e.preventDefault(); openP(); }
+      return;
+    }
+    if (e.key === 'Escape') { closeP(); return; }
+    if (e.key === 'Enter')  { const l = filter(); if (l[selected]) runCmd(l[selected]); return; }
+    if (e.key === 'ArrowDown') { const n = filter().length; if (n) selected = (selected + 1) % n; render(); e.preventDefault(); return; }
+    if (e.key === 'ArrowUp')   { const n = filter().length; if (n) selected = (selected - 1 + n) % n; render(); e.preventDefault(); return; }
+  });
+  input.addEventListener('input', () => { selected = 0; render(); });
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeP(); });
+})();
 </script>
 </body>
 </html>
