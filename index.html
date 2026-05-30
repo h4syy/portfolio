@@ -607,7 +607,25 @@
 
   document.querySelectorAll('section.chapter').forEach(s => revealObs.observe(s));
 
-  // JS for Tasks 9-11 below
+  // ── COVER REVEAL (fires on load, not scroll) ──
+  function revealCover() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.querySelectorAll('#chapter-00 .ink').forEach(el => el.classList.add('revealed'));
+      return;
+    }
+    const els = Array.from(document.querySelectorAll('#chapter-00 .ink'));
+    els.forEach((el, i) => {
+      setTimeout(() => el.classList.add('revealed'), 300 + i * 60);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', revealCover);
+  } else {
+    revealCover();
+  }
+
+  // JS for Tasks 10-11 below
   </script>
 </body>
 </html>
