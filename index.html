@@ -353,6 +353,75 @@
       justify-self: end;
     }
 
+    /* ── CHAPTER 04 — SIGNAL ── */
+    .signal-rule {
+      width: 100%;
+      max-width: 480px;
+      height: 1px;
+      background: var(--ink-faint);
+      margin-bottom: 2rem;
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--ink-faint);
+      border: 1px solid var(--ink-faint);
+      max-width: 480px;
+    }
+
+    .contact-item {
+      background: var(--paper);
+      padding: 1.4rem 1.6rem;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      transition: background 0.2s ease;
+      position: relative;
+    }
+    .contact-item:focus-visible { outline: 2px solid var(--crimson); outline-offset: -2px; }
+
+    .contact-item[data-hover="blue"]:hover    { background: rgba(29,78,216,0.05); }
+    .contact-item[data-hover="blue"]:hover .ci-name    { color: #1d4ed8; }
+    .contact-item[data-hover="purple"]:hover  { background: rgba(126,34,206,0.05); }
+    .contact-item[data-hover="purple"]:hover .ci-name  { color: #7e22ce; }
+    .contact-item[data-hover="pink"]:hover    { background: rgba(219,39,119,0.05); }
+    .contact-item[data-hover="pink"]:hover .ci-name    { color: #db2777; }
+    .contact-item[data-hover="crimson"]:hover { background: rgba(192,57,43,0.05); }
+    .contact-item[data-hover="crimson"]:hover .ci-name { color: var(--crimson); }
+
+    .ci-label {
+      font-family: var(--mono);
+      font-size: 0.5rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    .ci-name {
+      font-family: var(--serif);
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--ink-soft);
+      transition: color 0.2s ease;
+      line-height: 1.3;
+    }
+
+    .ci-arrow {
+      font-size: 0.75rem;
+      color: var(--ink-faint);
+      position: absolute;
+      top: 1rem; right: 1rem;
+      transition: color 0.2s ease;
+    }
+    .contact-item:hover .ci-arrow { color: inherit; }
+
+    @media (max-width: 500px) {
+      .contact-grid { grid-template-columns: 1fr; }
+    }
+
   </style>
 </head>
 <body>
@@ -480,7 +549,42 @@
     </div>
 
   </section>
-  <!-- Ch 04 injected in Task 7 -->
+  <section class="chapter" id="chapter-04" data-label="04 · The Signal">
+
+    <div class="chapter-num ink">04 · The Signal</div>
+
+    <h2 class="chapter-headline ink" style="margin-bottom:1.5rem;">The network<br>is open.</h2>
+
+    <div class="signal-rule ink"></div>
+
+    <div class="contact-grid">
+      <a href="https://www.linkedin.com/in/yashpaudel/" target="_blank" rel="noopener"
+         class="contact-item ink" data-hover="blue">
+        <span class="ci-label">Professional</span>
+        <span class="ci-name">LinkedIn</span>
+        <span class="ci-arrow">↗</span>
+      </a>
+      <a href="https://github.com/h4syy" target="_blank" rel="noopener"
+         class="contact-item ink" data-hover="purple">
+        <span class="ci-label">Code</span>
+        <span class="ci-name">GitHub</span>
+        <span class="ci-arrow">↗</span>
+      </a>
+      <a href="https://www.instagram.com/paudelyash/" target="_blank" rel="noopener"
+         class="contact-item ink" data-hover="pink">
+        <span class="ci-label">Personal</span>
+        <span class="ci-name">Instagram</span>
+        <span class="ci-arrow">↗</span>
+      </a>
+      <a href="mailto:yashpaudel10@gmail.com"
+         class="contact-item ink" data-hover="crimson">
+        <span class="ci-label">Direct</span>
+        <span class="ci-name">yashpaudel10@gmail.com</span>
+        <span class="ci-arrow">↗</span>
+      </a>
+    </div>
+
+  </section>
 
   <!-- Command palette injected in Task 11 -->
 
