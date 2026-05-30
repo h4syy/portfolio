@@ -625,7 +625,33 @@
     revealCover();
   }
 
-  // JS for Tasks 10-11 below
+  // ── SCROLL BEHAVIORS ──
+  const progressFill   = document.getElementById('progress-fill');
+  const chapterLabelEl = document.getElementById('chapter-label');
+  const chapters       = Array.from(document.querySelectorAll('section.chapter'));
+
+  function onScroll() {
+    const scrolled = window.scrollY;
+    const total    = document.documentElement.scrollHeight - window.innerHeight;
+    const pct      = total > 0 ? (scrolled / total) * 100 : 0;
+    if (progressFill) progressFill.style.height = pct.toFixed(1) + '%';
+
+    let activeLabel = chapters[0]?.dataset.label || '00 · COVER';
+    chapters.forEach(ch => {
+      const rect = ch.getBoundingClientRect();
+      if (rect.top <= window.innerHeight * 0.5) {
+        activeLabel = ch.dataset.label;
+      }
+    });
+    if (chapterLabelEl && chapterLabelEl.textContent !== activeLabel) {
+      chapterLabelEl.textContent = activeLabel;
+    }
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // JS for Task 11 below
   </script>
 </body>
 </html>
