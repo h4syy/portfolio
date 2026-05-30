@@ -1,0 +1,1325 @@
+# Ink Portfolio Redesign Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Complete rewrite of `index.html` as a minimal print/ink portfolio — off-white paper, dark ink, crimson accent, Libre Baskerville + Courier Prime, 5 scroll-snap chapters, ink wipe reveal on scroll. Zero canvas, ~50 lines of JS.
+
+**Architecture:** Replace the entire existing `index.html` with a clean rewrite. No canvas elements, no heavy animation library. A single `IntersectionObserver` drives all text reveals via `clip-path` CSS transitions. Fixed persistent UI (nav, progress rail, chapter label) updates via scroll events. Command palette JS is preserved verbatim, only its colors change.
+
+**Tech Stack:** Vanilla HTML5, CSS3 (scroll-snap, clip-path, custom properties), ~50 lines of vanilla JS. Google Fonts (Libre Baskerville + Courier Prime). No build step, no dependencies beyond fonts.
+
+---
+
+## File Map
+
+| File | Action | Responsibility |
+|------|--------|----------------|
+| `index.html` | **Full rewrite** | Everything — markup, CSS, JS in one file |
+| `game.html` | Untouched | Synapse game |
+| `404.html` | Untouched | Error page |
+| `blog/` | Untouched | Blog entries |
+
+---
+
+### Task 1: HTML Scaffold + CSS Foundation
+
+**Files:**
+- Rewrite: `index.html`
+
+- [ ] **Step 1: Replace index.html with the new scaffold**
+
+Delete all existing content in `index.html` and replace with:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yash Paudel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+
+    /* ── RESET ── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* ── DESIGN TOKENS ── */
+    :root {
+      --paper:      #f5f2eb;
+      --ink:        #1a1a1a;
+      --ink-soft:   #555555;
+      --ink-muted:  #999999;
+      --ink-faint:  #d8d4cc;
+      --crimson:    #c0392b;
+      --paper-warm: #eee8da;
+      --serif:      'Libre Baskerville', Georgia, serif;
+      --mono:       'Courier Prime', 'Courier New', monospace;
+    }
+
+    /* ── BASE ── */
+    html {
+      scroll-snap-type: y mandatory;
+      overflow-y: scroll;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--serif);
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body { background: var(--paper); }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 0; }
+
+    /* ── CHAPTERS ── */
+    section.chapter {
+      scroll-snap-align: start;
+      min-height: 100svh;
+      width: 100%;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: clamp(3rem, 8vw, 5rem) clamp(2rem, 8vw, 6rem);
+    }
+
+    /* ── INK REVEAL ── */
+    .ink {
+      clip-path: inset(0 100% 0 0);
+      transition: clip-path 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-block;
+    }
+    .ink.revealed { clip-path: inset(0 0% 0 0); }
+
+    /* Block elements need display:block not inline */
+    p.ink, div.ink, h1.ink, h2.ink, h3.ink { display: block; }
+
+    /* ── REDUCED MOTION ── */
+    @media (prefers-reduced-motion: reduce) {
+      .ink { clip-path: none !important; transition: none !important; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Persistent UI injected in Task 2 -->
+
+  <!-- Ch 00 injected in Task 3 -->
+  <!-- Ch 01 injected in Task 4 -->
+  <!-- Ch 02 injected in Task 5 -->
+  <!-- Ch 03 injected in Task 6 -->
+  <!-- Ch 04 injected in Task 7 -->
+
+  <!-- Command palette injected in Task 11 -->
+
+  <script>
+  // JS added in Tasks 8–11
+  </script>
+</body>
+</html>
+```
+
+- [ ] **Step 2: Verify in browser**
+
+Open `index.html` in a browser (serve with `python -m http.server 8765` or just open the file). Confirm:
+- Background is warm off-white (#f5f2eb)
+- Page is blank (no content yet)
+- No console errors
+- Fonts loading (check Network tab — Libre Baskerville and Courier Prime requests appear)
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add index.html
+git commit -m "feat: ink portfolio scaffold — tokens, reset, scroll-snap base"
+```
+
+---
+
+### Task 2: Persistent UI — Nav, Progress Rail, Chapter Label
+
+**Files:**
+- Modify: `index.html`
+
+- [ ] **Step 1: Add persistent HTML after `<body>`**
+
+Replace `<!-- Persistent UI injected in Task 2 -->` with:
+
+```html
+  <!-- Progress rail -->
+  <div id="progress-rail" aria-hidden="true">
+    <div id="progress-fill"></div>
+  </div>
+
+  <!-- Chapter label (rotated, left edge) -->
+  <div id="chapter-label" aria-hidden="true">00 · COVER</div>
+
+  <!-- Nav -->
+  <nav aria-label="Site navigation">
+    <a href="#chapter-00" class="nav-logo">YP</a>
+    <a href="game.html" class="nav-play">▸ PLAY</a>
+  </nav>
+```
+
+- [ ] **Step 2: Add persistent UI CSS inside `<style>`**
+
+Add before `</style>`:
+
+```css
+    /* ── PROGRESS RAIL ── */
+    #progress-rail {
+      position: fixed;
+      right: 0; top: 0;
+      width: 2px; height: 100%;
+      background: var(--ink-faint);
+      z-index: 200;
+    }
+    #progress-fill {
+      width: 100%; height: 0%;
+      background: var(--crimson);
+      transition: height 0.08s linear;
+    }
+
+    /* ── CHAPTER LABEL ── */
+    #chapter-label {
+      position: fixed;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%) rotate(-90deg);
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      z-index: 200;
+      white-space: nowrap;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.9rem clamp(2rem, 8vw, 6rem);
+      background: rgba(245,242,235,0.92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--ink-faint);
+    }
+    .nav-logo {
+      font-family: var(--serif);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--ink);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+    }
+    .nav-logo:hover { color: var(--crimson); }
+    .nav-play {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--ink-muted);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+    .nav-play:hover { color: var(--crimson); }
+```
+
+- [ ] **Step 3: Verify**
+
+Reload. Confirm:
+- Thin crimson progress rail on right edge (empty for now)
+- "00 · COVER" label rotated on left edge
+- Minimal nav bar at top with "YP" left and "▸ PLAY" right
+- No console errors
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add index.html
+git commit -m "feat: persistent nav, progress rail, chapter label"
+```
+
+---
+
+### Task 3: Chapter 00 — Cover
+
+**Files:**
+- Modify: `index.html`
+
+- [ ] **Step 1: Add cover HTML**
+
+Replace `<!-- Ch 00 injected in Task 3 -->` with:
+
+```html
+  <section class="chapter" id="chapter-00" data-label="00 · COVER">
+
+    <div class="cover-top">
+      <span class="cover-byline">Yash Paudel</span>
+      <span class="cover-date">Nepal · 2026</span>
+    </div>
+
+    <div class="cover-main">
+      <div class="cover-label ink">AI Researcher · Builder</div>
+      <h1 class="cover-headline">
+        <span class="cover-line ink">I build models</span>
+        <span class="cover-line ink">that speak <em>Nepali.</em></span>
+      </h1>
+      <p class="cover-sub ink">Fine-tuning · Eval Pipelines · Production AI</p>
+    </div>
+
+    <div class="cover-bottom">
+      <div class="cover-tags">
+        <span>LLM</span><span class="dot">·</span>
+        <span>Fintech</span><span class="dot">·</span>
+        <span>Nepal</span>
+      </div>
+      <a href="#chapter-01" class="cover-scroll" aria-label="Scroll to next chapter">Read ↓</a>
+    </div>
+
+  </section>
+```
+
+- [ ] **Step 2: Add cover CSS inside `<style>`**
+
+```css
+    /* ── CHAPTER 00 — COVER ── */
+    #chapter-00 {
+      justify-content: space-between;
+      padding-top: calc(clamp(3rem, 8vw, 5rem) + 3rem); /* offset for fixed nav */
+    }
+
+    .cover-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--ink-faint);
+      padding-bottom: 0.75rem;
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    .cover-main { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 2rem 0; }
+
+    .cover-label {
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--crimson);
+      margin-bottom: 1.2rem;
+    }
+
+    .cover-headline {
+      font-size: clamp(2.4rem, 6.5vw, 5.5rem);
+      font-weight: 700;
+      font-style: italic;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin-bottom: 1.5rem;
+    }
+    .cover-headline em { color: var(--crimson); font-style: inherit; }
+    .cover-line { display: block; }
+
+    .cover-sub {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    .cover-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-top: 1px solid var(--ink-faint);
+      padding-top: 0.75rem;
+    }
+
+    .cover-tags {
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .cover-tags .dot { color: var(--ink-faint); }
+
+    .cover-scroll {
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--crimson);
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .cover-scroll:hover { opacity: 0.7; }
+```
+
+- [ ] **Step 3: Verify**
+
+Reload. Confirm:
+- Cover fills viewport height
+- Top bar: "Yash Paudel" left / "Nepal · 2026" right, separated by faint rule
+- Main: "AI Researcher · Builder" in crimson small-caps, then large italic headline with "Nepali." in crimson
+- Bottom bar: tags left / "Read ↓" in crimson right
+- All `.ink` elements are invisible (clip-path cuts them — animation fires in Task 8)
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add index.html
+git commit -m "feat: Chapter 00 Cover layout"
+```
+
+---
+
+### Task 4: Chapter 01 — The Mind
+
+**Files:**
+- Modify: `index.html`
+
+- [ ] **Step 1: Add about HTML**
+
+Replace `<!-- Ch 01 injected in Task 4 -->` with:
+
+```html
+  <section class="chapter" id="chapter-01" data-label="01 · The Mind">
+
+    <div class="chapter-num ink">01 · The Mind</div>
+
+    <h2 class="chapter-headline ink">
+      I work at the edge of<br>what AI can actually do.
+    </h2>
+
+    <p class="chapter-body ink">
+      Not in a lab — in production. In markets most AI research
+      <strong>doesn't know exist.</strong> I fine-tune LLMs, build evaluation pipelines,
+      architect AI systems, and ship things that move real metrics.
+    </p>
+
+    <div class="stat-grid">
+      <div class="stat ink">
+        <div class="stat-val">3+</div>
+        <div class="stat-key">Years in AI &amp; ML</div>
+      </div>
+      <div class="stat ink">
+        <div class="stat-val">LLM</div>
+        <div class="stat-key">Fine-tune · Eval · Deploy</div>
+      </div>
+      <div class="stat ink">
+        <div class="stat-val">NP</div>
+        <div class="stat-key">Pushing AI where few go</div>
+      </div>
+    </div>
+
+  </section>
+```
+
+- [ ] **Step 2: Add about CSS inside `<style>`**
+
+```css
+    /* ── CHAPTER SHARED ── */
+    .chapter-num {
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--crimson);
+      margin-bottom: 2rem;
+    }
+
+    .chapter-headline {
+      font-size: clamp(1.6rem, 3.5vw, 3rem);
+      font-weight: 700;
+      font-style: italic;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      margin-bottom: 1.8rem;
+      max-width: 700px;
+    }
+
+    .chapter-body {
+      font-size: clamp(0.95rem, 1.5vw, 1.1rem);
+      color: var(--ink-soft);
+      line-height: 1.9;
+      max-width: 560px;
+      margin-bottom: 2.5rem;
+    }
+    .chapter-body strong { color: var(--ink); font-weight: 400; }
+
+    /* ── STAT GRID ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, auto);
+      gap: 1px;
+      background: var(--ink-faint);
+      border: 1px solid var(--ink-faint);
+      max-width: 480px;
+    }
+    .stat {
+      background: var(--paper);
+      padding: 1rem 1.2rem;
+    }
+    .stat-val {
+      font-family: var(--serif);
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1;
+      margin-bottom: 0.3rem;
+    }
+    .stat-key {
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      line-height: 1.5;
+    }
+
+    @media (max-width: 600px) {
+      .stat-grid { grid-template-columns: 1fr; max-width: 100%; }
+    }
+```
+
+- [ ] **Step 3: Verify**
+
+Scroll to Chapter 01. Confirm:
+- Crimson chapter number at top
+- Large italic headline (still invisible — ink reveal fires in Task 8)
+- Body paragraph
+- 3-column stat grid with 1px faint borders between cells
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add index.html
+git commit -m "feat: Chapter 01 The Mind layout"
+```
+
+---
+
+### Task 5: Chapter 02 — The Mission
+
+**Files:**
+- Modify: `index.html`
+
+- [ ] **Step 1: Add mission HTML**
+
+Replace `<!-- Ch 02 injected in Task 5 -->` with:
+
+```html
+  <section class="chapter" id="chapter-02" data-label="02 · The Mission">
+
+    <div class="chapter-num ink">02 · The Mission</div>
+    <div class="mission-rule ink"></div>
+
+    <h2 class="mission-headline">
+      <span class="mission-line ink">Nepal's next decade</span>
+      <span class="mission-line ink">won't be built on</span>
+      <span class="mission-line ink">imported models.</span>
+    </h2>
+
+    <p class="chapter-body ink" style="max-width:520px;">
+      Nepal's financial systems run on remittances, mobile-first infrastructure,
+      and a dozen distinct languages. <strong>No model trained on Western data
+      understands that.</strong> We build from here.
+    </p>
+
+  </section>
+```
+
+- [ ] **Step 2: Add mission CSS inside `<style>`**
+
+```css
+    /* ── CHAPTER 02 — MISSION ── */
+    .mission-rule {
+      width: 2rem;
+      height: 2px;
+      background: var(--crimson);
+      margin-bottom: 1.5rem;
+    }
+
+    .mission-headline {
+      font-size: clamp(2rem, 4.5vw, 4rem);
+      font-weight: 700;
+      font-style: italic;
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+      color: var(--crimson);
+      margin-bottom: 2rem;
+    }
+    .mission-line { display: block; }
+```
+
+- [ ] **Step 3: Verify**
+
+Scroll to Chapter 02. Confirm:
+- Crimson chapter number
+- 2px crimson horizontal rule
+- Large italic crimson headline (3 lines)
+- Body paragraph in ink-soft
+- Clean, minimal layout with lots of white space
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add index.html
+git commit -m "feat: Chapter 02 The Mission layout"
+```
+
+---
+
+### Task 6: Chapter 03 — The Work
+
+**Files:**
+- Modify: `index.html`
+
+- [ ] **Step 1: Add work HTML**
+
+Replace `<!-- Ch 03 injected in Task 6 -->` with:
+
+```html
+  <section class="chapter" id="chapter-03" data-label="03 · The Work">
+
+    <div class="chapter-num ink">03 · The Work</div>
+
+    <div class="work-list">
+
+      <a href="blog/why-nepal-needs-its-own-llms.html" class="work-entry ink">
+        <span class="work-num">01</span>
+        <div class="work-body">
+          <div class="work-title">Why Nepal's Fintech Needs Its Own LLMs</div>
+          <div class="work-meta">Essay · April 2026 · 6 min</div>
+        </div>
+        <span class="work-arrow">↗</span>
+      </a>
+
+      <a href="game.html" class="work-entry ink">
+        <span class="work-num">02</span>
+        <div class="work-body">
+          <div class="work-title">Synapse — Neural Network Game</div>
+          <div class="work-meta">Experience · Canvas · Interactive</div>
+        </div>
+        <span class="work-arrow">↗</span>
+      </a>
+
+      <div class="work-entry work-entry--pending ink">
+        <span class="work-num">03</span>
+        <div class="work-body">
+          <div class="work-title">Next piece forthcoming...</div>
+          <div class="work-meta">In progress</div>
+        </div>
+      </div>
+
+    </div>
+
+  </section>
+```
+
+- [ ] **Step 2: Add work CSS inside `<style>`**
+
+```css
+    /* ── CHAPTER 03 — WORK ── */
+    .work-list {
+      max-width: 640px;
+      border-top: 1px solid var(--ink-faint);
+    }
+
+    .work-entry {
+      display: grid;
+      grid-template-columns: 2.5rem 1fr auto;
+      align-items: center;
+      gap: 1.2rem;
+      padding: 1.2rem 0;
+      border-bottom: 1px solid var(--ink-faint);
+      text-decoration: none;
+      color: inherit;
+      transition: background 0.2s ease;
+    }
+    a.work-entry:hover { background: var(--paper-warm); padding-left: 0.5rem; margin-left: -0.5rem; }
+    a.work-entry:hover .work-arrow { color: var(--crimson); }
+    a.work-entry:focus-visible { outline: 2px solid var(--crimson); outline-offset: 2px; }
+    .work-entry--pending { opacity: 0.35; cursor: default; }
+
+    .work-num {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      color: var(--crimson);
+      padding-top: 0.1rem;
+    }
+
+    .work-title {
+      font-family: var(--serif);
+      font-size: clamp(0.9rem, 1.5vw, 1.05rem);
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 0.25rem;
+      line-height: 1.3;
+    }
+
+    .work-meta {
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    .work-arrow {
+      font-size: 0.85rem;
+      color: var(--ink-muted);
+      transition: color 0.2s ease;
+      justify-self: end;
+    }
+```
+
+- [ ] **Step 3: Verify**
+
+Scroll to Chapter 03. Confirm:
+- Crimson chapter number
+- 3 work entries separated by 1px faint rules
+- Entry 1 and 2 are clickable links with ↗ arrow
+- Entry 3 is dimmed (opacity 0.35), no link/arrow
+- Hovering entries 1/2 shifts background to warm paper
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add index.html
+git commit -m "feat: Chapter 03 The Work layout"
+```
+
+---
+
+### Task 7: Chapter 04 — The Signal (Contact)
+
+**Files:**
+- Modify: `index.html`
+
+- [ ] **Step 1: Add signal HTML**
+
+Replace `<!-- Ch 04 injected in Task 7 -->` with:
+
+```html
+  <section class="chapter" id="chapter-04" data-label="04 · The Signal">
+
+    <div class="chapter-num ink">04 · The Signal</div>
+
+    <h2 class="chapter-headline ink" style="margin-bottom:1.5rem;">The network<br>is open.</h2>
+
+    <div class="signal-rule ink"></div>
+
+    <div class="contact-grid">
+      <a href="https://www.linkedin.com/in/yashpaudel/" target="_blank" rel="noopener"
+         class="contact-item ink" data-hover="blue">
+        <span class="ci-label">Professional</span>
+        <span class="ci-name">LinkedIn</span>
+        <span class="ci-arrow">↗</span>
+      </a>
+      <a href="https://github.com/h4syy" target="_blank" rel="noopener"
+         class="contact-item ink" data-hover="purple">
+        <span class="ci-label">Code</span>
+        <span class="ci-name">GitHub</span>
+        <span class="ci-arrow">↗</span>
+      </a>
+      <a href="https://www.instagram.com/paudelyash/" target="_blank" rel="noopener"
+         class="contact-item ink" data-hover="pink">
+        <span class="ci-label">Personal</span>
+        <span class="ci-name">Instagram</span>
+        <span class="ci-arrow">↗</span>
+      </a>
+      <a href="mailto:yashpaudel10@gmail.com"
+         class="contact-item ink" data-hover="crimson">
+        <span class="ci-label">Direct</span>
+        <span class="ci-name">yashpaudel10@gmail.com</span>
+        <span class="ci-arrow">↗</span>
+      </a>
+    </div>
+
+  </section>
+```
+
+- [ ] **Step 2: Add signal CSS inside `<style>`**
+
+```css
+    /* ── CHAPTER 04 — SIGNAL ── */
+    .signal-rule {
+      width: 100%;
+      max-width: 480px;
+      height: 1px;
+      background: var(--ink-faint);
+      margin-bottom: 2rem;
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--ink-faint);
+      border: 1px solid var(--ink-faint);
+      max-width: 480px;
+    }
+
+    .contact-item {
+      background: var(--paper);
+      padding: 1.4rem 1.6rem;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      transition: background 0.2s ease;
+      position: relative;
+    }
+    .contact-item:focus-visible { outline: 2px solid var(--crimson); outline-offset: -2px; }
+
+    .contact-item[data-hover="blue"]:hover    { background: rgba(29,78,216,0.05); }
+    .contact-item[data-hover="blue"]:hover .ci-name    { color: #1d4ed8; }
+    .contact-item[data-hover="purple"]:hover  { background: rgba(126,34,206,0.05); }
+    .contact-item[data-hover="purple"]:hover .ci-name  { color: #7e22ce; }
+    .contact-item[data-hover="pink"]:hover    { background: rgba(219,39,119,0.05); }
+    .contact-item[data-hover="pink"]:hover .ci-name    { color: #db2777; }
+    .contact-item[data-hover="crimson"]:hover { background: rgba(192,57,43,0.05); }
+    .contact-item[data-hover="crimson"]:hover .ci-name { color: var(--crimson); }
+
+    .ci-label {
+      font-family: var(--mono);
+      font-size: 0.5rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    .ci-name {
+      font-family: var(--serif);
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--ink-soft);
+      transition: color 0.2s ease;
+      line-height: 1.3;
+    }
+
+    .ci-arrow {
+      font-size: 0.75rem;
+      color: var(--ink-faint);
+      position: absolute;
+      top: 1rem; right: 1rem;
+      transition: color 0.2s ease;
+    }
+    .contact-item:hover .ci-arrow { color: inherit; }
+
+    @media (max-width: 500px) {
+      .contact-grid { grid-template-columns: 1fr; }
+    }
+```
+
+- [ ] **Step 3: Verify**
+
+Scroll to Chapter 04. Confirm:
+- Crimson chapter number
+- "The network / is open." headline (italic, large)
+- 1px faint horizontal rule
+- 2×2 contact grid: LinkedIn, GitHub, Instagram, Email
+- Hover each: background tints and name changes color
+- Email text wraps cleanly in its cell
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add index.html
+git commit -m "feat: Chapter 04 The Signal layout"
+```
+
+---
+
+### Task 8: Ink Wipe Reveal — Scroll-Triggered
+
+**Files:**
+- Modify: `index.html` — `<script>` block
+
+- [ ] **Step 1: Add the reveal IntersectionObserver JS**
+
+Inside the `<script>` block, add:
+
+```js
+  // ── INK WIPE REVEAL ──
+  // Fires for chapters 01–04 on scroll. Chapter 00 handled separately (Task 9).
+  const revealObs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      // Don't auto-reveal chapter 00 — that fires on load
+      if (entry.target.id === 'chapter-00') return;
+
+      const els = Array.from(entry.target.querySelectorAll('.ink:not(.revealed)'));
+      els.forEach((el, i) => {
+        setTimeout(() => el.classList.add('revealed'), i * 40);
+      });
+      revealObs.unobserve(entry.target);
+    });
+  }, { threshold: 0.25 });
+
+  document.querySelectorAll('section.chapter').forEach(s => revealObs.observe(s));
+```
+
+- [ ] **Step 2: Verify**
+
+Reload page. Scroll slowly through chapters 01–04. Confirm:
+- Before scrolling to a chapter: all `.ink` elements are invisible (clipped)
+- As chapter enters viewport: elements wipe in left-to-right, staggered 40ms apart
+- Each chapter only reveals once (observer unobserves after firing)
+- Chapter 00 cover elements remain invisible (will be handled in Task 9)
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add index.html
+git commit -m "feat: ink wipe reveal IntersectionObserver for chapters 01-04"
+```
+
+---
+
+### Task 9: Cover Headline Animation (Load-triggered)
+
+**Files:**
+- Modify: `index.html` — `<script>` block
+
+- [ ] **Step 1: Add cover load animation JS**
+
+Add after the reveal observer JS:
+
+```js
+  // ── COVER REVEAL (fires on load, not scroll) ──
+  function revealCover() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      // Immediately show all cover ink elements
+      document.querySelectorAll('#chapter-00 .ink').forEach(el => el.classList.add('revealed'));
+      return;
+    }
+    const els = Array.from(document.querySelectorAll('#chapter-00 .ink'));
+    els.forEach((el, i) => {
+      setTimeout(() => el.classList.add('revealed'), 300 + i * 60);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', revealCover);
+  } else {
+    revealCover();
+  }
+```
+
+- [ ] **Step 2: Verify**
+
+Reload page. Confirm:
+- On load, after ~300ms, cover elements wipe in sequentially with 60ms stagger
+- Order: crimson label → headline line 1 → headline line 2 → subtitle → (bottom elements appear via their own .ink class)
+- Refreshing the page restarts the animation
+- With browser "prefers-reduced-motion" enabled (DevTools → Rendering → Emulate): all cover elements appear instantly
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add index.html
+git commit -m "feat: cover headline load animation with reduced-motion fallback"
+```
+
+---
+
+### Task 10: Scroll Behaviors — Progress Rail + Chapter Label
+
+**Files:**
+- Modify: `index.html` — `<script>` block
+
+- [ ] **Step 1: Add scroll behavior JS**
+
+Add after cover reveal JS:
+
+```js
+  // ── SCROLL BEHAVIORS ──
+  const progressFill   = document.getElementById('progress-fill');
+  const chapterLabelEl = document.getElementById('chapter-label');
+  const chapters       = Array.from(document.querySelectorAll('section.chapter'));
+
+  function onScroll() {
+    // Progress rail
+    const scrolled = window.scrollY;
+    const total    = document.documentElement.scrollHeight - window.innerHeight;
+    const pct      = total > 0 ? (scrolled / total) * 100 : 0;
+    progressFill.style.height = pct.toFixed(1) + '%';
+
+    // Chapter label — find which chapter is most visible
+    let activeLabel = chapters[0].dataset.label;
+    chapters.forEach(ch => {
+      const rect = ch.getBoundingClientRect();
+      if (rect.top <= window.innerHeight * 0.5) {
+        activeLabel = ch.dataset.label;
+      }
+    });
+    if (chapterLabelEl.textContent !== activeLabel) {
+      chapterLabelEl.textContent = activeLabel;
+    }
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll(); // run once on load
+```
+
+- [ ] **Step 2: Verify**
+
+Reload and scroll through all chapters. Confirm:
+- Crimson progress bar on right edge fills from 0% to 100% as you scroll top to bottom
+- Left chapter label text updates: "00 · COVER" → "01 · The Mind" → "02 · The Mission" → "03 · The Work" → "04 · The Signal"
+- Both update smoothly without layout jank
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add index.html
+git commit -m "feat: progress rail and chapter label scroll tracking"
+```
+
+---
+
+### Task 11: Command Palette + Audio Toggle
+
+**Files:**
+- Modify: `index.html` — HTML + CSS + JS
+
+The command palette is kept functional. Audio toggle is kept functional. Both are restyled to match the ink palette.
+
+- [ ] **Step 1: Add command palette HTML**
+
+Replace `<!-- Command palette injected in Task 11 -->` with:
+
+```html
+  <div id="cmd-overlay" class="cmd-hidden" role="dialog" aria-label="Command palette" aria-modal="true">
+    <div class="cmd-box">
+      <span class="cmd-prompt">$</span>
+      <input id="cmd-input" autocomplete="off" spellcheck="false" placeholder="type a command…" aria-label="Command input">
+      <span class="cmd-kbd">esc</span>
+    </div>
+    <div id="cmd-hints" role="listbox"></div>
+  </div>
+
+  <button class="audio-toggle" id="audio-toggle" aria-label="Toggle sound">♪</button>
+```
+
+- [ ] **Step 2: Add command palette + audio CSS inside `<style>`**
+
+```css
+    /* ── COMMAND PALETTE ── */
+    #cmd-overlay {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; padding-top: 16vh;
+      background: rgba(245,242,235,0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 900;
+      transition: opacity 0.15s ease;
+    }
+    #cmd-overlay.cmd-hidden { opacity: 0; pointer-events: none; }
+
+    .cmd-box {
+      display: flex; align-items: center; gap: 0.7rem;
+      width: min(520px, 85vw);
+      padding: 0.9rem 1.2rem;
+      background: var(--paper);
+      border: 1px solid var(--ink-faint);
+      box-shadow: 0 4px 32px rgba(26,26,26,0.12);
+    }
+    .cmd-prompt { font-family: var(--mono); font-size: 0.9rem; color: var(--crimson); }
+    #cmd-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      font-family: var(--mono); font-size: 0.9rem; color: var(--ink);
+      caret-color: var(--crimson);
+    }
+    #cmd-input::placeholder { color: var(--ink-faint); }
+    .cmd-kbd {
+      font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em;
+      color: var(--ink-muted); border: 1px solid var(--ink-faint); padding: 2px 6px;
+    }
+    #cmd-hints {
+      width: min(520px, 85vw);
+      max-height: 40vh; overflow-y: auto;
+      background: var(--paper);
+      border: 1px solid var(--ink-faint); border-top: none;
+    }
+    .cmd-hint {
+      display: flex; justify-content: space-between; align-items: center;
+      font-family: var(--mono); font-size: 0.75rem;
+      padding: 0.5rem 1.2rem; cursor: pointer;
+      color: var(--ink-soft); letter-spacing: 0.03em;
+      transition: background 0.1s ease;
+    }
+    .cmd-hint:hover, .cmd-hint.selected { background: var(--paper-warm); color: var(--ink); }
+    .cmd-hint .cmd-key { color: var(--crimson); }
+    .cmd-hint .cmd-desc { color: var(--ink-muted); font-size: 0.7rem; }
+
+    /* ── AUDIO TOGGLE ── */
+    .audio-toggle {
+      position: fixed; bottom: 1.4rem; left: 1.4rem;
+      z-index: 150;
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--paper);
+      border: 1px solid var(--ink-faint);
+      color: var(--ink-muted);
+      font-family: var(--mono); font-size: 0.75rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .audio-toggle:hover { border-color: var(--crimson); color: var(--crimson); }
+    .audio-toggle.muted { opacity: 0.45; }
+```
+
+- [ ] **Step 3: Add command palette + audio JS**
+
+Add inside `<script>`:
+
+```js
+  // ── COMMAND PALETTE ──
+  (() => {
+    const commands = [
+      { k: 'home',      d: '→ back to cover',            run: () => document.getElementById('chapter-00').scrollIntoView({ behavior: 'smooth' }) },
+      { k: 'about',     d: '→ the mind',                  run: () => document.getElementById('chapter-01').scrollIntoView({ behavior: 'smooth' }) },
+      { k: 'mission',   d: '→ the mission',               run: () => document.getElementById('chapter-02').scrollIntoView({ behavior: 'smooth' }) },
+      { k: 'work',      d: '→ the work',                  run: () => document.getElementById('chapter-03').scrollIntoView({ behavior: 'smooth' }) },
+      { k: 'contact',   d: '→ the signal',                run: () => document.getElementById('chapter-04').scrollIntoView({ behavior: 'smooth' }) },
+      { k: 'play',      d: '→ synapse (the game)',         run: () => { location.href = 'game.html'; } },
+      { k: 'blog',      d: '→ why nepal needs its own llms', run: () => { location.href = 'blog/why-nepal-needs-its-own-llms.html'; } },
+      { k: 'github',    d: '↗ github.com/h4syy',          run: () => window.open('https://github.com/h4syy', '_blank') },
+      { k: 'linkedin',  d: '↗ linkedin/yashpaudel',       run: () => window.open('https://www.linkedin.com/in/yashpaudel/', '_blank') },
+      { k: 'instagram', d: '↗ @paudelyash',               run: () => window.open('https://www.instagram.com/paudelyash/', '_blank') },
+      { k: 'email',     d: '✉ yashpaudel10@gmail.com',    run: () => { location.href = 'mailto:yashpaudel10@gmail.com'; } },
+      { k: 'reload',    d: '↻ refresh',                   run: () => location.reload() },
+    ];
+
+    const overlay = document.getElementById('cmd-overlay');
+    const input   = document.getElementById('cmd-input');
+    const hints   = document.getElementById('cmd-hints');
+    let selected  = 0;
+
+    const isOpen = () => !overlay.classList.contains('cmd-hidden');
+    const open   = () => { overlay.classList.remove('cmd-hidden'); input.value = ''; selected = 0; renderHints(); setTimeout(() => input.focus(), 20); };
+    const close  = () => { overlay.classList.add('cmd-hidden'); input.blur(); };
+
+    function filter() {
+      const q = input.value.trim().toLowerCase();
+      return q ? commands.filter(c => c.k.includes(q) || c.d.includes(q)) : commands;
+    }
+
+    function renderHints() {
+      const list = filter();
+      if (selected >= list.length) selected = Math.max(0, list.length - 1);
+      hints.innerHTML = '';
+      list.forEach((c, i) => {
+        const el = document.createElement('div');
+        el.className = 'cmd-hint' + (i === selected ? ' selected' : '');
+        el.setAttribute('role', 'option');
+        el.innerHTML = `<span class="cmd-key">${c.k}</span><span class="cmd-desc">${c.d}</span>`;
+        el.addEventListener('click', () => { close(); c.run(); });
+        hints.appendChild(el);
+      });
+    }
+
+    document.addEventListener('keydown', e => {
+      const meta = e.metaKey || e.ctrlKey;
+      if (meta && e.key.toLowerCase() === 'k') { e.preventDefault(); isOpen() ? close() : open(); return; }
+      if (!isOpen()) { if (e.key === '/' && !['INPUT','TEXTAREA'].includes(e.target.tagName)) { e.preventDefault(); open(); } return; }
+      if (e.key === 'Escape') { close(); return; }
+      if (e.key === 'Enter') { const list = filter(); if (list[selected]) { close(); list[selected].run(); } return; }
+      if (e.key === 'ArrowDown') { const len = filter().length; if (len) selected = (selected + 1) % len; renderHints(); e.preventDefault(); return; }
+      if (e.key === 'ArrowUp')   { const len = filter().length; if (len) selected = (selected - 1 + len) % len; renderHints(); e.preventDefault(); return; }
+    });
+    input.addEventListener('input', () => { selected = 0; renderHints(); });
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  })();
+
+  // ── AUDIO TOGGLE ──
+  (() => {
+    const AC  = window.AudioContext || window.webkitAudioContext;
+    let actx  = null;
+    let muted = localStorage.getItem('ink:audio') !== '1';
+    const btn = document.getElementById('audio-toggle');
+
+    function getCtx() {
+      if (!actx) actx = new AC();
+      if (actx.state === 'suspended') actx.resume();
+      return actx;
+    }
+    function tone(freq, dur, vol = 0.04) {
+      if (muted) return;
+      const c = getCtx();
+      const osc = c.createOscillator();
+      const g   = c.createGain();
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(0, c.currentTime);
+      g.gain.linearRampToValueAtTime(vol, c.currentTime + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+      osc.connect(g).connect(c.destination);
+      osc.start(); osc.stop(c.currentTime + dur + 0.01);
+    }
+
+    function syncBtn() {
+      if (!btn) return;
+      btn.classList.toggle('muted', muted);
+      btn.textContent = muted ? '♪' : '♫';
+      btn.title = muted ? 'sound off — click to enable' : 'sound on';
+    }
+    syncBtn();
+
+    btn?.addEventListener('click', () => {
+      muted = !muted;
+      localStorage.setItem('ink:audio', muted ? '0' : '1');
+      if (!muted) tone(660, 0.1, 0.03);
+      syncBtn();
+    });
+
+    // Subtle click tone on work entry clicks
+    document.querySelectorAll('a.work-entry, .contact-item').forEach(el => {
+      el.addEventListener('mouseenter', () => tone(700 + Math.random()*60, 0.04, 0.01));
+    });
+  })();
+```
+
+- [ ] **Step 4: Verify**
+
+- Press Ctrl+K (or Cmd+K): command palette opens with ink styling
+- Type "mission": filters to mission command
+- Press Enter: scrolls to Chapter 02
+- Press Escape: closes
+- Audio toggle button bottom-left: clicking toggles ♪/♫ and mutes/unmutes
+- Console: zero errors
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add index.html
+git commit -m "feat: command palette and audio toggle restyled for ink theme"
+```
+
+---
+
+### Task 12: Mobile + Final Polish
+
+**Files:**
+- Modify: `index.html` — CSS
+
+- [ ] **Step 1: Add mobile CSS inside `<style>`**
+
+```css
+    /* ── MOBILE ── */
+    @media (max-width: 768px) {
+      #chapter-label { display: none; } /* too cramped on mobile */
+
+      section.chapter {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+      }
+
+      .cover-headline { font-size: clamp(2rem, 10vw, 3.5rem); }
+      .chapter-headline { font-size: clamp(1.4rem, 6vw, 2.2rem); }
+      .mission-headline { font-size: clamp(1.6rem, 7vw, 3rem); }
+
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+
+      nav { padding: 0.75rem 1.5rem; }
+    }
+
+    @media (max-width: 400px) {
+      .stat-grid { grid-template-columns: 1fr; }
+      .contact-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── FOCUS STYLES (keyboard navigation) ── */
+    :focus-visible {
+      outline: 2px solid var(--crimson);
+      outline-offset: 3px;
+    }
+
+    /* ── SELECTION ── */
+    ::selection {
+      background: var(--crimson);
+      color: var(--paper);
+    }
+```
+
+- [ ] **Step 2: Verify desktop**
+
+At 1280px viewport, scroll through all chapters. Confirm:
+- No horizontal overflow
+- Progress rail visible on right
+- Chapter label visible on left
+- All text at appropriate sizes
+- Hover states on work entries and contact items work
+
+- [ ] **Step 3: Verify mobile (375px)**
+
+In DevTools, switch to iPhone SE viewport. Confirm:
+- No horizontal overflow
+- Chapter label hidden (too cramped)
+- Font sizes are readable (≥16px body text)
+- Stat grid goes to 2-column
+- Contact grid goes to 1-column
+- Command palette fits viewport
+
+- [ ] **Step 4: Final commit**
+
+```bash
+git add index.html
+git commit -m "feat: mobile responsive styles and keyboard focus polish"
+```
+
+---
+
+## Self-Review
+
+**Spec coverage:**
+- ✅ Colors: all 7 tokens defined in `:root` (Task 1)
+- ✅ Typography: Libre Baskerville + Courier Prime via Google Fonts (Task 1)
+- ✅ Chapter structure: 5 chapters with scroll-snap (Tasks 3–7)
+- ✅ Progress rail: crimson fill, scroll-driven (Tasks 2, 10)
+- ✅ Chapter label: fixed left, updates per chapter (Tasks 2, 10)
+- ✅ Nav: minimal YP + PLAY (Task 2)
+- ✅ Ch 00 Cover: top bar, headline with crimson "Nepali.", bottom bar (Task 3)
+- ✅ Ch 01 Mind: headline, body, 3-stat grid (Task 4)
+- ✅ Ch 02 Mission: crimson rule, full-crimson headline, body (Task 5)
+- ✅ Ch 03 Work: 3 entries as table-of-contents, pending dimmed (Task 6)
+- ✅ Ch 04 Signal: headline, rule, 2×2 contact grid (Task 7)
+- ✅ Ink wipe reveal: clip-path CSS + IntersectionObserver (Task 8)
+- ✅ Cover load animation: 300ms delay, 60ms stagger (Task 9)
+- ✅ Reduced-motion: clip-path: none, immediate reveal (Tasks 1, 9)
+- ✅ Command palette: restyled, all commands updated to chapter IDs (Task 11)
+- ✅ Audio toggle: restyled, kept functional (Task 11)
+- ✅ Mobile: responsive breakpoints (Task 12)
+- ✅ Removed: brain canvas, spine canvas, cursor trail, HUD, boot sequence, scene JS
+
+**Placeholder scan:** No TBDs, TODOs, or vague steps. All code blocks are complete.
+
+**Type consistency:**
+- `#chapter-00` through `#chapter-04` used consistently as IDs and in command palette targets ✅
+- `.ink` / `.revealed` class pair used consistently in CSS (Task 1) and JS (Tasks 8, 9) ✅
+- `data-label` attribute on every `section.chapter` matches what `onScroll()` reads (Task 10) ✅
+- `data-hover` attribute on contact items matches CSS `[data-hover="..."]` selectors (Task 7) ✅
