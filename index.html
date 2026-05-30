@@ -22,6 +22,7 @@
       --ink-faint:  #d8d4cc;
       --crimson:    #c0392b;
       --paper-warm: #eee8da;
+      --paper-rgb:  245,242,235;
       --serif:      'Libre Baskerville', Georgia, serif;
       --mono:       'Courier Prime', 'Courier New', monospace;
     }
@@ -110,7 +111,7 @@
       justify-content: space-between;
       align-items: center;
       padding: 0.9rem clamp(2rem, 8vw, 6rem);
-      background: rgba(245,242,235,0.92);
+      background: rgba(var(--paper-rgb),0.92);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       border-bottom: 1px solid var(--ink-faint);
