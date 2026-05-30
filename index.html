@@ -488,6 +488,41 @@
     .audio-toggle:hover { border-color: var(--crimson); color: var(--crimson); }
     .audio-toggle.muted { opacity: 0.45; }
 
+    /* ── MOBILE ── */
+    @media (max-width: 768px) {
+      #chapter-label { display: none; }
+
+      section.chapter {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+      }
+
+      .cover-headline { font-size: clamp(2rem, 10vw, 3.5rem); }
+      .chapter-headline { font-size: clamp(1.4rem, 6vw, 2.2rem); }
+      .mission-headline { font-size: clamp(1.6rem, 7vw, 3rem); }
+
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+
+      nav { padding: 0.75rem 1.5rem; }
+    }
+
+    @media (max-width: 400px) {
+      .stat-grid { grid-template-columns: 1fr; }
+      .contact-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── FOCUS STYLES ── */
+    :focus-visible {
+      outline: 2px solid var(--crimson);
+      outline-offset: 3px;
+    }
+
+    /* ── TEXT SELECTION ── */
+    ::selection {
+      background: var(--crimson);
+      color: var(--paper);
+    }
+
   </style>
 </head>
 <body>
