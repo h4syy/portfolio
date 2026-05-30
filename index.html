@@ -70,11 +70,87 @@
       .ink { clip-path: none !important; transition: none !important; }
     }
 
+    /* ── PROGRESS RAIL ── */
+    #progress-rail {
+      position: fixed;
+      right: 0; top: 0;
+      width: 2px; height: 100%;
+      background: var(--ink-faint);
+      z-index: 200;
+    }
+    #progress-fill {
+      width: 100%; height: 0%;
+      background: var(--crimson);
+      transition: height 0.08s linear;
+    }
+
+    /* ── CHAPTER LABEL ── */
+    #chapter-label {
+      position: fixed;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%) rotate(-90deg);
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      z-index: 200;
+      white-space: nowrap;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.9rem clamp(2rem, 8vw, 6rem);
+      background: rgba(245,242,235,0.92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--ink-faint);
+    }
+    .nav-logo {
+      font-family: var(--serif);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--ink);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+    }
+    .nav-logo:hover { color: var(--crimson); }
+    .nav-play {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--ink-muted);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+    .nav-play:hover { color: var(--crimson); }
+
   </style>
 </head>
 <body>
 
-  <!-- Persistent UI injected in Task 2 -->
+  <!-- Progress rail -->
+  <div id="progress-rail" aria-hidden="true">
+    <div id="progress-fill"></div>
+  </div>
+
+  <!-- Chapter label (rotated, left edge) -->
+  <div id="chapter-label" aria-hidden="true">00 · COVER</div>
+
+  <!-- Nav -->
+  <nav aria-label="Site navigation">
+    <a href="#chapter-00" class="nav-logo">YP</a>
+    <a href="game.html" class="nav-play">▸ PLAY</a>
+  </nav>
 
   <!-- Ch 00 injected in Task 3 -->
   <!-- Ch 01 injected in Task 4 -->
