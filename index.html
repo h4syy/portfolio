@@ -299,6 +299,60 @@
     }
     .mission-line { display: block; }
 
+    /* ── CHAPTER 03 — WORK ── */
+    .work-list {
+      max-width: 640px;
+      border-top: 1px solid var(--ink-faint);
+    }
+
+    .work-entry {
+      display: grid;
+      grid-template-columns: 2.5rem 1fr auto;
+      align-items: center;
+      gap: 1.2rem;
+      padding: 1.2rem 0;
+      border-bottom: 1px solid var(--ink-faint);
+      text-decoration: none;
+      color: inherit;
+      transition: background 0.2s ease, padding-left 0.2s ease;
+    }
+    a.work-entry:hover { background: var(--paper-warm); padding-left: 0.5rem; }
+    a.work-entry:hover .work-arrow { color: var(--crimson); }
+    a.work-entry:focus-visible { outline: 2px solid var(--crimson); outline-offset: 2px; }
+    .work-entry--pending { opacity: 0.35; cursor: default; }
+
+    .work-num {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      color: var(--crimson);
+      padding-top: 0.1rem;
+    }
+
+    .work-title {
+      font-family: var(--serif);
+      font-size: clamp(0.9rem, 1.5vw, 1.05rem);
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 0.25rem;
+      line-height: 1.3;
+    }
+
+    .work-meta {
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    .work-arrow {
+      font-size: 0.85rem;
+      color: var(--ink-muted);
+      transition: color 0.2s ease;
+      justify-self: end;
+    }
+
   </style>
 </head>
 <body>
@@ -391,7 +445,41 @@
     </p>
 
   </section>
-  <!-- Ch 03 injected in Task 6 -->
+  <section class="chapter" id="chapter-03" data-label="03 · The Work">
+
+    <div class="chapter-num ink">03 · The Work</div>
+
+    <div class="work-list">
+
+      <a href="blog/why-nepal-needs-its-own-llms.html" class="work-entry ink">
+        <span class="work-num">01</span>
+        <div class="work-body">
+          <div class="work-title">Why Nepal's Fintech Needs Its Own LLMs</div>
+          <div class="work-meta">Essay · April 2026 · 6 min</div>
+        </div>
+        <span class="work-arrow">↗</span>
+      </a>
+
+      <a href="game.html" class="work-entry ink">
+        <span class="work-num">02</span>
+        <div class="work-body">
+          <div class="work-title">Synapse — Neural Network Game</div>
+          <div class="work-meta">Experience · Canvas · Interactive</div>
+        </div>
+        <span class="work-arrow">↗</span>
+      </a>
+
+      <div class="work-entry work-entry--pending ink">
+        <span class="work-num">03</span>
+        <div class="work-body">
+          <div class="work-title">Next piece forthcoming...</div>
+          <div class="work-meta">In progress</div>
+        </div>
+      </div>
+
+    </div>
+
+  </section>
   <!-- Ch 04 injected in Task 7 -->
 
   <!-- Command palette injected in Task 11 -->
