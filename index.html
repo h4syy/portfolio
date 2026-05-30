@@ -590,7 +590,24 @@
   <!-- Command palette injected in Task 11 -->
 
   <script>
-  // JS added in Tasks 8–11
+  // ── INK WIPE REVEAL ──
+  // Fires for chapters 01–04 on scroll. Chapter 00 handled in Task 9.
+  const revealObs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      if (entry.target.id === 'chapter-00') return;
+
+      const els = Array.from(entry.target.querySelectorAll('.ink:not(.revealed)'));
+      els.forEach((el, i) => {
+        setTimeout(() => el.classList.add('revealed'), i * 40);
+      });
+      revealObs.unobserve(entry.target);
+    });
+  }, { threshold: 0.25 });
+
+  document.querySelectorAll('section.chapter').forEach(s => revealObs.observe(s));
+
+  // JS for Tasks 9-11 below
   </script>
 </body>
 </html>
