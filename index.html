@@ -280,6 +280,25 @@
       .stat-grid { grid-template-columns: 1fr; max-width: 100%; }
     }
 
+    /* ── CHAPTER 02 — MISSION ── */
+    .mission-rule {
+      width: 2rem;
+      height: 2px;
+      background: var(--crimson);
+      margin-bottom: 1.5rem;
+    }
+
+    .mission-headline {
+      font-size: clamp(2rem, 4.5vw, 4rem);
+      font-weight: 700;
+      font-style: italic;
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+      color: var(--crimson);
+      margin-bottom: 2rem;
+    }
+    .mission-line { display: block; }
+
   </style>
 </head>
 <body>
@@ -354,7 +373,24 @@
     </div>
 
   </section>
-  <!-- Ch 02 injected in Task 5 -->
+  <section class="chapter" id="chapter-02" data-label="02 · The Mission">
+
+    <div class="chapter-num ink">02 · The Mission</div>
+    <div class="mission-rule ink"></div>
+
+    <h2 class="mission-headline">
+      <span class="mission-line ink">Nepal's next decade</span>
+      <span class="mission-line ink">won't be built on</span>
+      <span class="mission-line ink">imported models.</span>
+    </h2>
+
+    <p class="chapter-body ink" style="max-width:520px;">
+      Nepal's financial systems run on remittances, mobile-first infrastructure,
+      and a dozen distinct languages. <strong>No model trained on Western data
+      understands that.</strong> We build from here.
+    </p>
+
+  </section>
   <!-- Ch 03 injected in Task 6 -->
   <!-- Ch 04 injected in Task 7 -->
 
