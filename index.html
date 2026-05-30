@@ -135,6 +135,87 @@
     }
     .nav-play:hover { color: var(--crimson); }
 
+    /* ── CHAPTER 00 — COVER ── */
+    #chapter-00 {
+      justify-content: space-between;
+      padding-top: calc(clamp(3rem, 8vw, 5rem) + 3rem);
+    }
+
+    .cover-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--ink-faint);
+      padding-bottom: 0.75rem;
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    .cover-main { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 2rem 0; }
+
+    .cover-label {
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--crimson);
+      margin-bottom: 1.2rem;
+    }
+
+    .cover-headline {
+      font-size: clamp(2.4rem, 6.5vw, 5.5rem);
+      font-weight: 700;
+      font-style: italic;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin-bottom: 1.5rem;
+    }
+    .cover-headline em { color: var(--crimson); font-style: inherit; }
+    .cover-line { display: block; }
+
+    .cover-sub {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    .cover-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-top: 1px solid var(--ink-faint);
+      padding-top: 0.75rem;
+    }
+
+    .cover-tags {
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .cover-tags .dot { color: var(--ink-faint); }
+
+    .cover-scroll {
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--crimson);
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .cover-scroll:hover { opacity: 0.7; }
+
   </style>
 </head>
 <body>
@@ -153,7 +234,32 @@
     <a href="game.html" class="nav-play">▸ PLAY</a>
   </nav>
 
-  <!-- Ch 00 injected in Task 3 -->
+  <section class="chapter" id="chapter-00" data-label="00 · COVER">
+
+    <div class="cover-top">
+      <span class="cover-byline">Yash Paudel</span>
+      <span class="cover-date">Nepal · 2026</span>
+    </div>
+
+    <div class="cover-main">
+      <div class="cover-label ink">AI Researcher · Builder</div>
+      <h1 class="cover-headline">
+        <span class="cover-line ink">I build models</span>
+        <span class="cover-line ink">that speak <em>Nepali.</em></span>
+      </h1>
+      <p class="cover-sub ink">Fine-tuning · Eval Pipelines · Production AI</p>
+    </div>
+
+    <div class="cover-bottom">
+      <div class="cover-tags">
+        <span>LLM</span><span class="dot">·</span>
+        <span>Fintech</span><span class="dot">·</span>
+        <span>Nepal</span>
+      </div>
+      <a href="#chapter-01" class="cover-scroll" aria-label="Scroll to next chapter">Read ↓</a>
+    </div>
+
+  </section>
   <!-- Ch 01 injected in Task 4 -->
   <!-- Ch 02 injected in Task 5 -->
   <!-- Ch 03 injected in Task 6 -->
