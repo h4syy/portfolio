@@ -121,8 +121,43 @@
     font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em;
     pointer-events: auto; border: none;
   }
+  .touch-boost {
+    position: absolute; bottom: 5.5rem; left: 1.2rem;
+    width: 4.5rem; height: 4.5rem; border-radius: 50%;
+    background: rgba(90,200,255,0.85); color: #04212e;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.55rem; font-weight: 700; letter-spacing: 0.08em;
+    pointer-events: auto; border: none;
+  }
   @media (hover: none) and (pointer: coarse) {
     #touch { display: block; }
+  }
+
+  /* ── NITRO METER ── */
+  .nitro-wrap {
+    position: fixed; bottom: 1.3rem; left: 50%; transform: translateX(-50%);
+    width: min(280px, 50vw); height: 7px; z-index: 10;
+    background: rgba(10,22,34,0.45); border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px; overflow: hidden; backdrop-filter: blur(6px);
+  }
+  .nitro-fill {
+    height: 100%; width: 100%;
+    background: linear-gradient(90deg, #2bd2ff, #7affd8);
+    transition: width 0.1s linear;
+  }
+  .nitro-fill.boosting { background: linear-gradient(90deg, #ffd86b, #ff7a52); }
+
+  /* ── FLOATING SCORE TEXT ── */
+  #floaters { position: fixed; inset: 0; z-index: 11; pointer-events: none; overflow: hidden; }
+  .floater {
+    position: absolute; font-weight: 700; letter-spacing: 0.05em;
+    color: #ffd86b; text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    animation: floatUp 1.1s ease-out forwards; white-space: nowrap;
+  }
+  @keyframes floatUp {
+    0%   { opacity: 0; transform: translate(-50%, 0) scale(0.6); }
+    20%  { opacity: 1; transform: translate(-50%, -14px) scale(1.1); }
+    100% { opacity: 0; transform: translate(-50%, -70px) scale(1); }
   }
   .hint-mobile { display: none; }
   @media (hover: none) and (pointer: coarse) {
@@ -155,7 +190,11 @@
     <div class="touch-btn touch-left"  id="t-left"></div>
     <div class="touch-btn touch-right" id="t-right"></div>
     <button class="touch-gas" id="t-gas">GAS</button>
+    <button class="touch-boost" id="t-boost">NITRO</button>
   </div>
+
+  <div class="nitro-wrap"><div class="nitro-fill" id="nitro-fill"></div></div>
+  <div id="floaters"></div>
 
   <div id="overlay">
     <div class="ov-title">COASTAL <em>DRIVE</em></div>
@@ -275,7 +314,24 @@
   let position = 0, playerX = 0, speed = 0, distance = 0;
   let best = +(localStorage.getItem('coastal:best') || 0);
   let trackLength = 0, running = false, paused = false;
-  const keys = { left:false, right:false, gas:false, brake:false };
+  const keys = { left:false, right:false, gas:false, brake:false, boost:false };
+
+  // nitro + combo
+  let nitro = 1, boosting = false, combo = 0, score = 0;
+  const floaters = document.getElementById('floaters');
+  const nitroFill = document.getElementById('nitro-fill');
+
+  function floatText(text, color) {
+    const el = document.createElement('div');
+    el.className = 'floater';
+    el.textContent = text;
+    el.style.left = (45 + Math.random()*10) + '%';
+    el.style.top  = (38 + Math.random()*8) + '%';
+    el.style.fontSize = 'clamp(1rem, 3vw, 1.6rem)';
+    if (color) el.style.color = color;
+    floaters.appendChild(el);
+    setTimeout(() => el.remove(), 1100);
+  }
 
   // juice
   let shake = 0;
@@ -350,6 +406,11 @@
     if (tiltEnabled) playerX += dx * tiltSteer * 1.5;
     playerX -= dx * speedPct * playerSeg.curve * CENTRIFUGAL;
 
+    boosting = keys.boost && nitro > 0 && speed > MAX_SPEED * 0.3;
+    const maxS = MAX_SPEED * (boosting ? 1.45 : 1);
+    if (boosting) { nitro = Math.max(0, nitro - dt*0.42); speed += ACCEL * 1.9 * dt; addShake(0.7); }
+    else { nitro = Math.min(1, nitro + dt*0.13); }
+
     if (keys.gas)        speed += ACCEL * dt;
     else if (keys.brake) speed += BREAKING * dt;
     else                 speed += DECEL * dt;
@@ -368,17 +429,31 @@
       Sound.screech((Math.abs(playerSeg.curve)/6) * speedPct);
 
     playerX = Math.max(-2, Math.min(2, playerX));
-    speed   = Math.max(0, Math.min(speed, MAX_SPEED));
+    speed   = Math.max(0, Math.min(speed, maxS));
 
     const pSeg = findSegment(position + CAM_HEIGHT);
     for (const car of traffic) {
       car.z = (car.z + car.speed * dt) % trackLength;
       const carSeg = findSegment(car.z);
-      if (carSeg.index === pSeg.index && speed > car.speed && Math.abs(playerX - car.offset) < 0.55) {
-        speed = car.speed * 0.6;
-        playerX += (playerX > car.offset ? 1 : -1) * 0.04;
-        Sound.screech(0.5); buzz(50); addShake(9);
+      const gap = Math.abs(playerX - car.offset);
+      if (carSeg.index === pSeg.index && speed > car.speed) {
+        if (gap < 0.55) {
+          speed = car.speed * 0.6;
+          playerX += (playerX > car.offset ? 1 : -1) * 0.04;
+          Sound.screech(0.5); buzz(50); addShake(9);
+          combo = 0;
+          car.nearMiss = false;
+        } else if (gap < 1.0 && !car.nearMiss) {
+          car.nearMiss = true;
+          combo++;
+          const pts = 50 * combo;
+          score += pts;
+          floatText((combo > 1 ? 'x' + combo + ' ' : '') + 'NEAR MISS +' + pts, '#7affd8');
+          buzz(12);
+        }
       }
+      // reset near-miss flag once the car is well behind/ahead again
+      if (carSeg.index !== pSeg.index) car.nearMiss = false;
     }
 
     distance += (speed * dt) / 180;
@@ -596,7 +671,7 @@
 
   function drawCar(x, baseY, scale, color, clipY) {
     if (baseY > clipY + 4) return;
-    const w = scale * W * 380, h = w*0.62, top = baseY - h;
+    const w = Math.min(W * 0.34, scale * W * 380), h = w*0.62, top = baseY - h;
     ctx.fillStyle = 'rgba(0,0,0,0.22)';
     ctx.beginPath(); ctx.ellipse(x, baseY, w*0.55, h*0.16, 0, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle = color; roundRect(x-w/2, top, w, h*0.78, Math.min(8,w*0.12)); ctx.fill();
@@ -671,7 +746,11 @@
     drawDust();
     renderPlayer();
     ctx.restore();
-    drawSpeedLines(speedPct);
+    drawSpeedLines(boosting ? speedPct + 0.25 : speedPct);
+
+    nitroFill.style.width = (nitro * 100) + '%';
+    nitroFill.classList.toggle('boosting', boosting);
+
     hudDist.textContent  = Math.floor(distance).toLocaleString();
     hudSpeed.textContent = Math.floor((speed/MAX_SPEED)*220);
     hudBest.textContent  = Math.floor(best).toLocaleString();
@@ -700,6 +779,7 @@
       case 'ArrowRight':case 'd': case 'D': keys.right = true; e.preventDefault(); break;
       case 'ArrowUp':   case 'w': case 'W': keys.gas = true; e.preventDefault(); break;
       case 'ArrowDown': case 's': case 'S': keys.brake = true; e.preventDefault(); break;
+      case 'Shift': keys.boost = true; break;
       case 'p': case 'P': togglePause(); break;
       case 'Enter': case ' ': if (!running) startGame(); break;
     }
@@ -710,6 +790,7 @@
       case 'ArrowRight':case 'd': case 'D': keys.right = false; break;
       case 'ArrowUp':   case 'w': case 'W': keys.gas = running; break;
       case 'ArrowDown': case 's': case 'S': keys.brake = false; break;
+      case 'Shift': keys.boost = false; break;
     }
   });
 
@@ -720,6 +801,7 @@
   bind(document.getElementById('t-left'), 'left');
   bind(document.getElementById('t-right'), 'right');
   bind(document.getElementById('t-gas'), 'gas');
+  bind(document.getElementById('t-boost'), 'boost');
 
   // ── DEVICE TILT STEERING ──
   let tiltSteer = 0, tiltEnabled = false, tiltNeutral = null;
