@@ -1225,6 +1225,11 @@
   soundBtn.addEventListener('click', () => { Sound.init(); Sound.toggle(); syncSound(); });
   document.getElementById('pause-toggle').addEventListener('click', () => { if (running) togglePause(); });
 
+  // auto-pause when the tab/app loses focus (saves battery, clean resume)
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && running && !paused) togglePause();
+  });
+
   // ── BOOT ──
   buildTrack();
   trackLength = trackLen();
