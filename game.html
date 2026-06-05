@@ -176,6 +176,27 @@
     .hint-desktop { display: none; }
     .hint-mobile { display: inline; }
   }
+
+  /* ── COUNTDOWN ── */
+  #countdown {
+    position: fixed; inset: 0; z-index: 21; pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; color: #fff;
+    font-size: clamp(5rem, 22vw, 14rem);
+    text-shadow: 0 6px 40px rgba(0,0,0,0.5);
+  }
+  #countdown.cd-show { animation: cdPop 0.7s ease-out; }
+  #countdown.cd-go { color: #7affd8; animation: cdGo 0.6s ease-out; }
+  @keyframes cdPop {
+    0% { opacity: 0; transform: scale(2.2); }
+    30% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.8); }
+  }
+  @keyframes cdGo {
+    0% { opacity: 0; transform: scale(0.5); }
+    30% { opacity: 1; transform: scale(1.2); }
+    100% { opacity: 0; transform: scale(1.6); }
+  }
 </style>
 </head>
 <body>
@@ -212,6 +233,7 @@
 
   <div class="nitro-wrap"><div class="nitro-fill" id="nitro-fill"></div></div>
   <div id="floaters"></div>
+  <div id="countdown"></div>
 
   <div id="overlay">
     <div class="ov-title">COASTAL <em>DRIVE</em></div>
@@ -413,6 +435,7 @@
 
   // ── UPDATE ──
   function update(dt) {
+    if (frozen) { speed = 0; return; }
     const playerSeg = findSegment(position + CAM_HEIGHT);
     const speedPct = speed / MAX_SPEED;
     const dx = dt * 2 * speedPct;
@@ -904,7 +927,26 @@
   const overlay = document.getElementById('overlay');
   const startBtn = document.getElementById('start-btn');
 
-  function startGame() { overlay.classList.add('hidden'); running = true; paused = false; keys.gas = true; Sound.init(); enableTilt(); }
+  let frozen = false;
+  const cdEl = document.getElementById('countdown');
+  function startGame() {
+    overlay.classList.add('hidden'); running = true; paused = false; keys.gas = true;
+    Sound.init(); enableTilt();
+    frozen = true;
+    let n = 3;
+    (function tick() {
+      cdEl.classList.remove('cd-show','cd-go'); void cdEl.offsetWidth;
+      if (n > 0) {
+        cdEl.textContent = n; cdEl.classList.add('cd-show');
+        Sound.tick(440); n--; setTimeout(tick, 700);
+      } else {
+        cdEl.textContent = 'GO!'; cdEl.classList.add('cd-go');
+        Sound.chime(); buzz(40);
+        frozen = false;
+        setTimeout(() => { cdEl.textContent = ''; cdEl.classList.remove('cd-go'); }, 600);
+      }
+    })();
+  }
   function togglePause() {
     if (!running) return;
     paused = !paused;
@@ -1036,6 +1078,15 @@
         o.connect(g).connect(master); o.start(t + i*0.09); o.stop(t + i*0.09 + 0.5);
       });
     }
+    function tick(freq) {
+      if (!started || !enabled) return;
+      const t = actx.currentTime;
+      const o = actx.createOscillator(); o.type='sine'; o.frequency.value=freq||520;
+      const g = actx.createGain();
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.12, t+0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+0.18);
+      o.connect(g).connect(master); o.start(t); o.stop(t+0.2);
+    }
     function toggle() {
       enabled = !enabled;
       localStorage.setItem('coastal:sound', enabled?'1':'0');
@@ -1043,7 +1094,7 @@
       return enabled;
     }
     function isEnabled(){ return enabled; }
-    return { init, update, screech, chime, toggle, isEnabled };
+    return { init, update, screech, chime, tick, toggle, isEnabled };
   })();
 
   const soundBtn = document.getElementById('sound-toggle');
