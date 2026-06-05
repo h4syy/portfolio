@@ -731,26 +731,65 @@
   }
 
   // ── PLAYER CAR ──
+  let visualTilt = 0, flamePhase = 0;
   function renderPlayer() {
-    const bounce = (speed/MAX_SPEED) * Math.sin(performance.now()/60) * 1.5;
-    const cx = W/2 + (keys.left ? -6 : keys.right ? 6 : 0);
+    const speedPct = speed / MAX_SPEED;
+    const bounce = speedPct * Math.sin(performance.now()/60) * 1.6;
+    // smooth lean: combine steering intent + curve drift
+    const baseSeg = findSegment(position);
+    const steerIntent = (keys.left ? -1 : keys.right ? 1 : 0) + (tiltEnabled ? tiltSteer : 0);
+    const targetTilt = Math.max(-1, Math.min(1, steerIntent * 0.7 + baseSeg.curve * speedPct * 0.12));
+    visualTilt += (targetTilt - visualTilt) * 0.12;
+
+    const cx = W/2 + visualTilt * 10;
     const baseY = H - H*0.06 + bounce;
     const w = Math.min(W,H)*0.18, h = w*0.6, top = baseY - h;
 
+    // shadow
     ctx.fillStyle = 'rgba(0,0,0,0.28)';
     ctx.beginPath(); ctx.ellipse(cx, baseY+h*0.1, w*0.56, h*0.18, 0, 0, Math.PI*2); ctx.fill();
 
-    const tilt = (keys.left ? -1 : keys.right ? 1 : 0) * 0.04;
-    ctx.save(); ctx.translate(cx, baseY); ctx.rotate(tilt); ctx.translate(-cx, -baseY);
+    // nitro flames behind the car
+    if (boosting) {
+      flamePhase += 0.6;
+      const fy = baseY + h*0.05;
+      for (const fx of [cx - w*0.3, cx + w*0.3]) {
+        const fl = (h*0.5) * (0.7 + Math.sin(flamePhase + fx)*0.3);
+        const fg = ctx.createLinearGradient(fx, fy, fx, fy + fl);
+        fg.addColorStop(0, '#fff6d0'); fg.addColorStop(0.4, '#ffb04a'); fg.addColorStop(1, 'rgba(255,60,30,0)');
+        ctx.fillStyle = fg;
+        ctx.beginPath();
+        ctx.moveTo(fx - w*0.08, fy);
+        ctx.quadraticCurveTo(fx, fy + fl*1.2, fx + w*0.08, fy);
+        ctx.closePath(); ctx.fill();
+      }
+    }
+
+    ctx.save(); ctx.translate(cx, baseY); ctx.rotate(visualTilt * 0.05); ctx.translate(-cx, -baseY);
+
+    // body
     ctx.fillStyle = '#e63946'; roundRect(cx-w/2, top, w, h*0.66, 10); ctx.fill();
     ctx.fillStyle = '#c92f3c'; roundRect(cx-w/2, top+h*0.4, w, h*0.4, 10); ctx.fill();
+    // subtle top highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.12)'; roundRect(cx-w/2, top, w, h*0.14, 10); ctx.fill();
+    // seats
     ctx.fillStyle = '#3a2a22';
     roundRect(cx-w*0.3, top+h*0.16, w*0.24, h*0.3, 4); ctx.fill();
     roundRect(cx+w*0.06, top+h*0.16, w*0.24, h*0.3, 4); ctx.fill();
+    // windshield
     ctx.fillStyle = 'rgba(180,220,240,0.6)'; roundRect(cx-w*0.34, top+h*0.04, w*0.68, h*0.16, 4); ctx.fill();
-    ctx.fillStyle = '#ffce54';
+    // tail / brake lights (glow when braking)
+    const braking = keys.brake;
+    if (braking) {
+      ctx.shadowColor = '#ff2a2a'; ctx.shadowBlur = 18;
+      ctx.fillStyle = '#ff3030';
+    } else {
+      ctx.shadowBlur = 0; ctx.fillStyle = '#ffce54';
+    }
     ctx.fillRect(cx-w*0.48, top+h*0.5, w*0.1, h*0.18);
     ctx.fillRect(cx+w*0.38, top+h*0.5, w*0.1, h*0.18);
+    ctx.shadowBlur = 0;
+    // wheels
     ctx.fillStyle = '#1a1a1a';
     ctx.fillRect(cx-w*0.52, top+h*0.62, w*0.14, h*0.3);
     ctx.fillRect(cx+w*0.38, top+h*0.62, w*0.14, h*0.3);
