@@ -722,8 +722,15 @@
       ctx.beginPath(); ctx.moveTo(W*0.42, y); ctx.lineTo(W, y); ctx.stroke();
     }
     ctx.globalAlpha = 1;
-    ctx.fillStyle = 'rgba(255,240,200,0.4)';
-    ctx.fillRect(sunX - sunR*0.6, oceanTop, sunR*1.2, horizon-oceanTop);
+    // animated shimmering sun-reflection column on the water
+    const colW = sunR * 1.4, oh = horizon - oceanTop, nowMs = performance.now();
+    for (let yy = oceanTop; yy < horizon; yy += 3) {
+      const f = (yy - oceanTop) / oh;                 // 0 (far) .. 1 (near shore)
+      const wob = Math.sin(yy*0.32 + nowMs/300) * colW*0.14*f;
+      const w2 = colW * (0.28 + f*0.72) * (0.6 + 0.4*Math.sin(yy*0.5 + nowMs/180));
+      ctx.fillStyle = `rgba(255,${Math.round(232-tod*22)},${Math.round(180-tod*34)},${0.5*(1-f*0.45)})`;
+      ctx.fillRect(sunX - w2/2 + wob, yy, w2, 2);
+    }
 
     // sailboats
     const oceanLeft = W*0.42, oceanW = W - oceanLeft, oceanH = horizon - oceanTop;
