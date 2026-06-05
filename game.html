@@ -729,9 +729,14 @@
     while (bx < W*0.5) {
       const bw = 30 + (i%4)*16, bh = H*(0.06 + ((i*37)%11)*0.012);
       ctx.fillStyle = bcols[i%3]; ctx.fillRect(bx, baseY-bh, bw, bh);
-      ctx.fillStyle = 'rgba(255,240,200,0.55)';
+      const winA = 0.35 + tod*0.5;
       for (let wy=baseY-bh+6; wy<baseY-4; wy+=10)
-        for (let wx=bx+4; wx<bx+bw-4; wx+=9) ctx.fillRect(wx, wy, 4, 5);
+        for (let wx=bx+4; wx<bx+bw-4; wx+=9) {
+          // a few windows flicker dark for life
+          const lit = ((wx*7 + wy*13) % 17) > 3;
+          ctx.fillStyle = lit ? `rgba(255,${Math.round(235-tod*20)},${Math.round(170-tod*30)},${winA})` : 'rgba(80,70,80,0.25)';
+          ctx.fillRect(wx, wy, 4, 5);
+        }
       bx += bw + 10; i++;
     }
     ctx.restore();
