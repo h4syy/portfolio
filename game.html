@@ -343,6 +343,11 @@
     for (let m = 120; m < segments.length; m += 140) {
       segments[m].sprites.push({ type:'lighthouse', side:1, offset:2.1, beam: Math.random()*6 });
     }
+    // beach huts with a parasol alongside, on the shore (right) side
+    for (let m = 55; m < segments.length; m += 80) {
+      segments[m].sprites.push({ type:'beachhut', side:1, offset:1.5, hue: Math.floor(Math.random()*3) });
+      if (segments[m+3]) segments[m+3].sprites.push({ type:'umbrella', side:1, offset:1.25, hue: Math.floor(Math.random()*4) });
+    }
   }
 
   const tokens = [];
@@ -874,6 +879,27 @@
       const refl = sp.side > 0 ? '#ff8a3a' : '#ff4a4a';
       ctx.fillStyle = refl;
       ctx.beginPath(); ctx.arc(x, baseY - ph, Math.max(1.5, s*8), 0, Math.PI*2); ctx.fill();
+      return;
+    }
+    if (sp.type === 'beachhut') {
+      const hw = Math.max(8, s*220), hh = Math.max(6, s*150);
+      const walls = ['#ecdcb8','#e6cf9c','#f0e2c4'];
+      // body
+      ctx.fillStyle = walls[sp.hue % 3];
+      ctx.fillRect(x - hw/2, baseY - hh, hw, hh);
+      // thatched roof
+      ctx.fillStyle = '#b3793a';
+      ctx.beginPath();
+      ctx.moveTo(x - hw*0.64, baseY - hh);
+      ctx.lineTo(x + hw*0.64, baseY - hh);
+      ctx.lineTo(x, baseY - hh - hh*0.55);
+      ctx.closePath(); ctx.fill();
+      // door
+      ctx.fillStyle = '#5a4434';
+      ctx.fillRect(x - hw*0.13, baseY - hh*0.6, hw*0.26, hh*0.6);
+      // window
+      ctx.fillStyle = 'rgba(120,170,200,0.6)';
+      ctx.fillRect(x + hw*0.18, baseY - hh*0.7, hw*0.18, hh*0.22);
       return;
     }
     if (sp.type === 'lighthouse') {
