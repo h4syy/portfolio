@@ -66,6 +66,17 @@
   .sound-toggle:hover { background: rgba(10,22,34,0.7); border-color: rgba(255,255,255,0.5); }
   .sound-toggle.muted { opacity: 0.4; }
 
+  .pause-toggle {
+    position: fixed; top: 7.7rem; right: 1.2rem; z-index: 10;
+    width: 2.6rem; height: 2.6rem; border-radius: 50%;
+    background: rgba(10,22,34,0.45); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.2); color: #fff;
+    font-size: 0.6rem; cursor: pointer; pointer-events: auto;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .pause-toggle:hover { background: rgba(10,22,34,0.7); border-color: rgba(255,255,255,0.5); }
+
   /* ── OVERLAY (start / pause) ── */
   #overlay {
     position: fixed; inset: 0; z-index: 20;
@@ -190,6 +201,7 @@
 
   <a href="index.html" class="back-link">← back to portfolio</a>
   <button class="sound-toggle" id="sound-toggle" aria-label="Toggle sound">♪</button>
+  <button class="pause-toggle" id="pause-toggle" aria-label="Pause">❚❚</button>
 
   <div id="touch">
     <div class="touch-btn touch-left"  id="t-left"></div>
@@ -1030,6 +1042,7 @@
   }
   syncSound();
   soundBtn.addEventListener('click', () => { Sound.init(); Sound.toggle(); syncSound(); });
+  document.getElementById('pause-toggle').addEventListener('click', () => { if (running) togglePause(); });
 
   // ── BOOT ──
   buildTrack();
