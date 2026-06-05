@@ -376,6 +376,8 @@
   let nitro = 1, boosting = false, combo = 0, score = 0, lastMilestone = 0;
   let steer = 0, camDepth = CAM_DEPTH;
   let drawDist = DRAW_DIST, fpsAvg = 60;
+  const bestToBeat = best;
+  let beatenThisRun = false;
   const floaters = document.getElementById('floaters');
   const nitroFill = document.getElementById('nitro-fill');
 
@@ -545,6 +547,13 @@
     distance += (speed * dt) / 180;
     score += (speed * dt) / 1800;
     if (distance > best) { best = distance; localStorage.setItem('coastal:best', Math.floor(best)); }
+
+    // celebrate beating your previous record (once per run)
+    if (!beatenThisRun && bestToBeat > 50 && distance > bestToBeat) {
+      beatenThisRun = true;
+      floatText('NEW BEST!', '#7affd8');
+      Sound.chime(); buzz([20,30,20,30]); collectFlash = 0.5; addShake(3);
+    }
 
     // distance milestones every 1000m
     const ms = Math.floor(distance / 1000);
