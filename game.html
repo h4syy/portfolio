@@ -339,6 +339,10 @@
       segments[m].sprites.push({ type:'post', side:1, offset:1.04 });
       segments[m].sprites.push({ type:'post', side:-1, offset:1.04 });
     }
+    // occasional lighthouse landmark on the ocean side
+    for (let m = 120; m < segments.length; m += 140) {
+      segments[m].sprites.push({ type:'lighthouse', side:1, offset:2.1, beam: Math.random()*6 });
+    }
   }
 
   const tokens = [];
@@ -862,6 +866,37 @@
       const refl = sp.side > 0 ? '#ff8a3a' : '#ff4a4a';
       ctx.fillStyle = refl;
       ctx.beginPath(); ctx.arc(x, baseY - ph, Math.max(1.5, s*8), 0, Math.PI*2); ctx.fill();
+      return;
+    }
+    if (sp.type === 'lighthouse') {
+      const lh = Math.max(20, s*620), tw = Math.max(6, s*120), tod = timeOfDay();
+      // tapered tower
+      ctx.fillStyle = '#f5f0e8';
+      ctx.beginPath();
+      ctx.moveTo(x - tw*0.5, baseY); ctx.lineTo(x + tw*0.5, baseY);
+      ctx.lineTo(x + tw*0.3, baseY - lh); ctx.lineTo(x - tw*0.3, baseY - lh);
+      ctx.closePath(); ctx.fill();
+      // red bands
+      ctx.fillStyle = '#cf3a2c';
+      for (let bI=1; bI<=3; bI++) {
+        const by = baseY - lh*(bI/4), bw2 = tw*(0.5 - 0.05*bI);
+        ctx.fillRect(x - bw2, by, bw2*2, lh*0.07);
+      }
+      // lantern room
+      ctx.fillStyle = '#2f3038';
+      ctx.fillRect(x - tw*0.26, baseY - lh - tw*0.42, tw*0.52, tw*0.42);
+      // beacon glow at dusk
+      const bg = 0.35 + tod*0.65;
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      const lr = tw*0.9;
+      const gl = ctx.createRadialGradient(x, baseY-lh-tw*0.2, 0, x, baseY-lh-tw*0.2, lr);
+      gl.addColorStop(0, `rgba(255,240,180,${bg})`); gl.addColorStop(1, 'rgba(255,240,180,0)');
+      ctx.fillStyle = gl;
+      ctx.beginPath(); ctx.arc(x, baseY-lh-tw*0.2, lr, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+      // light core
+      ctx.fillStyle = `rgba(255,250,210,${0.6+tod*0.4})`;
+      ctx.fillRect(x - tw*0.12, baseY - lh - tw*0.32, tw*0.24, tw*0.22);
       return;
     }
     if (sp.type === 'palm') {
