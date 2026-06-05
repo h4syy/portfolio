@@ -615,6 +615,22 @@
     ctx.fillStyle = hexLerp(SUN_DAY, SUN_SET, tod);
     ctx.beginPath(); ctx.arc(sunX, sunY, sunR, 0, Math.PI*2); ctx.fill();
 
+    // god-rays — soft volumetric beams from the sun
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, W, horizon); ctx.clip();
+    ctx.globalCompositeOperation = 'lighter';
+    const rayLen = Math.max(W, H);
+    for (let i = 0; i < 9; i++) {
+      const a = (i / 9) * Math.PI * 2 + performance.now() / 9000;
+      ctx.fillStyle = `rgba(255,${Math.round(225-tod*40)},${Math.round(160-tod*50)},${0.03 + tod*0.025})`;
+      ctx.beginPath();
+      ctx.moveTo(sunX, sunY);
+      ctx.lineTo(sunX + Math.cos(a-0.03)*rayLen, sunY + Math.sin(a-0.03)*rayLen);
+      ctx.lineTo(sunX + Math.cos(a+0.03)*rayLen, sunY + Math.sin(a+0.03)*rayLen);
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+
     // ocean (right)
     const oceanTop = horizon - H*0.05;
     ctx.save();
