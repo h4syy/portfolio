@@ -53,6 +53,18 @@
   }
   .back-link:hover { background: rgba(10,22,34,0.7); border-color: rgba(255,255,255,0.5); }
 
+  /* ── SOUND TOGGLE ── */
+  .sound-toggle {
+    position: fixed; top: 4.6rem; right: 1.2rem; z-index: 10;
+    width: 2.6rem; height: 2.6rem; border-radius: 50%;
+    background: rgba(10,22,34,0.45); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.2); color: #fff;
+    font-size: 0.9rem; cursor: pointer; pointer-events: auto;
+    transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+  }
+  .sound-toggle:hover { background: rgba(10,22,34,0.7); border-color: rgba(255,255,255,0.5); }
+  .sound-toggle.muted { opacity: 0.4; }
+
   /* ── OVERLAY (start / pause) ── */
   #overlay {
     position: fixed; inset: 0; z-index: 20;
@@ -132,6 +144,7 @@
   </div>
 
   <a href="index.html" class="back-link">← back to portfolio</a>
+  <button class="sound-toggle" id="sound-toggle" aria-label="Toggle sound">♪</button>
 
   <div id="touch">
     <div class="touch-btn touch-left"  id="t-left"></div>
@@ -290,6 +303,10 @@
     else                 speed += DECEL * dt;
 
     if ((playerX < -1 || playerX > 1) && speed > OFF_LIMIT) speed += OFF_DECEL * dt;
+
+    // tire screech on hard curves at speed
+    if (Math.abs(playerSeg.curve) > 3.5 && speedPct > 0.55)
+      Sound.screech((Math.abs(playerSeg.curve)/6) * speedPct);
 
     playerX = Math.max(-2, Math.min(2, playerX));
     speed   = Math.max(0, Math.min(speed, MAX_SPEED));
@@ -532,6 +549,7 @@
     requestAnimationFrame(frame);
     const dt = Math.min((t - lastT)/1000, 1/30); lastT = t;
     if (running && !paused) update(dt);
+    Sound.update(speed / MAX_SPEED, playerX < -1 || playerX > 1);
     const baseSeg = findSegment(position);
     const basePercent = (position % SEG_LEN) / SEG_LEN;
     bgShift += baseSeg.curve * (speed/MAX_SPEED) * 12;
@@ -552,7 +570,7 @@
   const overlay = document.getElementById('overlay');
   const startBtn = document.getElementById('start-btn');
 
-  function startGame() { overlay.classList.add('hidden'); running = true; paused = false; keys.gas = true; }
+  function startGame() { overlay.classList.add('hidden'); running = true; paused = false; keys.gas = true; Sound.init(); }
   function togglePause() {
     if (!running) return;
     paused = !paused;
@@ -588,6 +606,83 @@
   bind(document.getElementById('t-left'), 'left');
   bind(document.getElementById('t-right'), 'right');
   bind(document.getElementById('t-gas'), 'gas');
+
+  // ── AUDIO ──
+  const Sound = (() => {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    let actx=null, master=null, engine=null, eGain=null, wGain=null;
+    let started=false, enabled=(localStorage.getItem('coastal:sound')!=='0');
+    let lastScreech=0;
+
+    function init() {
+      if (started || !AC) return;
+      actx = new AC();
+      master = actx.createGain();
+      master.gain.value = enabled ? 0.6 : 0;
+      master.connect(actx.destination);
+
+      const eFilter = actx.createBiquadFilter();
+      eFilter.type='lowpass'; eFilter.frequency.value=900;
+      eGain = actx.createGain(); eGain.gain.value=0;
+      eFilter.connect(eGain).connect(master);
+
+      engine = actx.createOscillator(); engine.type='sawtooth'; engine.frequency.value=55;
+      engine.connect(eFilter); engine.start();
+      const engine2 = actx.createOscillator(); engine2.type='square'; engine2.frequency.value=27;
+      const e2g = actx.createGain(); e2g.gain.value=0.5;
+      engine2.connect(e2g).connect(eFilter); engine2.start();
+
+      const nb = actx.createBuffer(1, actx.sampleRate*2, actx.sampleRate);
+      const d = nb.getChannelData(0);
+      for (let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+      const wind = actx.createBufferSource(); wind.buffer=nb; wind.loop=true;
+      const wFilter = actx.createBiquadFilter(); wFilter.type='bandpass'; wFilter.frequency.value=600; wFilter.Q.value=0.5;
+      wGain = actx.createGain(); wGain.gain.value=0;
+      wind.connect(wFilter).connect(wGain).connect(master); wind.start();
+
+      started = true;
+    }
+
+    function update(speedPct, offroad) {
+      if (!started) return;
+      const t = actx.currentTime;
+      engine.frequency.setTargetAtTime(55 + speedPct*205, t, 0.06);
+      eGain.gain.setTargetAtTime(0.07 + speedPct*0.13, t, 0.1);
+      wGain.gain.setTargetAtTime(speedPct*speedPct*0.18 + (offroad?0.12:0), t, 0.12);
+    }
+
+    function screech(intensity) {
+      if (!started || !enabled) return;
+      const now = performance.now();
+      if (now - lastScreech < 180) return;
+      lastScreech = now;
+      const t = actx.currentTime;
+      const nb = actx.createBuffer(1, actx.sampleRate*0.3, actx.sampleRate);
+      const d = nb.getChannelData(0);
+      for (let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length);
+      const src = actx.createBufferSource(); src.buffer=nb;
+      const f = actx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=2200; f.Q.value=6;
+      const g = actx.createGain(); g.gain.value=Math.min(0.25, intensity*0.25);
+      src.connect(f).connect(g).connect(master); src.start();
+    }
+
+    function toggle() {
+      enabled = !enabled;
+      localStorage.setItem('coastal:sound', enabled?'1':'0');
+      if (master) master.gain.setTargetAtTime(enabled?0.6:0, actx.currentTime, 0.05);
+      return enabled;
+    }
+    function isEnabled(){ return enabled; }
+    return { init, update, screech, toggle, isEnabled };
+  })();
+
+  const soundBtn = document.getElementById('sound-toggle');
+  function syncSound() {
+    soundBtn.classList.toggle('muted', !Sound.isEnabled());
+    soundBtn.textContent = Sound.isEnabled() ? '♫' : '♪';
+  }
+  syncSound();
+  soundBtn.addEventListener('click', () => { Sound.init(); Sound.toggle(); syncSound(); });
 
   // ── BOOT ──
   buildTrack();
