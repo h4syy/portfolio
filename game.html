@@ -30,6 +30,7 @@
   }
   .hud-block { display: flex; flex-direction: column; gap: 2px; }
   .hud-right { text-align: right; align-items: flex-end; }
+  .hud-center { text-align: center; align-items: center; }
   .hud-label {
     font-size: 0.55rem; letter-spacing: 0.25em; text-transform: uppercase;
     color: rgba(255,255,255,0.7);
@@ -176,6 +177,10 @@
       <span class="hud-val" id="hud-dist">0</span>
       <span class="hud-unit">METERS</span>
     </div>
+    <div class="hud-block hud-center">
+      <span class="hud-label">Score</span>
+      <span class="hud-val" id="hud-score">0</span>
+    </div>
     <div class="hud-block hud-right">
       <span class="hud-label">Speed</span>
       <span class="hud-val speed" id="hud-speed">0</span>
@@ -317,7 +322,7 @@
   const keys = { left:false, right:false, gas:false, brake:false, boost:false };
 
   // nitro + combo
-  let nitro = 1, boosting = false, combo = 0, score = 0;
+  let nitro = 1, boosting = false, combo = 0, score = 0, lastMilestone = 0;
   const floaters = document.getElementById('floaters');
   const nitroFill = document.getElementById('nitro-fill');
 
@@ -457,7 +462,17 @@
     }
 
     distance += (speed * dt) / 180;
+    score += (speed * dt) / 1800;
     if (distance > best) { best = distance; localStorage.setItem('coastal:best', Math.floor(best)); }
+
+    // distance milestones every 1000m
+    const ms = Math.floor(distance / 1000);
+    if (ms > lastMilestone) {
+      lastMilestone = ms;
+      score += 500;
+      floatText(ms + ' KM! +500', '#ffd86b');
+      Sound.chime(); buzz([30,40,30]); addShake(4);
+    }
   }
 
   // ── BACKGROUND ──
@@ -478,6 +493,10 @@
   // clouds
   const clouds = [];
   for (let i=0;i<6;i++) clouds.push({ x: Math.random()*1.2, y: 0.08 + Math.random()*0.26, s: 0.5 + Math.random()*0.9, sp: 0.2 + Math.random()*0.4 });
+
+  // seagulls
+  const birds = [];
+  for (let i=0;i<5;i++) birds.push({ x: Math.random(), y: 0.12 + Math.random()*0.22, s: 0.6 + Math.random()*0.7, sp: 0.3 + Math.random()*0.5, flap: Math.random()*6 });
 
   function timeOfDay() { return Math.sin(distance / 2600) * 0.5 + 0.5; }
 
@@ -511,6 +530,23 @@
       ctx.fill();
     }
     ctx.restore();
+
+    // seagulls
+    ctx.strokeStyle = `rgba(60,70,90,${0.5 - tod*0.15})`;
+    ctx.lineWidth = Math.max(1.5, Math.min(W,H)*0.003);
+    for (const bd of birds) {
+      bd.x -= bd.sp * 0.0006;
+      if (bd.x < -0.05) { bd.x = 1.05; bd.y = 0.12 + Math.random()*0.22; }
+      bd.flap += 0.15;
+      const bx = bd.x * W + shift * 0.25 * bd.sp;
+      const by = bd.y * H;
+      const wsz = Math.min(W,H) * 0.018 * bd.s;
+      const lift = Math.sin(bd.flap) * wsz * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(bx - wsz, by + lift);
+      ctx.quadraticCurveTo(bx, by - wsz*0.4, bx + wsz, by + lift);
+      ctx.stroke();
+    }
 
     // sun — lowers toward horizon at sunset
     const sunX = W*0.68 + shift*0.3, sunY = horizon - H*(0.13 - tod*0.06), sunR = Math.min(W,H)*(0.09 + tod*0.02);
@@ -754,12 +790,14 @@
     hudDist.textContent  = Math.floor(distance).toLocaleString();
     hudSpeed.textContent = Math.floor((speed/MAX_SPEED)*220);
     hudBest.textContent  = Math.floor(best).toLocaleString();
+    hudScore.textContent = Math.floor(score).toLocaleString();
   }
 
   // ── INPUT ──
   const hudDist = document.getElementById('hud-dist');
   const hudSpeed = document.getElementById('hud-speed');
   const hudBest = document.getElementById('hud-best');
+  const hudScore = document.getElementById('hud-score');
   const overlay = document.getElementById('overlay');
   const startBtn = document.getElementById('start-btn');
 
@@ -883,6 +921,18 @@
       src.connect(f).connect(g).connect(master); src.start();
     }
 
+    function chime() {
+      if (!started || !enabled) return;
+      const t = actx.currentTime;
+      [660, 880, 1175].forEach((f, i) => {
+        const o = actx.createOscillator(); o.type='sine'; o.frequency.value=f;
+        const g = actx.createGain();
+        g.gain.setValueAtTime(0, t + i*0.09);
+        g.gain.linearRampToValueAtTime(0.14, t + i*0.09 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + i*0.09 + 0.45);
+        o.connect(g).connect(master); o.start(t + i*0.09); o.stop(t + i*0.09 + 0.5);
+      });
+    }
     function toggle() {
       enabled = !enabled;
       localStorage.setItem('coastal:sound', enabled?'1':'0');
@@ -890,7 +940,7 @@
       return enabled;
     }
     function isEnabled(){ return enabled; }
-    return { init, update, screech, toggle, isEnabled };
+    return { init, update, screech, chime, toggle, isEnabled };
   })();
 
   const soundBtn = document.getElementById('sound-toggle');
