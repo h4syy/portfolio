@@ -220,8 +220,9 @@
   const ctx = canvas.getContext('2d');
   let W = 0, H = 0, DPR = 1;
 
+  const isCoarse = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
   function resize() {
-    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    DPR = Math.min(window.devicePixelRatio || 1, isCoarse ? 1.5 : 2);
     W = window.innerWidth; H = window.innerHeight;
     canvas.width = W * DPR; canvas.height = H * DPR;
     canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
@@ -324,6 +325,7 @@
   // nitro + combo
   let nitro = 1, boosting = false, combo = 0, score = 0, lastMilestone = 0;
   let steer = 0, camDepth = CAM_DEPTH;
+  let drawDist = DRAW_DIST, fpsAvg = 60;
   const floaters = document.getElementById('floaters');
   const nitroFill = document.getElementById('nitro-fill');
 
@@ -635,7 +637,7 @@
   function renderRoad(baseSeg, basePercent) {
     let maxY = H, x = 0, dx = -(baseSeg.curve * basePercent);
     const camX = playerX * ROAD_WIDTH, camY = CAM_HEIGHT + baseSeg.p1.world.y;
-    for (let i=0;i<DRAW_DIST;i++) {
+    for (let i=0;i<drawDist;i++) {
       const seg = segments[(baseSeg.index + i) % segments.length];
       const looped = (baseSeg.index + i) >= segments.length;
       const camZ = position - (looped ? trackLength : 0);
@@ -674,7 +676,7 @@
 
   // ── SPRITES ──
   function renderSprites(baseSeg) {
-    for (let i=DRAW_DIST-1;i>0;i--) {
+    for (let i=drawDist-1;i>0;i--) {
       const seg = segments[(baseSeg.index + i) % segments.length];
       if (!seg.sprites.length) continue;
       const p = seg.p1.screen;
@@ -688,7 +690,7 @@
     for (const car of traffic) {
       const seg = findSegment(car.z);
       const rel = ((seg.index - baseSeg.index) + segments.length) % segments.length;
-      if (rel > 0 && rel < DRAW_DIST) arr.push({ car, seg, rel });
+      if (rel > 0 && rel < drawDist) arr.push({ car, seg, rel });
     }
     arr.sort((a,b) => b.rel - a.rel);
     for (const { car, seg } of arr) {
@@ -735,7 +737,7 @@
 
   function drawCar(x, baseY, scale, color, clipY) {
     if (baseY > clipY + 4) return;
-    const w = Math.min(W * 0.34, scale * W * 380), h = w*0.62, top = baseY - h;
+    const w = Math.min(W * 0.26, scale * W * 380), h = w*0.62, top = baseY - h;
     ctx.fillStyle = 'rgba(0,0,0,0.22)';
     ctx.beginPath(); ctx.ellipse(x, baseY, w*0.55, h*0.16, 0, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle = color; roundRect(x-w/2, top, w, h*0.78, Math.min(8,w*0.12)); ctx.fill();
@@ -828,7 +830,16 @@
   let lastT = 0;
   function frame(t) {
     requestAnimationFrame(frame);
-    const dt = Math.min((t - lastT)/1000, 1/30); lastT = t;
+    const rawDt = (t - lastT)/1000;
+    const dt = Math.min(rawDt, 1/30); lastT = t;
+
+    // adaptive quality — keep the framerate smooth on any device
+    if (rawDt > 0 && rawDt < 0.5) {
+      fpsAvg = fpsAvg * 0.95 + (1/rawDt) * 0.05;
+      if (fpsAvg < 48 && drawDist > 120) drawDist -= 2;
+      else if (fpsAvg > 57 && drawDist < DRAW_DIST) drawDist += 1;
+    }
+
     if (running && !paused) update(dt);
     // FOV punch on boost — widens view for a speed rush
     camDepth += ((boosting ? CAM_DEPTH - 0.11 : CAM_DEPTH) - camDepth) * 0.08;
