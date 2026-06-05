@@ -392,7 +392,7 @@
   }
 
   // juice
-  let shake = 0, collectFlash = 0;
+  let shake = 0, collectFlash = 0, exhaustT = 0;
   const dust = [];
   function addShake(a){ shake = Math.min(12, shake + a); }
   function spawnDust(x, y, tint) {
@@ -484,6 +484,15 @@
       spawnDust(W/2 - (playerX>0?1:-1)*w*0.4, H - H*0.06, '#d8b06a');
     }
     updateDust(dt);
+
+    // exhaust puffs trailing the car
+    exhaustT += dt;
+    const puffEvery = boosting ? 0.05 : 0.14;
+    if (exhaustT > puffEvery) {
+      exhaustT = 0;
+      const px = W/2 + visualTilt*10 + (Math.random()-0.5)*Math.min(W,H)*0.06;
+      dust.push({ x: px, y: H - H*0.045, vx:(Math.random()-0.5)*20, vy:-30-Math.random()*30, life:0.7, size:3+Math.random()*3, tint: boosting?'#ffcf9a':'rgba(160,160,160,1)' });
+    }
 
     // tire screech on hard curves at speed
     if (Math.abs(playerSeg.curve) > 3.5 && speedPct > 0.55)
