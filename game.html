@@ -398,7 +398,7 @@
   }
 
   // juice
-  let shake = 0, collectFlash = 0, exhaustT = 0;
+  let shake = 0, collectFlash = 0, exhaustT = 0, rumbleT = 0;
   const dust = [];
   function addShake(a){ shake = Math.min(12, shake + a); }
   function spawnDust(x, y, tint) {
@@ -490,6 +490,14 @@
       spawnDust(W/2 - (playerX>0?1:-1)*w*0.4, H - H*0.06, '#d8b06a');
     }
     updateDust(dt);
+
+    // rumble-strip tactile feedback at the road edge
+    const ar = Math.abs(playerX);
+    if (ar > 0.9 && ar <= 1.06 && speed > MAX_SPEED * 0.15) {
+      addShake(1.1);
+      rumbleT += dt;
+      if (rumbleT > 0.09) { rumbleT = 0; Sound.tick(70 + Math.random()*30); buzz(8); }
+    }
 
     // exhaust puffs trailing the car
     exhaustT += dt;
