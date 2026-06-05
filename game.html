@@ -517,6 +517,15 @@
       score += 500;
       floatText(ms + ' KM! +500', '#ffd86b');
       Sound.chime(); buzz([30,40,30]); addShake(4);
+      // progressive difficulty — more traffic the further you get
+      if (traffic.length < 30) {
+        for (let k = 0; k < 2; k++) traffic.push({
+          offset: (Math.random()<0.5?-1:1) * (0.15 + Math.random()*0.7),
+          z: (position + (8000 + Math.random()*14000)) % trackLength,
+          speed: MAX_SPEED/4 + Math.random()*(MAX_SPEED/3),
+          color: TRAFFIC_COLORS[traffic.length % TRAFFIC_COLORS.length],
+        });
+      }
     }
   }
 
