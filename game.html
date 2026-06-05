@@ -392,7 +392,7 @@
   }
 
   // juice
-  let shake = 0;
+  let shake = 0, collectFlash = 0;
   const dust = [];
   function addShake(a){ shake = Math.min(12, shake + a); }
   function spawnDust(x, y, tint) {
@@ -524,6 +524,9 @@
         score += 100;
         floatText('+100', '#ffe06b');
         Sound.tick(1175); buzz(10);
+        collectFlash = 0.45;
+        const px = W/2 + (tk.offset - playerX) * 120;
+        for (let s = 0; s < 7; s++) spawnDust(px, H - H*0.12, '#ffd24a');
         // respawn ahead
         tk.z = (tk.z + (9000 + Math.random()*18000)) % trackLength;
         tk.offset = Math.random()*1.4 - 0.7;
@@ -1008,6 +1011,14 @@
     vig.addColorStop(0, 'rgba(0,0,0,0)');
     vig.addColorStop(1, `rgba(18,8,28,${0.22 + tod*0.16})`);
     ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H);
+
+    // token collect flash
+    if (collectFlash > 0) {
+      ctx.fillStyle = `rgba(255,215,90,${collectFlash*0.35})`;
+      ctx.fillRect(0, 0, W, H);
+      collectFlash *= 0.85;
+      if (collectFlash < 0.01) collectFlash = 0;
+    }
 
     nitroFill.style.width = (nitro * 100) + '%';
     nitroFill.classList.toggle('boosting', boosting);
