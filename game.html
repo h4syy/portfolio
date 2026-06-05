@@ -570,6 +570,21 @@
 
     const shift = -(bgShift * 0.6 + playerX * 30);
 
+    // distant hazy headland hills (atmospheric depth, behind everything)
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, W, horizon + 2); ctx.clip();
+    const hillY = horizon - H*0.03;
+    ctx.fillStyle = hexLerp('#9fb4c6', '#b892a4', tod);
+    ctx.globalAlpha = 0.55;
+    ctx.beginPath(); ctx.moveTo(0, horizon+2);
+    for (let hx = 0; hx <= W; hx += 36) {
+      const hh = Math.abs(Math.sin(hx*0.0045 + shift*0.0016) * H*0.04 + Math.sin(hx*0.012)*H*0.018);
+      ctx.lineTo(hx, hillY - hh);
+    }
+    ctx.lineTo(W, horizon+2); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
     // clouds
     ctx.save();
     ctx.beginPath(); ctx.rect(0, 0, W, horizon); ctx.clip();
