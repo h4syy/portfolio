@@ -323,6 +323,7 @@
 
   // nitro + combo
   let nitro = 1, boosting = false, combo = 0, score = 0, lastMilestone = 0;
+  let steer = 0, camDepth = CAM_DEPTH;
   const floaters = document.getElementById('floaters');
   const nitroFill = document.getElementById('nitro-fill');
 
@@ -390,7 +391,7 @@
     p.camera.x = (p.world.x||0) - camX;
     p.camera.y = (p.world.y||0) - camY;
     p.camera.z = (p.world.z||0) - camZ;
-    p.screen.scale = CAM_DEPTH / p.camera.z;
+    p.screen.scale = camDepth / p.camera.z;
     p.screen.x = Math.round((W/2) + (p.screen.scale * p.camera.x * W/2));
     p.screen.y = Math.round((H/2) - (p.screen.scale * p.camera.y * H/2));
     p.screen.w = Math.round(p.screen.scale * ROAD_WIDTH * W/2);
@@ -406,9 +407,11 @@
     while (position >= trackLength) position -= trackLength;
     while (position < 0) position += trackLength;
 
-    if (keys.left)  playerX -= dx;
-    if (keys.right) playerX += dx;
-    if (tiltEnabled) playerX += dx * tiltSteer * 1.5;
+    // smoothed steering — feels natural on touch + tilt
+    const targetSteer = Math.max(-1, Math.min(1,
+      (keys.right ? 1 : 0) - (keys.left ? 1 : 0) + (tiltEnabled ? tiltSteer : 0)));
+    steer += (targetSteer - steer) * Math.min(1, dt * 8);
+    playerX += dx * steer * 1.5;
     playerX -= dx * speedPct * playerSeg.curve * CENTRIFUGAL;
 
     boosting = keys.boost && nitro > 0 && speed > MAX_SPEED * 0.3;
@@ -641,7 +644,7 @@
       project(seg.p2, camX - x - dx, camY, camZ);
       x += dx; dx += seg.curve;
       seg._clip = maxY;
-      if (seg.p1.camera.z <= CAM_DEPTH || seg.p2.screen.y >= seg.p1.screen.y || seg.p2.screen.y >= maxY) continue;
+      if (seg.p1.camera.z <= camDepth || seg.p2.screen.y >= seg.p1.screen.y || seg.p2.screen.y >= maxY) continue;
       drawSegment(seg, fog);
       maxY = seg.p2.screen.y;
     }
@@ -827,6 +830,8 @@
     requestAnimationFrame(frame);
     const dt = Math.min((t - lastT)/1000, 1/30); lastT = t;
     if (running && !paused) update(dt);
+    // FOV punch on boost — widens view for a speed rush
+    camDepth += ((boosting ? CAM_DEPTH - 0.11 : CAM_DEPTH) - camDepth) * 0.08;
     Sound.update(speed / MAX_SPEED, playerX < -1 || playerX > 1);
     const baseSeg = findSegment(position);
     const basePercent = (position % SEG_LEN) / SEG_LEN;
