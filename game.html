@@ -319,6 +319,7 @@
     for (let i=0;i<RUMBLE_LEN;i++) if (segments[i]) segments[i].color = COLORS.START;
     placeScenery();
     placeTraffic();
+    placeTokens();
   }
 
   function placeScenery() {
@@ -338,6 +339,16 @@
       segments[m].sprites.push({ type:'post', side:1, offset:1.04 });
       segments[m].sprites.push({ type:'post', side:-1, offset:1.04 });
     }
+  }
+
+  const tokens = [];
+  function placeTokens() {
+    tokens.length = 0;
+    for (let i = 0; i < 24; i++) tokens.push({
+      offset: Math.random()*1.4 - 0.7,
+      z: Math.floor(Math.random()*segments.length) * SEG_LEN,
+      bob: Math.random()*6,
+    });
   }
 
   const TRAFFIC_COLORS = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#ecf0f1'];
@@ -504,6 +515,19 @@
       }
       // reset near-miss flag once the car is well behind/ahead again
       if (carSeg.index !== pSeg.index) car.nearMiss = false;
+    }
+
+    // sun-token collection
+    for (const tk of tokens) {
+      const tkSeg = findSegment(tk.z);
+      if (tkSeg.index === pSeg.index && Math.abs(playerX - tk.offset) < 0.42) {
+        score += 100;
+        floatText('+100', '#ffe06b');
+        Sound.tick(1175); buzz(10);
+        // respawn ahead
+        tk.z = (tk.z + (9000 + Math.random()*18000)) % trackLength;
+        tk.offset = Math.random()*1.4 - 0.7;
+      }
     }
 
     distance += (speed * dt) / 180;
@@ -778,6 +802,28 @@
       if (p.scale <= 0) continue;
       const sx = p.x + (p.scale * car.offset * ROAD_WIDTH * W/2);
       drawCar(sx, p.y, p.scale * 2.2, car.color, seg._clip);
+    }
+    // sun-tokens
+    const tarr = [];
+    for (const tk of tokens) {
+      const seg = findSegment(tk.z);
+      const rel = ((seg.index - baseSeg.index) + segments.length) % segments.length;
+      if (rel > 0 && rel < drawDist) tarr.push({ tk, seg, rel });
+    }
+    tarr.sort((a,b) => b.rel - a.rel);
+    for (const { tk, seg } of tarr) {
+      const p = seg.p1.screen;
+      if (p.scale <= 0 || p.y > seg._clip + 4) continue;
+      const sx = p.x + (p.scale * tk.offset * ROAD_WIDTH * W/2);
+      const r = Math.max(3, p.scale * W * 60);
+      const cy = p.y - r*1.6 + Math.sin(performance.now()/300 + tk.bob) * r*0.3;
+      ctx.save();
+      ctx.shadowColor = 'rgba(255,210,90,0.8)'; ctx.shadowBlur = r;
+      const g = ctx.createRadialGradient(sx, cy, 0, sx, cy, r);
+      g.addColorStop(0, '#fff6c8'); g.addColorStop(0.6, '#ffd24a'); g.addColorStop(1, '#f0a020');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(sx, cy, r, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
     }
   }
 
