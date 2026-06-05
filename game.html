@@ -498,6 +498,10 @@
   const birds = [];
   for (let i=0;i<5;i++) birds.push({ x: Math.random(), y: 0.12 + Math.random()*0.22, s: 0.6 + Math.random()*0.7, sp: 0.3 + Math.random()*0.5, flap: Math.random()*6 });
 
+  // sailboats on the ocean (x is fraction across the ocean band 0..1)
+  const boats = [];
+  for (let i=0;i<4;i++) boats.push({ x: Math.random(), yo: Math.random(), s: 0.6 + Math.random()*0.8, sp: 0.2 + Math.random()*0.3, sail: Math.random()<0.5?'#ffffff':'#ffe1a8' });
+
   function timeOfDay() { return Math.sin(distance / 2600) * 0.5 + 0.5; }
 
   function renderBackground(playerSeg) {
@@ -573,6 +577,27 @@
     ctx.globalAlpha = 1;
     ctx.fillStyle = 'rgba(255,240,200,0.4)';
     ctx.fillRect(sunX - sunR*0.6, oceanTop, sunR*1.2, horizon-oceanTop);
+
+    // sailboats
+    const oceanLeft = W*0.42, oceanW = W - oceanLeft, oceanH = horizon - oceanTop;
+    for (const bt of boats) {
+      bt.x -= bt.sp * 0.00025;
+      if (bt.x < -0.05) bt.x = 1.05;
+      const bx = oceanLeft + bt.x * oceanW;
+      const by = oceanTop + (0.25 + bt.yo*0.5) * oceanH + Math.sin(performance.now()/700 + bt.x*8)*1.5;
+      const sz = Math.max(4, oceanH * 0.32 * bt.s);
+      // hull
+      ctx.fillStyle = '#5a4636';
+      ctx.beginPath();
+      ctx.moveTo(bx - sz*0.5, by); ctx.lineTo(bx + sz*0.5, by);
+      ctx.lineTo(bx + sz*0.3, by + sz*0.18); ctx.lineTo(bx - sz*0.3, by + sz*0.18);
+      ctx.closePath(); ctx.fill();
+      // sail
+      ctx.fillStyle = bt.sail;
+      ctx.beginPath();
+      ctx.moveTo(bx, by - sz*0.9); ctx.lineTo(bx, by); ctx.lineTo(bx + sz*0.42, by);
+      ctx.closePath(); ctx.fill();
+    }
     ctx.restore();
 
     // resort skyline (left)
