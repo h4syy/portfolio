@@ -876,6 +876,17 @@
     ctx.restore();
     drawSpeedLines(boosting ? speedPct + 0.25 : speedPct);
 
+    // cinematic vignette + sunset warm grade
+    const tod = timeOfDay();
+    if (tod > 0.28) {
+      ctx.fillStyle = `rgba(255,140,70,${(tod-0.28)*0.07})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+    const vig = ctx.createRadialGradient(W/2, H*0.55, Math.min(W,H)*0.32, W/2, H*0.55, Math.max(W,H)*0.78);
+    vig.addColorStop(0, 'rgba(0,0,0,0)');
+    vig.addColorStop(1, `rgba(18,8,28,${0.22 + tod*0.16})`);
+    ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H);
+
     nitroFill.style.width = (nitro * 100) + '%';
     nitroFill.classList.toggle('boosting', boosting);
 
