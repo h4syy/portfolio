@@ -387,20 +387,63 @@
 
   // ── BACKGROUND ──
   let bgShift = 0;
+
+  // time-of-day palettes (0 = midday, 1 = golden sunset)
+  function hexLerp(a, b, t) {
+    const ah=a.replace('#',''), bh=b.replace('#','');
+    const ar=parseInt(ah.substr(0,2),16), ag=parseInt(ah.substr(2,2),16), ab=parseInt(ah.substr(4,2),16);
+    const br=parseInt(bh.substr(0,2),16), bg=parseInt(bh.substr(2,2),16), bb=parseInt(bh.substr(4,2),16);
+    const r=Math.round(ar+(br-ar)*t), g=Math.round(ag+(bg-ag)*t), bl=Math.round(ab+(bb-ab)*t);
+    return `rgb(${r},${g},${bl})`;
+  }
+  const SKY_DAY = ['#3a8fd4','#8fc7e8','#ffe1a8'], SKY_SET = ['#54478f','#ff9e6b','#ff7a52'];
+  const OCN_DAY = ['#2b86c5','#1c6aa8'],            OCN_SET = ['#3f5a96','#5a3a72'];
+  const SUN_DAY = '#fff6df',                        SUN_SET = '#ffcf9a';
+
+  // clouds
+  const clouds = [];
+  for (let i=0;i<6;i++) clouds.push({ x: Math.random()*1.2, y: 0.08 + Math.random()*0.26, s: 0.5 + Math.random()*0.9, sp: 0.2 + Math.random()*0.4 });
+
+  function timeOfDay() { return Math.sin(distance / 2600) * 0.5 + 0.5; }
+
   function renderBackground(playerSeg) {
     const horizon = H * 0.5;
+    const tod = timeOfDay();
+
     const sky = ctx.createLinearGradient(0, 0, 0, horizon);
-    sky.addColorStop(0,'#3a8fd4'); sky.addColorStop(0.55,'#8fc7e8'); sky.addColorStop(1,'#ffe1a8');
+    sky.addColorStop(0,   hexLerp(SKY_DAY[0], SKY_SET[0], tod));
+    sky.addColorStop(0.55,hexLerp(SKY_DAY[1], SKY_SET[1], tod));
+    sky.addColorStop(1,   hexLerp(SKY_DAY[2], SKY_SET[2], tod));
     ctx.fillStyle = sky; ctx.fillRect(0, 0, W, horizon + 2);
 
     const shift = -(bgShift * 0.6 + playerX * 30);
 
-    // sun
-    const sunX = W*0.68 + shift*0.3, sunY = horizon - H*0.13, sunR = Math.min(W,H)*0.09;
-    const glow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, sunR*3.2);
-    glow.addColorStop(0,'rgba(255,240,200,0.95)'); glow.addColorStop(0.3,'rgba(255,216,107,0.55)'); glow.addColorStop(1,'rgba(255,216,107,0)');
+    // clouds
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, W, horizon); ctx.clip();
+    for (const c of clouds) {
+      c.x -= c.sp * 0.00018;
+      if (c.x < -0.25) c.x = 1.25;
+      const cx = (c.x * W) + shift * 0.15 * c.sp;
+      const cy = c.y * H;
+      const r = Math.min(W,H) * 0.05 * c.s;
+      ctx.fillStyle = `rgba(255,${Math.round(245-tod*30)},${Math.round(235-tod*55)},${0.55 - tod*0.15})`;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.arc(cx + r*1.1, cy + r*0.15, r*0.8, 0, Math.PI*2);
+      ctx.arc(cx - r*1.0, cy + r*0.2, r*0.7, 0, Math.PI*2);
+      ctx.arc(cx + r*0.3, cy - r*0.4, r*0.7, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // sun — lowers toward horizon at sunset
+    const sunX = W*0.68 + shift*0.3, sunY = horizon - H*(0.13 - tod*0.06), sunR = Math.min(W,H)*(0.09 + tod*0.02);
+    const glowMid = hexLerp('#ffd86b', '#ff8a5a', tod);
+    const glow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, sunR*3.4);
+    glow.addColorStop(0,'rgba(255,240,200,0.95)'); glow.addColorStop(0.3, glowMid.replace('rgb','rgba').replace(')',',0.55)')); glow.addColorStop(1, glowMid.replace('rgb','rgba').replace(')',',0)'));
     ctx.fillStyle = glow; ctx.fillRect(0, 0, W, horizon);
-    ctx.fillStyle = '#fff6df';
+    ctx.fillStyle = hexLerp(SUN_DAY, SUN_SET, tod);
     ctx.beginPath(); ctx.arc(sunX, sunY, sunR, 0, Math.PI*2); ctx.fill();
 
     // ocean (right)
@@ -408,7 +451,7 @@
     ctx.save();
     ctx.beginPath(); ctx.rect(W*0.42, oceanTop, W, horizon-oceanTop+3); ctx.clip();
     const ocean = ctx.createLinearGradient(0, oceanTop, 0, horizon+3);
-    ocean.addColorStop(0,'#2b86c5'); ocean.addColorStop(1,'#1c6aa8');
+    ocean.addColorStop(0, hexLerp(OCN_DAY[0], OCN_SET[0], tod)); ocean.addColorStop(1, hexLerp(OCN_DAY[1], OCN_SET[1], tod));
     ctx.fillStyle = ocean; ctx.fillRect(W*0.42, oceanTop, W, horizon-oceanTop+3);
     ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1;
     for (let i=0;i<6;i++) {
