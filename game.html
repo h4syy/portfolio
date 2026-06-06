@@ -394,6 +394,10 @@
       const side = (m % 2) ? 1 : -1;
       segments[m].sprites.push({ type:'parkedcar', side, offset:1.18, color: PARK[(m/64|0) % PARK.length] });
     }
+    // roadside spectators cheering
+    for (let m = 60; m < segments.length; m += 95) {
+      segments[m].sprites.push({ type:'crowd', side:-1, offset:1.12 });
+    }
     // overhead highway gantry signs spanning the road
     const SIGNS = ['COAST ↑', 'BEACH ↑', 'PIER ↑', 'NEXT EXIT'];
     for (let m = 70, gi = 0; m < segments.length; m += 115, gi++) {
@@ -1222,6 +1226,18 @@
     }
     if (sp.type === 'parkedcar') {
       drawCar(x, baseY, scale * 1.7, sp.color, clipY, false);
+      return;
+    }
+    if (sp.type === 'crowd') {
+      const fh = Math.max(4, s*95), cols = ['#e74c3c','#3498db','#2ecc71','#f1c40f','#ecf0f1'];
+      const bob = Math.sin(performance.now()/200 + sp.offset*7);
+      for (let i=0;i<4;i++) {
+        const fx = x + (i-1.5)*fh*0.5, lift = (i%2 ? bob : -bob) * fh*0.06;
+        ctx.fillStyle = cols[(i + (sp.offset*10|0)) % cols.length];
+        ctx.fillRect(fx - fh*0.12, baseY - fh*0.6 + lift, fh*0.24, fh*0.6);
+        ctx.fillStyle = '#e8b888';
+        ctx.beginPath(); ctx.arc(fx, baseY - fh*0.68 + lift, fh*0.12, 0, Math.PI*2); ctx.fill();
+      }
       return;
     }
     if (sp.type === 'campfire') {
