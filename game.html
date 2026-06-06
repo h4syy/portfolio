@@ -705,6 +705,10 @@
   const clouds = [];
   for (let i=0;i<6;i++) clouds.push({ x: Math.random()*1.2, y: 0.08 + Math.random()*0.26, s: 0.5 + Math.random()*0.9, sp: 0.2 + Math.random()*0.4 });
 
+  // stars (pre-generated once; drawn only at deep dusk — cheap fillRects)
+  const stars = [];
+  for (let i=0;i<44;i++) stars.push({ x: Math.random(), y: Math.random()*0.62, s: Math.random()<0.3?2:1, p: Math.random()*6.28 });
+
   // seagulls
   const birds = [];
   for (let i=0;i<5;i++) birds.push({ x: Math.random(), y: 0.12 + Math.random()*0.22, s: 0.6 + Math.random()*0.7, sp: 0.3 + Math.random()*0.5, flap: Math.random()*6 });
@@ -760,6 +764,28 @@
     ctx.fillStyle = sky; ctx.fillRect(0, 0, W, horizon + 2);
 
     const shift = -(bgShift * 0.6 + playerX * 30);
+
+    // stars at deep dusk (cheap fillRect dots)
+    if (tod > 0.55) {
+      const sa = (tod - 0.55) / 0.45, now = performance.now();
+      for (const st of stars) {
+        const tw = 0.5 + 0.5*Math.sin(now/600 + st.p);
+        ctx.fillStyle = `rgba(255,255,238,${(sa*0.85*tw).toFixed(3)})`;
+        ctx.fillRect(st.x*W, st.y*horizon, st.s, st.s);
+      }
+      // moon (single gradient/frame)
+      const ma = (tod - 0.55) / 0.45;
+      const mx = W*0.2 + shift*0.05, my = horizon*0.3, mr = Math.min(W,H)*0.05;
+      const mg = ctx.createRadialGradient(mx, my, 0, mx, my, mr*2.4);
+      mg.addColorStop(0, `rgba(255,250,230,${ma*0.45})`); mg.addColorStop(1, 'rgba(255,250,230,0)');
+      ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(mx, my, mr*2.4, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = `rgba(248,246,235,${ma})`; ctx.beginPath(); ctx.arc(mx, my, mr, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = `rgba(222,219,206,${ma*0.6})`;
+      ctx.beginPath();
+      ctx.arc(mx - mr*0.3, my - mr*0.2, mr*0.18, 0, Math.PI*2);
+      ctx.arc(mx + mr*0.25, my + mr*0.28, mr*0.12, 0, Math.PI*2);
+      ctx.fill();
+    }
 
     // distant snow-capped mountains (farthest layer, behind the hills)
     {
