@@ -422,6 +422,12 @@
     for (let m = 70, gi = 0; m < segments.length; m += 115, gi++) {
       segments[m].sprites.push({ type:'gantry', side:1, offset:0, text: SIGNS[gi % SIGNS.length] });
     }
+    // checkpoint arches spanning the road (drive through for a bonus)
+    checkpointSet.clear();
+    for (let m = 130; m < segments.length; m += 150) {
+      segments[m].sprites.push({ type:'checkpoint', side:1, offset:0 });
+      checkpointSet.add(m);
+    }
   }
 
   const tokens = [];
@@ -470,6 +476,8 @@
     { at: 28000, body:'#ffd24a', lower:'#e0a800', name:'Gold' },
   ];
   let liveryIdx = 0;
+  const checkpointSet = new Set();
+  let lastCheckpoint = -1;
   let steer = 0, camDepth = CAM_DEPTH;
   let drawDist = DRAW_DIST, fpsAvg = 60;
   const bestToBeat = best;
@@ -674,6 +682,14 @@
         if (combo >= 3) { floatText('COMBO x' + combo + ' BANKED!', '#ffd86b'); Sound.chime(); }
         combo = 0;
       }
+    }
+
+    // checkpoint pass bonus
+    if (checkpointSet.has(pSeg.index) && pSeg.index !== lastCheckpoint) {
+      lastCheckpoint = pSeg.index;
+      score += 200;
+      floatText('CHECKPOINT +200', '#7affd8');
+      Sound.tick(700); buzz(15); collectFlash = 0.35;
     }
 
     // sun-token collection
@@ -1238,6 +1254,7 @@
       if (p.scale <= 0) continue;
       for (const sp of seg.sprites) {
         if (sp.type === 'gantry') { drawGantry(p, sp.text); continue; }
+        if (sp.type === 'checkpoint') { drawCheckpoint(p); continue; }
         const sx = p.x + (p.scale * sp.side * sp.offset * ROAD_WIDTH * W/2);
         drawSprite(sp, sx, p.y, p.scale, seg._clip);
       }
@@ -1308,6 +1325,25 @@
       ctx.fillText(text, p.x, sy + beamH*0.78);
       ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     }
+  }
+
+  function drawCheckpoint(p) {
+    const roadHalf = p.w;
+    if (roadHalf < 2) return;
+    const legX1 = p.x - roadHalf*1.15, legX2 = p.x + roadHalf*1.15;
+    const height = Math.max(40, p.scale * W * 900), topY = p.y - height;
+    const legW = Math.max(2, p.scale * W * 45), beamH = Math.max(4, p.scale * W * 145);
+    ctx.fillStyle = '#d8d8e0';
+    ctx.fillRect(legX1 - legW/2, topY, legW, p.y - topY);
+    ctx.fillRect(legX2 - legW/2, topY, legW, p.y - topY);
+    // checkered banner
+    const bw = legX2 - legX1, cols = Math.max(4, Math.round(bw / Math.max(6, beamH))), cw = bw / cols;
+    for (let i=0;i<cols;i++) { ctx.fillStyle = (i%2) ? '#1a1a1a' : '#ffffff'; ctx.fillRect(legX1 + i*cw, topY, cw+1, beamH); }
+    // flags on top
+    ctx.fillStyle = '#e74c3c';
+    ctx.beginPath(); ctx.moveTo(legX1, topY); ctx.lineTo(legX1, topY-beamH*1.2); ctx.lineTo(legX1+beamH*0.9, topY-beamH*0.8); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#3498db';
+    ctx.beginPath(); ctx.moveTo(legX2, topY); ctx.lineTo(legX2, topY-beamH*1.2); ctx.lineTo(legX2-beamH*0.9, topY-beamH*0.8); ctx.closePath(); ctx.fill();
   }
 
   function drawSprite(sp, x, baseY, scale, clipY) {
