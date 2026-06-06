@@ -759,6 +759,9 @@
   // hang-glider
   const glider = { x: 0.6, y: 0.18, sp: 0.4 };
 
+  // beach kites (pre-generated, swaying)
+  const kites = [{ x:0.72, y:0.27, p:0, h:'#e74c3c' }, { x:0.85, y:0.21, p:2.2, h:'#3498db' }];
+
   // drifting petals (foreground ambient, tiny fixed pool)
   const petals = [];
   for (let i=0;i<12;i++) petals.push({ x:Math.random(), y:Math.random(), vx:-0.02-Math.random()*0.03, vy:0.012+Math.random()*0.02, rot:Math.random()*6, rs:(Math.random()-0.5)*2, sz:3+Math.random()*4, h: Math.random()<0.5?'#ffd9e0':'#fff2c0' });
@@ -980,6 +983,26 @@
       ctx.strokeStyle = '#333'; ctx.lineWidth = Math.max(1, gs*0.06);
       ctx.beginPath(); ctx.moveTo(gx, gy+gs*0.2); ctx.lineTo(gx, gy+gs*0.7); ctx.stroke();
       ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(gx, gy+gs*0.8, gs*0.12, 0, Math.PI*2); ctx.fill();
+    }
+
+    // beach kites swaying in the wind
+    {
+      const nowK = performance.now();
+      for (const k of kites) {
+        const sway = Math.sin(nowK/1200 + k.p)*0.02;
+        const kx = (k.x + sway)*W + shift*0.08, ky = k.y*H, ks = Math.min(W,H)*0.022;
+        // string to the beach
+        ctx.strokeStyle = 'rgba(120,120,120,0.4)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(kx, ky+ks); ctx.quadraticCurveTo(kx - ks, (ky+horizon)/2, kx - ks*0.5, horizon); ctx.stroke();
+        // diamond
+        ctx.fillStyle = k.h;
+        ctx.beginPath(); ctx.moveTo(kx, ky-ks); ctx.lineTo(kx+ks*0.7, ky); ctx.lineTo(kx, ky+ks); ctx.lineTo(kx-ks*0.7, ky); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = Math.max(1, ks*0.05);
+        ctx.beginPath(); ctx.moveTo(kx, ky-ks); ctx.lineTo(kx, ky+ks); ctx.moveTo(kx-ks*0.7, ky); ctx.lineTo(kx+ks*0.7, ky); ctx.stroke();
+        // tail bows
+        ctx.fillStyle = k.h;
+        for (let t=1;t<=3;t++) { ctx.beginPath(); ctx.arc(kx, ky+ks+t*ks*0.4 + Math.sin(nowK/300+t)*2, ks*0.1, 0, Math.PI*2); ctx.fill(); }
+      }
     }
 
     // sun — lowers toward horizon at sunset
