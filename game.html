@@ -597,6 +597,12 @@
       }
     }
 
+    // brake smoke from the rear tires
+    if (keys.brake && speed > MAX_SPEED*0.45 && Math.random() < 0.6) {
+      dust.push({ x: W/2 + visualTilt*10 + (Math.random()-0.5)*Math.min(W,H)*0.1, y: H - H*0.05,
+        vx:(Math.random()-0.5)*45, vy:-18-Math.random()*28, life:0.6, size:5+Math.random()*5, tint:'rgba(120,120,120,1)' });
+    }
+
     // rumble-strip tactile feedback at the road edge
     const ar = Math.abs(playerX);
     if (ar > 0.9 && ar <= 1.06 && speed > MAX_SPEED * 0.15) {
