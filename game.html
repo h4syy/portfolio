@@ -1364,6 +1364,18 @@
       if (collectFlash < 0.01) collectFlash = 0;
     }
 
+    // chromatic aberration speed fringe (red left / cyan right) at top speed
+    const ca = (boosting ? 0.35 : 0) + Math.max(0, speedPct - 0.72) * 1.1;
+    if (ca > 0.02) {
+      const a = Math.min(0.4, ca), fw = W * 0.13;
+      const gl = ctx.createLinearGradient(0, 0, fw, 0);
+      gl.addColorStop(0, `rgba(255,40,60,${a*0.5})`); gl.addColorStop(1, 'rgba(255,40,60,0)');
+      ctx.fillStyle = gl; ctx.fillRect(0, 0, fw, H);
+      const gr = ctx.createLinearGradient(W, 0, W - fw, 0);
+      gr.addColorStop(0, `rgba(40,180,255,${a*0.5})`); gr.addColorStop(1, 'rgba(40,180,255,0)');
+      ctx.fillStyle = gr; ctx.fillRect(W - fw, 0, fw, H);
+    }
+
     nitroFill.style.width = (nitro * 100) + '%';
     nitroFill.classList.toggle('boosting', boosting);
 
