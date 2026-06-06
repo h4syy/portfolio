@@ -348,6 +348,10 @@
       segments[m].sprites.push({ type:'beachhut', side:1, offset:1.5, hue: Math.floor(Math.random()*3) });
       if (segments[m+3]) segments[m+3].sprites.push({ type:'umbrella', side:1, offset:1.25, hue: Math.floor(Math.random()*4) });
     }
+    // ferris wheel landmark on the resort (left) side
+    for (let m = 90; m < segments.length; m += 160) {
+      segments[m].sprites.push({ type:'ferris', side:-1, offset:2.0 });
+    }
   }
 
   const tokens = [];
@@ -1017,6 +1021,34 @@
       const refl = sp.side > 0 ? '#ff8a3a' : '#ff4a4a';
       ctx.fillStyle = refl;
       ctx.beginPath(); ctx.arc(x, baseY - ph, Math.max(1.5, s*8), 0, Math.PI*2); ctx.fill();
+      return;
+    }
+    if (sp.type === 'ferris') {
+      const R = Math.max(10, s*240);
+      const cx = x, cyW = baseY - R - Math.max(6, s*50);
+      const CABIN = ['#e74c3c','#f39c12','#2ecc71','#3498db','#9b59b6','#ecf0f1'];
+      // support legs
+      ctx.strokeStyle = '#6a6a74'; ctx.lineWidth = Math.max(2, s*16);
+      ctx.beginPath();
+      ctx.moveTo(cx, cyW); ctx.lineTo(cx - R*0.55, baseY);
+      ctx.moveTo(cx, cyW); ctx.lineTo(cx + R*0.55, baseY);
+      ctx.stroke();
+      // rim
+      ctx.strokeStyle = '#d6d6e0'; ctx.lineWidth = Math.max(1.5, s*9);
+      ctx.beginPath(); ctx.arc(cx, cyW, R, 0, Math.PI*2); ctx.stroke();
+      // spokes + cabins (slow rotation)
+      const rot = performance.now()/4200, n = 12;
+      for (let i=0;i<n;i++) {
+        const a = rot + i*Math.PI*2/n;
+        const ex = cx + Math.cos(a)*R, ey = cyW + Math.sin(a)*R;
+        ctx.strokeStyle = 'rgba(200,200,212,0.7)'; ctx.lineWidth = Math.max(1, s*3.5);
+        ctx.beginPath(); ctx.moveTo(cx, cyW); ctx.lineTo(ex, ey); ctx.stroke();
+        ctx.fillStyle = CABIN[i % CABIN.length];
+        ctx.beginPath(); ctx.arc(ex, ey, Math.max(2, s*15), 0, Math.PI*2); ctx.fill();
+      }
+      // hub
+      ctx.fillStyle = '#9a9aa4';
+      ctx.beginPath(); ctx.arc(cx, cyW, Math.max(2, s*19), 0, Math.PI*2); ctx.fill();
       return;
     }
     if (sp.type === 'beachhut') {
