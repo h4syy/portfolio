@@ -534,7 +534,9 @@
     playerX -= dx * speedPct * playerSeg.curve * CENTRIFUGAL;
 
     boosting = keys.boost && nitro > 0 && speed > MAX_SPEED * 0.3;
-    const maxS = MAX_SPEED * (boosting ? 1.45 : 1);
+    // dynamic difficulty — top speed ramps up the further you drive (+40% max)
+    const diffMul = 1 + Math.min(0.4, distance / 50000);
+    const maxS = MAX_SPEED * diffMul * (boosting ? 1.45 : 1);
     if (boosting) { nitro = Math.max(0, nitro - dt*0.42); speed += ACCEL * 1.9 * dt; addShake(0.7); }
     else { nitro = Math.min(1, nitro + dt*0.13); }
 
@@ -698,8 +700,8 @@
   const birds = [];
   for (let i=0;i<5;i++) birds.push({ x: Math.random(), y: 0.12 + Math.random()*0.22, s: 0.6 + Math.random()*0.7, sp: 0.3 + Math.random()*0.5, flap: Math.random()*6 });
 
-  // banner-towing aeroplane
-  const plane = { x: 0.85, y: 0.1, sp: 0.55 };
+  // banner-towing aeroplane (flies in the mid sky, below the HUD)
+  const plane = { x: 0.85, y: 0.3, sp: 0.55 };
 
   // drifting hot-air balloon
   const balloon = { x: 0.25, y: 0.2, sp: 0.3 };
@@ -782,7 +784,7 @@
 
     // banner-towing aeroplane
     plane.x -= plane.sp * 0.00035;
-    if (plane.x < -0.55) { plane.x = 1.4; plane.y = 0.07 + Math.random()*0.13; }
+    if (plane.x < -0.55) { plane.x = 1.4; plane.y = 0.26 + Math.random()*0.1; }
     {
       const px = plane.x * W, py = plane.y * H, ps = Math.min(W,H)*0.022;
       // plane body (nose points left, direction of travel)
