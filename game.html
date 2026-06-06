@@ -41,6 +41,13 @@
   }
   .hud-val.speed { color: #ffd86b; }
   .hud-unit { font-size: 0.6rem; color: rgba(255,255,255,0.6); letter-spacing: 0.1em; }
+  .rev-bar {
+    width: clamp(70px, 14vw, 110px); height: 5px; margin: 5px 0 3px;
+    background: rgba(255,255,255,0.18); border-radius: 3px; overflow: hidden;
+  }
+  #rev-fill { height: 100%; width: 0%; background: #7affd8; transition: width 0.06s linear, background 0.1s linear; }
+  #rev-fill.shift { background: #fff !important; }
+  #gear { color: #ffd86b; font-weight: 700; }
 
   /* ── BACK LINK ── */
   .back-link {
@@ -235,6 +242,8 @@
       <span class="hud-label">Speed</span>
       <span class="hud-val speed" id="hud-speed">0</span>
       <span class="hud-unit">KM/H · BEST <span id="hud-best">0</span>M</span>
+      <div class="rev-bar"><div id="rev-fill"></div></div>
+      <span class="hud-unit">GEAR <span id="gear">1</span></span>
     </div>
   </div>
 
@@ -432,6 +441,9 @@
   const comboEl = document.getElementById('combo');
   const comboN = document.getElementById('combo-n');
   const comboFill = document.getElementById('combo-fill');
+  const gearEl = document.getElementById('gear');
+  const revFill = document.getElementById('rev-fill');
+  let prevGear = 1;
 
   function floatText(text, color) {
     const el = document.createElement('div');
@@ -1365,6 +1377,22 @@
     hudSpeed.textContent = Math.floor((speed/MAX_SPEED)*220);
     hudBest.textContent  = Math.floor(best).toLocaleString();
     hudScore.textContent = Math.floor(score).toLocaleString();
+
+    // tachometer + gear
+    const GEARS = 6;
+    const gear = Math.min(GEARS, Math.max(1, Math.floor(speedPct * GEARS) + 1));
+    const bandLo = (gear-1)/GEARS, bandHi = gear/GEARS;
+    let rev = (speedPct - bandLo) / (bandHi - bandLo);
+    rev = Math.max(0, Math.min(1.05, rev));
+    revFill.style.width = Math.min(100, rev*100) + '%';
+    revFill.style.background = rev > 0.85 ? '#ff5a4a' : (rev > 0.65 ? '#ffd86b' : '#7affd8');
+    gearEl.textContent = gear;
+    if (gear > prevGear) {
+      Sound.tick(260); buzz(6);
+      revFill.classList.add('shift');
+      setTimeout(() => revFill.classList.remove('shift'), 90);
+    }
+    prevGear = gear;
   }
 
   // ── INPUT ──
