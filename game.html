@@ -411,6 +411,12 @@
     for (let m = 130; m < segments.length; m += 200) {
       segments[m].sprites.push({ type:'pier', side:1, offset:1.5 });
     }
+    // roadside bushes & flowers (greenery at the verge)
+    const FLOWER = ['#ff5a8a','#ffd24a','#ffffff','#b06bff'];
+    for (let m = 14; m < segments.length; m += 17) {
+      const side = (m % 2) ? 1 : -1;
+      segments[m].sprites.push({ type:'bush', side, offset:1.09, fc: FLOWER[(m/17|0) % FLOWER.length] });
+    }
     // overhead highway gantry signs spanning the road
     const SIGNS = ['COAST ↑', 'BEACH ↑', 'PIER ↑', 'NEXT EXIT'];
     for (let m = 70, gi = 0; m < segments.length; m += 115, gi++) {
@@ -1278,6 +1284,22 @@
   function drawSprite(sp, x, baseY, scale, clipY) {
     if (baseY > clipY + 4) return;
     const s = scale * W;
+    if (sp.type === 'bush') {
+      const bs = Math.max(3, s*48);
+      ctx.fillStyle = '#2e8b4f';
+      ctx.beginPath();
+      ctx.arc(x, baseY - bs*0.4, bs*0.6, 0, Math.PI*2);
+      ctx.arc(x - bs*0.5, baseY - bs*0.2, bs*0.5, 0, Math.PI*2);
+      ctx.arc(x + bs*0.5, baseY - bs*0.2, bs*0.5, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = sp.fc;
+      ctx.beginPath();
+      ctx.arc(x - bs*0.3, baseY - bs*0.5, bs*0.13, 0, Math.PI*2);
+      ctx.arc(x + bs*0.32, baseY - bs*0.62, bs*0.13, 0, Math.PI*2);
+      ctx.arc(x, baseY - bs*0.3, bs*0.12, 0, Math.PI*2);
+      ctx.fill();
+      return;
+    }
     if (sp.type === 'post') {
       const ph = Math.max(4, s*70), pw = Math.max(1.5, s*5);
       ctx.fillStyle = '#f0ece4'; ctx.fillRect(x - pw/2, baseY - ph, pw, ph);
