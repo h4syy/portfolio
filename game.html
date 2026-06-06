@@ -446,11 +446,13 @@
     traffic.length = 0;
     const count = Math.floor(segments.length / 60);
     for (let i=0;i<count;i++) {
+      const bike = Math.random() < 0.3;
       traffic.push({
         offset: (Math.random()<0.5?-1:1) * (0.15 + Math.random()*0.7),
         z: Math.floor(Math.random()*segments.length) * SEG_LEN,
-        speed: MAX_SPEED/4 + Math.random()*(MAX_SPEED/4),
+        speed: (bike ? MAX_SPEED/3 : MAX_SPEED/4) + Math.random()*(MAX_SPEED/4),
         color: TRAFFIC_COLORS[i % TRAFFIC_COLORS.length],
+        bike,
       });
     }
   }
@@ -728,12 +730,16 @@
       Sound.chime(); buzz([30,40,30]); addShake(4);
       // progressive difficulty — more traffic the further you get
       if (traffic.length < 30) {
-        for (let k = 0; k < 2; k++) traffic.push({
-          offset: (Math.random()<0.5?-1:1) * (0.15 + Math.random()*0.7),
-          z: (position + (8000 + Math.random()*14000)) % trackLength,
-          speed: MAX_SPEED/4 + Math.random()*(MAX_SPEED/3),
-          color: TRAFFIC_COLORS[traffic.length % TRAFFIC_COLORS.length],
-        });
+        for (let k = 0; k < 2; k++) {
+          const bk = Math.random() < 0.3;
+          traffic.push({
+            offset: (Math.random()<0.5?-1:1) * (0.15 + Math.random()*0.7),
+            z: (position + (8000 + Math.random()*14000)) % trackLength,
+            speed: (bk ? MAX_SPEED/3 : MAX_SPEED/4) + Math.random()*(MAX_SPEED/3),
+            color: TRAFFIC_COLORS[traffic.length % TRAFFIC_COLORS.length],
+            bike: bk,
+          });
+        }
       }
     }
   }
@@ -1271,7 +1277,8 @@
       if (p.scale <= 0) continue;
       const sx = p.x + (p.scale * car.offset * ROAD_WIDTH * W/2);
       const braking = rel < 12 && speed > car.speed * 1.05;
-      drawCar(sx, p.y, p.scale * 2.2, car.color, seg._clip, braking);
+      if (car.bike) drawBike(sx, p.y, p.scale * 2.2, car.color, seg._clip, braking);
+      else drawCar(sx, p.y, p.scale * 2.2, car.color, seg._clip, braking);
     }
     // sun-tokens
     const tarr = [];
@@ -1569,6 +1576,28 @@
     else { ctx.shadowBlur = 0; ctx.fillStyle = '#d04030'; }
     ctx.fillRect(x-w*0.46, top+h*0.52, w*0.12, h*0.16);
     ctx.fillRect(x+w*0.34, top+h*0.52, w*0.12, h*0.16);
+    ctx.shadowBlur = 0;
+  }
+
+  function drawBike(x, baseY, scale, color, clipY, braking) {
+    if (baseY > clipY + 4) return;
+    const w = Math.min(W*0.12, scale * W * 175), h = w*1.15, top = baseY - h;
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.beginPath(); ctx.ellipse(x, baseY, w*0.5, h*0.1, 0, 0, Math.PI*2); ctx.fill();
+    // rear wheel
+    ctx.fillStyle = '#1a1a1a'; ctx.fillRect(x - w*0.16, top + h*0.66, w*0.32, h*0.32);
+    // body
+    ctx.fillStyle = color; ctx.fillRect(x - w*0.22, top + h*0.42, w*0.44, h*0.3);
+    // rider torso
+    ctx.fillStyle = '#33373f'; ctx.fillRect(x - w*0.2, top + h*0.12, w*0.4, h*0.38);
+    // helmet
+    ctx.fillStyle = shade(color, 30);
+    ctx.beginPath(); ctx.arc(x, top + h*0.12, w*0.2, 0, Math.PI*2); ctx.fill();
+    // tail light
+    if (braking) { ctx.shadowColor = '#ff2a2a'; ctx.shadowBlur = w*0.4; ctx.fillStyle = '#ff3030'; }
+    else { ctx.shadowBlur = 0; ctx.fillStyle = '#d04030'; }
+    ctx.fillRect(x - w*0.1, top + h*0.62, w*0.2, h*0.1);
     ctx.shadowBlur = 0;
   }
 
