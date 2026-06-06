@@ -288,7 +288,7 @@
       index: n,
       p1: { world:{ y:prevY, z:n*SEG_LEN }, camera:{}, screen:{} },
       p2: { world:{ y:y, z:(n+1)*SEG_LEN }, camera:{}, screen:{} },
-      curve, sprites: [], _clip: H,
+      curve, sprites: [], skids: [], _clip: H,
       color: Math.floor(n / RUMBLE_LEN) % 2 ? COLORS.DARK : COLORS.LIGHT,
     });
   }
@@ -495,6 +495,17 @@
       spawnDust(W/2 - (playerX>0?1:-1)*w*0.4, H - H*0.06, '#d8b06a');
     }
     updateDust(dt);
+
+    // tire skid marks — lay rubber on hard cornering / braking / off-road
+    const skidding = (Math.abs(steer) > 0.55 && speed > MAX_SPEED*0.45)
+      || (keys.brake && speed > MAX_SPEED*0.4)
+      || offroad;
+    if (skidding && Math.abs(playerX) < 1.4) {
+      for (const seg of [playerSeg, segments[(playerSeg.index+1) % segments.length]]) {
+        seg.skids.push({ off: playerX - 0.07 }, { off: playerX + 0.07 });
+        while (seg.skids.length > 12) seg.skids.shift();
+      }
+    }
 
     // rumble-strip tactile feedback at the road edge
     const ar = Math.abs(playerX);
@@ -911,6 +922,16 @@
       seg._clip = maxY;
       if (seg.p1.camera.z <= camDepth || seg.p2.screen.y >= seg.p1.screen.y || seg.p2.screen.y >= maxY) continue;
       drawSegment(seg, fog);
+      if (seg.skids.length) {
+        const p1 = seg.p1.screen, p2 = seg.p2.screen;
+        const mh = p1.y - p2.y + 1;
+        const mw = Math.max(2, p1.w * 0.07);
+        ctx.fillStyle = 'rgba(26,20,20,0.42)';
+        for (const sk of seg.skids) {
+          const sx = p1.x + sk.off * p1.w;
+          ctx.fillRect(sx - mw/2, p2.y, mw, mh);
+        }
+      }
       maxY = seg.p2.screen.y;
     }
   }
