@@ -411,6 +411,18 @@
   // nitro + combo
   let nitro = 1, boosting = false, combo = 0, score = 0, lastMilestone = 0, comboTimer = 0;
   const COMBO_WINDOW = 3.5;
+
+  // unlockable car liveries by distance
+  const LIVERIES = [
+    { at: 0,     body:'#e63946', lower:'#c92f3c', name:'Coral' },
+    { at: 2000,  body:'#f39c12', lower:'#d4860a', name:'Sunset Orange' },
+    { at: 5000,  body:'#2ecc71', lower:'#27ae60', name:'Palm Green' },
+    { at: 9000,  body:'#3498db', lower:'#2980b9', name:'Ocean Blue' },
+    { at: 14000, body:'#9b59b6', lower:'#8e44ad', name:'Twilight Purple' },
+    { at: 20000, body:'#222831', lower:'#11151c', name:'Midnight' },
+    { at: 28000, body:'#ffd24a', lower:'#e0a800', name:'Gold' },
+  ];
+  let liveryIdx = 0;
   let steer = 0, camDepth = CAM_DEPTH;
   let drawDist = DRAW_DIST, fpsAvg = 60;
   const bestToBeat = best;
@@ -587,6 +599,13 @@
       }
       // reset near-miss flag once the car is well behind/ahead again
       if (carSeg.index !== pSeg.index) car.nearMiss = false;
+    }
+
+    // unlock next car livery by distance
+    if (liveryIdx < LIVERIES.length - 1 && distance >= LIVERIES[liveryIdx + 1].at) {
+      liveryIdx++;
+      floatText('NEW RIDE: ' + LIVERIES[liveryIdx].name + '!', LIVERIES[liveryIdx].body);
+      Sound.chime(); buzz([20,30,20,30]); collectFlash = 0.5; addShake(4);
     }
 
     // combo flow decay — lapse banks the streak
@@ -1233,9 +1252,10 @@
 
     ctx.save(); ctx.translate(cx, baseY); ctx.rotate(visualTilt * 0.05); ctx.translate(-cx, -baseY);
 
-    // body
-    ctx.fillStyle = '#e63946'; roundRect(cx-w/2, top, w, h*0.66, 10); ctx.fill();
-    ctx.fillStyle = '#c92f3c'; roundRect(cx-w/2, top+h*0.4, w, h*0.4, 10); ctx.fill();
+    // body (current livery)
+    const lv = LIVERIES[liveryIdx];
+    ctx.fillStyle = lv.body;  roundRect(cx-w/2, top, w, h*0.66, 10); ctx.fill();
+    ctx.fillStyle = lv.lower; roundRect(cx-w/2, top+h*0.4, w, h*0.4, 10); ctx.fill();
     // subtle top highlight
     ctx.fillStyle = 'rgba(255,255,255,0.12)'; roundRect(cx-w/2, top, w, h*0.14, 10); ctx.fill();
     // seats
