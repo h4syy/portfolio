@@ -730,6 +730,9 @@
   const balloon = { x: 0.25, y: 0.2, sp: 0.3 };
   const BALLOON_COLS = ['#e74c3c','#f7b733','#ffffff','#3aa0d8'];
 
+  // hang-glider
+  const glider = { x: 0.6, y: 0.18, sp: 0.4 };
+
   // leaping dolphins (x is fraction across full width, seaward/right half)
   const dolphins = [];
   for (let i=0;i<3;i++) dolphins.push({ x: 0.55 + Math.random()*0.38, t: Math.random()*9, period: 6 + Math.random()*5 });
@@ -932,6 +935,21 @@
       ctx.moveTo(bx-br*0.55, by+br*0.8); ctx.lineTo(bx-br*0.16, by+br*1.5);
       ctx.moveTo(bx+br*0.55, by+br*0.8); ctx.lineTo(bx+br*0.16, by+br*1.5);
       ctx.stroke();
+    }
+
+    // hang-glider drifting across the sky
+    glider.x -= glider.sp * 0.00009;
+    if (glider.x < -0.1) { glider.x = 1.1; glider.y = 0.13 + Math.random()*0.12; }
+    {
+      const gx = glider.x*W + shift*0.1, gy = glider.y*H + Math.sin(performance.now()/1600)*6;
+      const gs = Math.min(W,H)*0.032;
+      ctx.fillStyle = '#e74c3c';
+      ctx.beginPath(); ctx.moveTo(gx-gs, gy); ctx.lineTo(gx+gs, gy); ctx.lineTo(gx, gy+gs*0.5); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#f1c40f';
+      ctx.beginPath(); ctx.moveTo(gx-gs*0.4, gy); ctx.lineTo(gx+gs*0.4, gy); ctx.lineTo(gx, gy+gs*0.3); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#333'; ctx.lineWidth = Math.max(1, gs*0.06);
+      ctx.beginPath(); ctx.moveTo(gx, gy+gs*0.2); ctx.lineTo(gx, gy+gs*0.7); ctx.stroke();
+      ctx.fillStyle = '#333'; ctx.beginPath(); ctx.arc(gx, gy+gs*0.8, gs*0.12, 0, Math.PI*2); ctx.fill();
     }
 
     // sun — lowers toward horizon at sunset
