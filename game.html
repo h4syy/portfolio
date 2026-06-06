@@ -388,6 +388,12 @@
     for (let m = 48; m < segments.length; m += 75) {
       segments[m].sprites.push({ type:'campfire', side:1, offset:1.35 });
     }
+    // parked cars on the shoulder
+    const PARK = ['#bdc3c7','#34495e','#e67e22','#16a085','#c0392b'];
+    for (let m = 33; m < segments.length; m += 64) {
+      const side = (m % 2) ? 1 : -1;
+      segments[m].sprites.push({ type:'parkedcar', side, offset:1.18, color: PARK[(m/64|0) % PARK.length] });
+    }
     // overhead highway gantry signs spanning the road
     const SIGNS = ['COAST ↑', 'BEACH ↑', 'PIER ↑', 'NEXT EXIT'];
     for (let m = 70, gi = 0; m < segments.length; m += 115, gi++) {
@@ -1212,6 +1218,10 @@
       const refl = sp.side > 0 ? '#ff8a3a' : '#ff4a4a';
       ctx.fillStyle = refl;
       ctx.beginPath(); ctx.arc(x, baseY - ph, Math.max(1.5, s*8), 0, Math.PI*2); ctx.fill();
+      return;
+    }
+    if (sp.type === 'parkedcar') {
+      drawCar(x, baseY, scale * 1.7, sp.color, clipY, false);
       return;
     }
     if (sp.type === 'campfire') {
