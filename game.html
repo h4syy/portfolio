@@ -177,6 +177,24 @@
     .hint-mobile { display: inline; }
   }
 
+  /* ── COMBO FLOW METER ── */
+  #combo {
+    position: fixed; top: 15%; left: 50%; transform: translateX(-50%);
+    z-index: 11; text-align: center; pointer-events: none;
+    opacity: 0; transition: opacity 0.2s ease;
+  }
+  #combo.show { opacity: 1; }
+  #combo-label { font-size: 0.55rem; letter-spacing: 0.3em; color: #7affd8; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+  #combo-n {
+    font-weight: 700; font-size: clamp(1.6rem, 5vw, 2.6rem); color: #fff;
+    text-shadow: 0 2px 14px rgba(0,0,0,0.5); line-height: 1; margin-top: 2px;
+  }
+  .combo-bar {
+    width: clamp(80px, 20vw, 160px); height: 4px; margin: 6px auto 0;
+    background: rgba(255,255,255,0.22); border-radius: 3px; overflow: hidden;
+  }
+  #combo-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #7affd8, #2bd2ff); transition: width 0.1s linear; }
+
   /* ── COUNTDOWN ── */
   #countdown {
     position: fixed; inset: 0; z-index: 21; pointer-events: none;
@@ -234,6 +252,11 @@
   <div class="nitro-wrap"><div class="nitro-fill" id="nitro-fill"></div></div>
   <div id="floaters"></div>
   <div id="countdown"></div>
+  <div id="combo">
+    <div id="combo-label">COMBO</div>
+    <div id="combo-n">x2</div>
+    <div class="combo-bar"><div id="combo-fill"></div></div>
+  </div>
 
   <div id="overlay">
     <div class="ov-title">COASTAL <em>DRIVE</em></div>
@@ -386,13 +409,17 @@
   const keys = { left:false, right:false, gas:false, brake:false, boost:false };
 
   // nitro + combo
-  let nitro = 1, boosting = false, combo = 0, score = 0, lastMilestone = 0;
+  let nitro = 1, boosting = false, combo = 0, score = 0, lastMilestone = 0, comboTimer = 0;
+  const COMBO_WINDOW = 3.5;
   let steer = 0, camDepth = CAM_DEPTH;
   let drawDist = DRAW_DIST, fpsAvg = 60;
   const bestToBeat = best;
   let beatenThisRun = false;
   const floaters = document.getElementById('floaters');
   const nitroFill = document.getElementById('nitro-fill');
+  const comboEl = document.getElementById('combo');
+  const comboN = document.getElementById('combo-n');
+  const comboFill = document.getElementById('combo-fill');
 
   function floatText(text, color) {
     const el = document.createElement('div');
@@ -545,7 +572,7 @@
           speed = car.speed * 0.6;
           playerX += (playerX > car.offset ? 1 : -1) * 0.04;
           Sound.screech(0.5); buzz(50); addShake(9);
-          combo = 0;
+          combo = 0; comboTimer = 0;
           car.nearMiss = false;
         } else if (gap < 1.0 && !car.nearMiss) {
           car.nearMiss = true;
@@ -555,10 +582,20 @@
           floatText((combo > 1 ? 'x' + combo + ' ' : '') + 'NEAR MISS +' + pts, '#7affd8');
           buzz(12);
           Sound.whoosh(1 - (gap - 0.55) / 0.45);
+          comboTimer = COMBO_WINDOW;
         }
       }
       // reset near-miss flag once the car is well behind/ahead again
       if (carSeg.index !== pSeg.index) car.nearMiss = false;
+    }
+
+    // combo flow decay — lapse banks the streak
+    if (comboTimer > 0) {
+      comboTimer -= dt;
+      if (comboTimer <= 0 && combo > 0) {
+        if (combo >= 3) { floatText('COMBO x' + combo + ' BANKED!', '#ffd86b'); Sound.chime(); }
+        combo = 0;
+      }
     }
 
     // sun-token collection
@@ -1284,6 +1321,14 @@
 
     nitroFill.style.width = (nitro * 100) + '%';
     nitroFill.classList.toggle('boosting', boosting);
+
+    if (combo > 1) {
+      comboEl.classList.add('show');
+      comboN.textContent = 'x' + combo;
+      comboFill.style.width = (Math.max(0, comboTimer) / COMBO_WINDOW * 100) + '%';
+    } else {
+      comboEl.classList.remove('show');
+    }
 
     hudDist.textContent  = Math.floor(distance).toLocaleString();
     hudSpeed.textContent = Math.floor((speed/MAX_SPEED)*220);
