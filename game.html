@@ -614,6 +614,9 @@
   const birds = [];
   for (let i=0;i<5;i++) birds.push({ x: Math.random(), y: 0.12 + Math.random()*0.22, s: 0.6 + Math.random()*0.7, sp: 0.3 + Math.random()*0.5, flap: Math.random()*6 });
 
+  // banner-towing aeroplane
+  const plane = { x: 0.85, y: 0.1, sp: 0.55 };
+
   // sailboats on the ocean (x is fraction across the ocean band 0..1)
   const boats = [];
   for (let i=0;i<4;i++) boats.push({ x: Math.random(), yo: Math.random(), s: 0.6 + Math.random()*0.8, sp: 0.2 + Math.random()*0.3, sail: Math.random()<0.5?'#ffffff':'#ffe1a8' });
@@ -665,6 +668,34 @@
       ctx.fill();
     }
     ctx.restore();
+
+    // banner-towing aeroplane
+    plane.x -= plane.sp * 0.00035;
+    if (plane.x < -0.55) { plane.x = 1.4; plane.y = 0.07 + Math.random()*0.13; }
+    {
+      const px = plane.x * W, py = plane.y * H, ps = Math.min(W,H)*0.022;
+      // plane body (nose points left, direction of travel)
+      ctx.fillStyle = '#3a3a42';
+      ctx.beginPath();
+      ctx.moveTo(px - ps*2.6, py);
+      ctx.lineTo(px - ps*1.4, py - ps*0.45);
+      ctx.lineTo(px, py - ps*0.2);
+      ctx.lineTo(px, py + ps*0.2);
+      ctx.lineTo(px - ps*1.4, py + ps*0.45);
+      ctx.closePath(); ctx.fill();
+      ctx.fillRect(px - ps*1.6, py - ps*0.12, ps*0.8, ps*0.9); // wing
+      // banner trails to the right
+      const bx = px + ps*0.6, bw = Math.min(W,H)*0.24, bh = Math.min(W,H)*0.05;
+      ctx.strokeStyle = '#3a3a42'; ctx.lineWidth = Math.max(1, ps*0.12);
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(bx, py); ctx.stroke();
+      ctx.fillStyle = 'rgba(231,76,60,0.92)';
+      ctx.fillRect(bx, py - bh/2, bw, bh);
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${Math.round(bh*0.56)}px 'Courier Prime', monospace`;
+      ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+      ctx.fillText('COASTAL DRIVE', bx + bw/2, py + 1);
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    }
 
     // seagulls
     ctx.strokeStyle = `rgba(60,70,90,${0.5 - tod*0.15})`;
