@@ -407,6 +407,10 @@
     for (let m = 60; m < segments.length; m += 95) {
       segments[m].sprites.push({ type:'crowd', side:-1, offset:1.12 });
     }
+    // wooden pier on the shore (extends toward the sea)
+    for (let m = 130; m < segments.length; m += 200) {
+      segments[m].sprites.push({ type:'pier', side:1, offset:1.5 });
+    }
     // overhead highway gantry signs spanning the road
     const SIGNS = ['COAST ↑', 'BEACH ↑', 'PIER ↑', 'NEXT EXIT'];
     for (let m = 70, gi = 0; m < segments.length; m += 115, gi++) {
@@ -1258,6 +1262,19 @@
     }
     if (sp.type === 'parkedcar') {
       drawCar(x, baseY, scale * 1.7, sp.color, clipY, false);
+      return;
+    }
+    if (sp.type === 'pier') {
+      const pl = Math.max(20, s*620), deckH = Math.max(2, s*28), railH = Math.max(6, s*60);
+      const deckTop = baseY - Math.max(6, s*120);
+      const postW = Math.max(1, s*12);
+      ctx.fillStyle = '#5a4030';
+      for (let i=0;i<=6;i++) { const px = x + (i/6)*pl; ctx.fillRect(px - postW/2, deckTop, postW, baseY - deckTop + s*40); }
+      ctx.fillStyle = '#7a5a3e';
+      ctx.fillRect(x - s*20, deckTop - deckH, pl + s*20, deckH);
+      ctx.strokeStyle = '#8a6a4a'; ctx.lineWidth = Math.max(1, s*5);
+      ctx.beginPath(); ctx.moveTo(x - s*20, deckTop - railH); ctx.lineTo(x + pl, deckTop - railH); ctx.stroke();
+      for (let i=0;i<=6;i++) { const px = x + (i/6)*pl; ctx.beginPath(); ctx.moveTo(px, deckTop - deckH); ctx.lineTo(px, deckTop - railH); ctx.stroke(); }
       return;
     }
     if (sp.type === 'crowd') {
