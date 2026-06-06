@@ -384,6 +384,11 @@
     for (let m = 90; m < segments.length; m += 160) {
       segments[m].sprites.push({ type:'ferris', side:-1, offset:2.0 });
     }
+    // overhead highway gantry signs spanning the road
+    const SIGNS = ['COAST ↑', 'BEACH ↑', 'PIER ↑', 'NEXT EXIT'];
+    for (let m = 70, gi = 0; m < segments.length; m += 115, gi++) {
+      segments[m].sprites.push({ type:'gantry', side:1, offset:0, text: SIGNS[gi % SIGNS.length] });
+    }
   }
 
   const tokens = [];
@@ -1041,6 +1046,7 @@
       const p = seg.p1.screen;
       if (p.scale <= 0) continue;
       for (const sp of seg.sprites) {
+        if (sp.type === 'gantry') { drawGantry(p, sp.text); continue; }
         const sx = p.x + (p.scale * sp.side * sp.offset * ROAD_WIDTH * W/2);
         drawSprite(sp, sx, p.y, p.scale, seg._clip);
       }
@@ -1080,6 +1086,36 @@
       ctx.fillStyle = g;
       ctx.beginPath(); ctx.arc(sx, cy, r, 0, Math.PI*2); ctx.fill();
       ctx.restore();
+    }
+  }
+
+  function drawGantry(p, text) {
+    const roadHalf = p.w;
+    if (roadHalf < 2) return;
+    const legX1 = p.x - roadHalf*1.15, legX2 = p.x + roadHalf*1.15;
+    const height = Math.max(40, p.scale * W * 900);
+    const topY = p.y - height;
+    const legW = Math.max(2, p.scale * W * 45);
+    const beamH = Math.max(4, p.scale * W * 130);
+    // legs
+    ctx.fillStyle = '#646a73';
+    ctx.fillRect(legX1 - legW/2, topY, legW, p.y - topY);
+    ctx.fillRect(legX2 - legW/2, topY, legW, p.y - topY);
+    // top beam
+    ctx.fillRect(legX1 - legW/2, topY, (legX2 - legX1) + legW, beamH);
+    // green sign panel
+    const sw = (legX2 - legX1) * 0.62, sx = p.x - sw/2, sy = topY + beamH*1.1;
+    ctx.fillStyle = '#1c6f3a';
+    ctx.fillRect(sx, sy, sw, beamH*1.5);
+    ctx.strokeStyle = '#eafff0'; ctx.lineWidth = Math.max(1, p.scale*W*8);
+    ctx.strokeRect(sx + beamH*0.2, sy + beamH*0.2, sw - beamH*0.4, beamH*1.1);
+    // text
+    if (beamH > 7 && text) {
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${Math.round(beamH*0.95)}px 'Courier Prime', monospace`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(text, p.x, sy + beamH*0.78);
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
     }
   }
 
