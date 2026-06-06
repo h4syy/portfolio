@@ -1208,6 +1208,12 @@
     polygon(p1.x-p1.w-r1, p1.y, p1.x-p1.w, p1.y, p2.x-p2.w, p2.y, p2.x-p2.w-r2, p2.y, c.rumble);
     polygon(p1.x+p1.w+r1, p1.y, p1.x+p1.w, p1.y, p2.x+p2.w, p2.y, p2.x+p2.w+r2, p2.y, c.rumble);
     polygon(p1.x-p1.w, p1.y, p1.x+p1.w, p1.y, p2.x+p2.w, p2.y, p2.x-p2.w, p2.y, c.road);
+    // tar seam tick (every 5th segment) — cheap speed cue
+    if (seg.index % 5 === 0) {
+      const t = 0.22;
+      const mx = p1.x + (p2.x - p1.x)*t, mw = p1.w + (p2.w - p1.w)*t, my = p1.y + (p2.y - p1.y)*t;
+      polygon(p1.x-p1.w, p1.y, p1.x+p1.w, p1.y, mx+mw, my, mx-mw, my, 'rgba(0,0,0,0.10)');
+    }
     if (c.lane) {
       const l1 = laneMarkWidth(p1.w), l2 = laneMarkWidth(p2.w);
       const lw1 = (p1.w*2)/LANES, lw2 = (p2.w*2)/LANES;
