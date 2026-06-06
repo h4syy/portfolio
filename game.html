@@ -1160,17 +1160,28 @@
       return;
     }
     if (sp.type === 'palm') {
-      const h = s*220, tw = Math.max(2, s*14);
-      ctx.fillStyle = '#7a5230'; ctx.fillRect(x-tw/2, baseY-h, tw, h);
-      const fr = s*70;
+      const h = s*220, tw = Math.max(2, s*14), fr = s*70;
+      const sway = Math.sin(performance.now()/650 + sp.offset*9) * fr * 0.22;
+      const topX = x + sway*0.45, topY = baseY - h;
+      // curved trunk that bends with the breeze
+      ctx.fillStyle = '#7a5230';
+      ctx.beginPath();
+      ctx.moveTo(x - tw/2, baseY);
+      ctx.quadraticCurveTo(x - tw/2 + sway*0.35, baseY - h*0.5, topX - tw/2, topY);
+      ctx.lineTo(topX + tw/2, topY);
+      ctx.quadraticCurveTo(x + tw/2 + sway*0.35, baseY - h*0.5, x + tw/2, baseY);
+      ctx.closePath(); ctx.fill();
+      // swaying fronds
       ctx.lineWidth = Math.max(2, s*10); ctx.strokeStyle = '#2e9e5b';
       for (let a=0;a<6;a++) {
         const ang = (a/6)*Math.PI*2;
-        ctx.beginPath(); ctx.moveTo(x, baseY-h);
-        ctx.quadraticCurveTo(x+Math.cos(ang)*fr*0.6, baseY-h-Math.abs(Math.sin(ang))*fr*0.4-fr*0.3, x+Math.cos(ang)*fr, baseY-h-fr*0.1);
+        ctx.beginPath(); ctx.moveTo(topX, topY);
+        ctx.quadraticCurveTo(
+          topX + Math.cos(ang)*fr*0.6 + sway, topY - Math.abs(Math.sin(ang))*fr*0.4 - fr*0.3,
+          topX + Math.cos(ang)*fr + sway*1.4, topY - fr*0.1);
         ctx.stroke();
       }
-      ctx.fillStyle = '#caa14a'; ctx.beginPath(); ctx.arc(x, baseY-h, Math.max(2,s*10), 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#caa14a'; ctx.beginPath(); ctx.arc(topX, topY, Math.max(2,s*10), 0, Math.PI*2); ctx.fill();
     } else if (sp.type === 'umbrella') {
       const hues = ['#e74c3c','#3498db','#f39c12','#fff'];
       const h = s*110, pw = Math.max(2, s*8), r = s*90;
