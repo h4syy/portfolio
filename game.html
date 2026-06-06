@@ -384,6 +384,10 @@
     for (let m = 90; m < segments.length; m += 160) {
       segments[m].sprites.push({ type:'ferris', side:-1, offset:2.0 });
     }
+    // beach campfires on the shore (glow at dusk)
+    for (let m = 48; m < segments.length; m += 75) {
+      segments[m].sprites.push({ type:'campfire', side:1, offset:1.35 });
+    }
     // overhead highway gantry signs spanning the road
     const SIGNS = ['COAST ↑', 'BEACH ↑', 'PIER ↑', 'NEXT EXIT'];
     for (let m = 70, gi = 0; m < segments.length; m += 115, gi++) {
@@ -1182,6 +1186,38 @@
       const refl = sp.side > 0 ? '#ff8a3a' : '#ff4a4a';
       ctx.fillStyle = refl;
       ctx.beginPath(); ctx.arc(x, baseY - ph, Math.max(1.5, s*8), 0, Math.PI*2); ctx.fill();
+      return;
+    }
+    if (sp.type === 'campfire') {
+      const tod = timeOfDay(), fs = Math.max(3, s*60);
+      const flick = 0.8 + Math.sin(performance.now()/90 + sp.offset*11)*0.2;
+      const fh = fs*1.6 * flick * (0.5 + tod*0.7);
+      // warm glow
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      const gl = ctx.createRadialGradient(x, baseY - fh*0.4, 0, x, baseY - fh*0.4, fs*2.6);
+      gl.addColorStop(0, `rgba(255,170,60,${0.25 + tod*0.5})`); gl.addColorStop(1, 'rgba(255,120,40,0)');
+      ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(x, baseY - fh*0.4, fs*2.6, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+      // logs
+      ctx.strokeStyle = '#5a3a26'; ctx.lineWidth = Math.max(2, s*8); ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x - fs*0.6, baseY); ctx.lineTo(x + fs*0.6, baseY - fs*0.12);
+      ctx.moveTo(x - fs*0.6, baseY - fs*0.12); ctx.lineTo(x + fs*0.6, baseY);
+      ctx.stroke(); ctx.lineCap = 'butt';
+      // outer flame
+      ctx.fillStyle = '#ff8a30';
+      ctx.beginPath();
+      ctx.moveTo(x - fs*0.4, baseY - fs*0.1);
+      ctx.quadraticCurveTo(x - fs*0.2, baseY - fh*0.6, x, baseY - fh);
+      ctx.quadraticCurveTo(x + fs*0.2, baseY - fh*0.6, x + fs*0.4, baseY - fs*0.1);
+      ctx.closePath(); ctx.fill();
+      // inner flame
+      ctx.fillStyle = '#ffd24a';
+      ctx.beginPath();
+      ctx.moveTo(x - fs*0.2, baseY - fs*0.1);
+      ctx.quadraticCurveTo(x, baseY - fh*0.55, x, baseY - fh*0.8);
+      ctx.quadraticCurveTo(x + fs*0.12, baseY - fh*0.5, x + fs*0.2, baseY - fs*0.1);
+      ctx.closePath(); ctx.fill();
       return;
     }
     if (sp.type === 'ferris') {
