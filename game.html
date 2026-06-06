@@ -397,6 +397,10 @@
     for (let m = 48; m < segments.length; m += 75) {
       segments[m].sprites.push({ type:'campfire', side:1, offset:1.35 });
     }
+    // sandcastles on the beach
+    for (let m = 88; m < segments.length; m += 84) {
+      segments[m].sprites.push({ type:'sandcastle', side:1, offset:1.28 });
+    }
     // parked cars on the shoulder
     const PARK = ['#bdc3c7','#34495e','#e67e22','#16a085','#c0392b'];
     for (let m = 33; m < segments.length; m += 64) {
@@ -1407,6 +1411,23 @@
         ctx.fillStyle = '#e8b888';
         ctx.beginPath(); ctx.arc(fx, baseY - fh*0.68 + lift, fh*0.12, 0, Math.PI*2); ctx.fill();
       }
+      return;
+    }
+    if (sp.type === 'sandcastle') {
+      const cs = Math.max(3, s*55);
+      ctx.fillStyle = '#e0b878';
+      ctx.fillRect(x - cs*0.7, baseY - cs*0.5, cs*1.4, cs*0.5);
+      ctx.fillRect(x - cs*0.7, baseY - cs, cs*0.4, cs*0.55);
+      ctx.fillRect(x + cs*0.3, baseY - cs, cs*0.4, cs*0.55);
+      ctx.fillRect(x - cs*0.2, baseY - cs*1.2, cs*0.4, cs*0.75);
+      // shading
+      ctx.fillStyle = 'rgba(150,110,60,0.25)';
+      ctx.fillRect(x - cs*0.7, baseY - cs*0.5, cs*1.4, cs*0.12);
+      // flag
+      ctx.strokeStyle = '#5a4636'; ctx.lineWidth = Math.max(1, cs*0.05);
+      ctx.beginPath(); ctx.moveTo(x, baseY - cs*1.2); ctx.lineTo(x, baseY - cs*1.55); ctx.stroke();
+      ctx.fillStyle = '#e74c3c';
+      ctx.beginPath(); ctx.moveTo(x, baseY - cs*1.55); ctx.lineTo(x + cs*0.32, baseY - cs*1.47); ctx.lineTo(x, baseY - cs*1.39); ctx.closePath(); ctx.fill();
       return;
     }
     if (sp.type === 'campfire') {
