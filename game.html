@@ -1110,6 +1110,26 @@
     }
     ctx.restore();
 
+    // dusk searchlights sweeping from the city (cheap triangles, lighter blend)
+    if (tod > 0.5) {
+      const sa = (tod - 0.5) / 0.5, now2 = performance.now();
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0, 0, W, horizon); ctx.clip();
+      ctx.globalCompositeOperation = 'lighter';
+      const bases = [0.14, 0.3];
+      for (let i=0;i<bases.length;i++) {
+        const bx = bases[i]*W + shift*0.1, by = horizon - H*0.04;
+        const ang = -Math.PI/2 + Math.sin(now2/2500 + i*2.3)*0.5, len = horizon;
+        ctx.fillStyle = `rgba(255,250,220,${(sa*0.06).toFixed(3)})`;
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.lineTo(bx + Math.cos(ang-0.025)*len, by + Math.sin(ang-0.025)*len);
+        ctx.lineTo(bx + Math.cos(ang+0.025)*len, by + Math.sin(ang+0.025)*len);
+        ctx.closePath(); ctx.fill();
+      }
+      ctx.restore();
+    }
+
     const haze = ctx.createLinearGradient(0, horizon-30, 0, horizon+4);
     haze.addColorStop(0,'rgba(255,225,168,0)'); haze.addColorStop(1,'rgba(255,225,168,0.5)');
     ctx.fillStyle = haze; ctx.fillRect(0, horizon-30, W, 34);
