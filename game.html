@@ -617,6 +617,29 @@
   // banner-towing aeroplane
   const plane = { x: 0.85, y: 0.1, sp: 0.55 };
 
+  // leaping dolphins (x is fraction across full width, seaward/right half)
+  const dolphins = [];
+  for (let i=0;i<3;i++) dolphins.push({ x: 0.55 + Math.random()*0.38, t: Math.random()*9, period: 6 + Math.random()*5 });
+
+  function drawDolphin(x, y, s, ang) {
+    ctx.save();
+    ctx.translate(x, y); ctx.rotate(ang);
+    ctx.fillStyle = '#39505f';
+    // body
+    ctx.beginPath(); ctx.ellipse(0, 0, s*1.6, s*0.55, 0, 0, Math.PI*2); ctx.fill();
+    // tail
+    ctx.beginPath();
+    ctx.moveTo(s*1.3, 0); ctx.lineTo(s*2.1, -s*0.5); ctx.lineTo(s*1.9, 0); ctx.lineTo(s*2.1, s*0.5);
+    ctx.closePath(); ctx.fill();
+    // dorsal fin
+    ctx.beginPath(); ctx.moveTo(-s*0.1, -s*0.4); ctx.lineTo(s*0.4, -s*1.1); ctx.lineTo(s*0.5, -s*0.4);
+    ctx.closePath(); ctx.fill();
+    // belly highlight
+    ctx.fillStyle = 'rgba(200,220,230,0.5)';
+    ctx.beginPath(); ctx.ellipse(-s*0.2, s*0.2, s*1.1, s*0.25, 0, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
   // sailboats on the ocean (x is fraction across the ocean band 0..1)
   const boats = [];
   for (let i=0;i<4;i++) boats.push({ x: Math.random(), yo: Math.random(), s: 0.6 + Math.random()*0.8, sp: 0.2 + Math.random()*0.3, sail: Math.random()<0.5?'#ffffff':'#ffe1a8' });
@@ -784,6 +807,29 @@
       ctx.closePath(); ctx.fill();
     }
     ctx.restore();
+
+    // leaping dolphins (drawn over the waterline)
+    const waterY = horizon - H*0.018, jumpDur = 1.3;
+    for (const dol of dolphins) {
+      const cyc = (nowMs/1000 + dol.t) % dol.period;
+      if (cyc < jumpDur) {
+        const u = cyc / jumpDur;
+        const leap = H * 0.055;
+        const dxp = dol.x*W + (u-0.5)*W*0.025;
+        const dyp = waterY - Math.sin(u*Math.PI)*leap;
+        const ang = -Math.cos(u*Math.PI) * 0.9;
+        drawDolphin(dxp, dyp, Math.max(4, H*0.014), ang);
+        // splash at entry/exit
+        if (u < 0.12 || u > 0.88) {
+          ctx.fillStyle = 'rgba(255,255,255,0.6)';
+          for (let k=0;k<4;k++) {
+            ctx.beginPath();
+            ctx.arc(dxp + (Math.random()-0.5)*H*0.03, waterY + (Math.random())*H*0.01, Math.max(1,H*0.004), 0, Math.PI*2);
+            ctx.fill();
+          }
+        }
+      }
+    }
 
     // resort skyline (left)
     ctx.save();
