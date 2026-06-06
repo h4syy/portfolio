@@ -757,6 +757,36 @@
 
     const shift = -(bgShift * 0.6 + playerX * 30);
 
+    // distant snow-capped mountains (farthest layer, behind the hills)
+    {
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0, 0, W, horizon); ctx.clip();
+      const mBase = horizon - H*0.015, mShift = shift*0.06;
+      const peaks = [{x:0.1,h:0.16},{x:0.26,h:0.22},{x:0.42,h:0.18},{x:0.6,h:0.24},{x:0.78,h:0.17},{x:0.92,h:0.2}];
+      const body = hexLerp('#8a9bb2', '#9a7a92', tod), snow = hexLerp('#f4f8ff', '#ffe2cf', tod);
+      ctx.globalAlpha = 0.7;
+      for (const pk of peaks) {
+        const px = pk.x*W + mShift, ph = pk.h*H, pw = ph*0.95;
+        ctx.fillStyle = body;
+        ctx.beginPath();
+        ctx.moveTo(px - pw, mBase); ctx.lineTo(px, mBase - ph); ctx.lineTo(px + pw, mBase);
+        ctx.closePath(); ctx.fill();
+        // snow cap with a jagged underside
+        const capY = mBase - ph*0.6, capW = pw*0.4;
+        ctx.fillStyle = snow;
+        ctx.beginPath();
+        ctx.moveTo(px - capW, capY);
+        ctx.lineTo(px, mBase - ph);
+        ctx.lineTo(px + capW, capY);
+        ctx.lineTo(px + capW*0.45, capY + ph*0.07);
+        ctx.lineTo(px, capY - ph*0.03);
+        ctx.lineTo(px - capW*0.45, capY + ph*0.07);
+        ctx.closePath(); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+
     // distant hazy headland hills (atmospheric depth, behind everything)
     ctx.save();
     ctx.beginPath(); ctx.rect(0, 0, W, horizon + 2); ctx.clip();
