@@ -735,6 +735,10 @@
     ctx.restore();
   }
 
+  // jet-skis zipping across the ocean
+  const jetskis = [];
+  for (let i=0;i<2;i++) jetskis.push({ x: Math.random(), yo: Math.random(), sp: 1.1 + Math.random()*0.8, dir: Math.random()<0.5?-1:1 });
+
   // sailboats on the ocean (x is fraction across the ocean band 0..1)
   const boats = [];
   for (let i=0;i<4;i++) boats.push({ x: Math.random(), yo: Math.random(), s: 0.6 + Math.random()*0.8, sp: 0.2 + Math.random()*0.3, sail: Math.random()<0.5?'#ffffff':'#ffe1a8' });
@@ -928,6 +932,26 @@
       ctx.beginPath();
       ctx.moveTo(bx, by - sz*0.9); ctx.lineTo(bx, by); ctx.lineTo(bx + sz*0.42, by);
       ctx.closePath(); ctx.fill();
+    }
+
+    // jet-skis with wake spray
+    for (const js of jetskis) {
+      js.x += js.dir * js.sp * 0.0008;
+      if (js.x > 1.06) js.x = -0.06;
+      if (js.x < -0.06) js.x = 1.06;
+      const jx = oceanLeft + js.x*oceanW;
+      const jy = oceanTop + (0.42 + js.yo*0.42)*oceanH;
+      const sz = Math.max(2, oceanH*0.2);
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      for (let k=0;k<3;k++) {
+        ctx.beginPath();
+        ctx.arc(jx - js.dir*(sz*0.9 + k*sz*0.6), jy + (k-1)*sz*0.15, sz*0.42*(1-k*0.22), 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#2c3e50';
+      ctx.beginPath(); ctx.ellipse(jx, jy, sz*0.95, sz*0.42, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#e74c3c';
+      ctx.beginPath(); ctx.arc(jx, jy - sz*0.32, sz*0.3, 0, Math.PI*2); ctx.fill();
     }
     ctx.restore();
 
