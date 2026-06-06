@@ -123,6 +123,11 @@
     background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
     border-radius: 4px; padding: 1px 7px; margin: 0 2px; font-family: inherit;
   }
+  .ov-tip {
+    margin-top: 0.9rem; font-size: 0.72rem; letter-spacing: 0.08em;
+    color: #ffd86b; opacity: 0.85; transition: opacity 0.4s ease;
+    min-height: 1em; text-align: center;
+  }
 
   /* ── TOUCH CONTROLS ── */
   #touch { position: fixed; inset: 0; z-index: 8; display: none; pointer-events: none; }
@@ -285,6 +290,7 @@
       <kbd>↑</kbd> gas &nbsp;·&nbsp; <kbd>↓</kbd> brake &nbsp;·&nbsp; <kbd>P</kbd> pause</span>
       <span class="hint-mobile">📱 tilt your phone to steer &nbsp;·&nbsp; tap sides to nudge</span>
     </div>
+    <div class="ov-tip" id="ov-tip"></div>
   </div>
 
 <script>
@@ -1933,6 +1939,26 @@
     startBtn.textContent = paused ? '▸ Resume' : '▸ Start Driving';
   }
   startBtn.addEventListener('click', () => { if (paused) togglePause(); else startGame(); });
+
+  // start-screen tip carousel
+  (() => {
+    const TIPS = [
+      '💡 Tilt your phone to steer',
+      '⚡ Hold NITRO to surge — it refills over time',
+      '🎯 Thread past traffic for NEAR-MISS combos',
+      '☀️ Grab sun-tokens for +100',
+      '🏁 Drive through checkpoints for +200',
+      '🚗 Reach 2 km to unlock a fresh ride',
+      '🌅 Keep driving — the coast shifts into a golden sunset',
+    ];
+    const tipEl = document.getElementById('ov-tip');
+    if (!tipEl) return;
+    let i = 0; tipEl.textContent = TIPS[0];
+    setInterval(() => {
+      tipEl.style.opacity = '0';
+      setTimeout(() => { i = (i+1) % TIPS.length; tipEl.textContent = TIPS[i]; tipEl.style.opacity = '0.85'; }, 400);
+    }, 3600);
+  })();
 
   window.addEventListener('keydown', e => {
     switch (e.key) {
