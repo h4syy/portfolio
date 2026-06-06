@@ -401,6 +401,11 @@
     for (let m = 88; m < segments.length; m += 84) {
       segments[m].sprites.push({ type:'sandcastle', side:1, offset:1.28 });
     }
+    // beach towels with sunbathers
+    const TOWEL = ['#e74c3c','#3498db','#2ecc71','#f1c40f','#9b59b6'];
+    for (let m = 26; m < segments.length; m += 58) {
+      segments[m].sprites.push({ type:'towel', side:1, offset:1.22, tc: TOWEL[(m/58|0) % TOWEL.length] });
+    }
     // parked cars on the shoulder
     const PARK = ['#bdc3c7','#34495e','#e67e22','#16a085','#c0392b'];
     for (let m = 33; m < segments.length; m += 64) {
@@ -1411,6 +1416,18 @@
         ctx.fillStyle = '#e8b888';
         ctx.beginPath(); ctx.arc(fx, baseY - fh*0.68 + lift, fh*0.12, 0, Math.PI*2); ctx.fill();
       }
+      return;
+    }
+    if (sp.type === 'towel') {
+      const ts = Math.max(3, s*52);
+      ctx.fillStyle = sp.tc;
+      ctx.fillRect(x - ts*0.7, baseY - ts*0.12, ts*1.4, ts*0.5);
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.fillRect(x - ts*0.7, baseY - ts*0.12 + ts*0.2, ts*1.4, ts*0.08);
+      // sunbather
+      ctx.fillStyle = '#e8b888';
+      ctx.fillRect(x - ts*0.5, baseY - ts*0.22, ts*0.8, ts*0.13);
+      ctx.beginPath(); ctx.arc(x - ts*0.56, baseY - ts*0.17, ts*0.1, 0, Math.PI*2); ctx.fill();
       return;
     }
     if (sp.type === 'sandcastle') {
