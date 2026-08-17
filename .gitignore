@@ -1,4 +1,6 @@
 .claude*
+.superpowers/
+_smoke.mjs
 node_modules/
 *.log
 .DS_Store
