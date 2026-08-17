@@ -538,7 +538,7 @@
   <!-- Nav -->
   <nav aria-label="Site navigation">
     <a href="#chapter-00" class="nav-logo">YP</a>
-    <a href="game.html" class="nav-play">▸ PLAY</a>
+    <a href="arcade.html" class="nav-play">▸ ARCADE</a>
   </nav>
 
   <section class="chapter" id="chapter-00" data-label="00 · COVER">
@@ -631,13 +631,23 @@
         <span class="work-arrow">↗</span>
       </a>
 
-      <div class="work-entry work-entry--pending ink">
+      <a href="starfall.html" class="work-entry ink">
         <span class="work-num">02</span>
         <div class="work-body">
-          <div class="work-title">More forthcoming...</div>
-          <div class="work-meta">In progress</div>
+          <div class="work-title">Starfall — Neon Bullet-Heaven Survivor</div>
+          <div class="work-meta">Experience · Canvas · Play it</div>
         </div>
-      </div>
+        <span class="work-arrow">↗</span>
+      </a>
+
+      <a href="arcade.html" class="work-entry ink">
+        <span class="work-num">03</span>
+        <div class="work-body">
+          <div class="work-title">YP Arcade — The Whole Cabinet</div>
+          <div class="work-meta">Collection · Canvas · Enter</div>
+        </div>
+        <span class="work-arrow">↗</span>
+      </a>
 
     </div>
 
@@ -675,6 +685,32 @@
         <span class="ci-name">yashpaudel10@gmail.com</span>
         <span class="ci-arrow">↗</span>
       </a>
+    </div>
+
+  </section>
+  <section class="chapter" id="chapter-05" data-label="05 · The Word">
+
+    <div class="chapter-num ink">05 · The Word</div>
+
+    <h2 class="chapter-headline ink" style="margin-bottom:1.5rem;">Notes from<br>the workshop.</h2>
+
+    <div class="work-list" id="thoughts">
+      <a href="blog/why-nepal-needs-its-own-llms.html" class="work-entry ink">
+        <span class="work-num">01</span>
+        <div class="work-body">
+          <div class="work-title">Why Nepal's Fintech Needs Its Own LLMs</div>
+          <div class="work-meta">Essay · GenAI · 8 min read</div>
+        </div>
+        <span class="work-arrow">↗</span>
+      </a>
+
+      <div class="work-entry work-entry--pending ink">
+        <span class="work-num">02</span>
+        <div class="work-body">
+          <div class="work-title">More dispatches forthcoming...</div>
+          <div class="work-meta">In progress</div>
+        </div>
+      </div>
     </div>
 
   </section>
@@ -760,7 +796,12 @@
       { k: 'mission',   d: '→ the mission',                 run: () => document.getElementById('chapter-02').scrollIntoView({ behavior: 'smooth' }) },
       { k: 'work',      d: '→ the work',                    run: () => document.getElementById('chapter-03').scrollIntoView({ behavior: 'smooth' }) },
       { k: 'contact',   d: '→ the signal',                  run: () => document.getElementById('chapter-04').scrollIntoView({ behavior: 'smooth' }) },
-      { k: 'play',      d: '→ coastal drive (the game)',     run: () => { location.href = 'game.html'; } },
+      { k: 'thoughts',  d: '→ the word (writing)',           run: () => document.getElementById('chapter-05').scrollIntoView({ behavior: 'smooth' }) },
+      { k: 'arcade',    d: '→ the arcade (all games)',       run: () => { location.href = 'arcade.html'; } },
+      { k: 'play',      d: '→ the arcade',                   run: () => { location.href = 'arcade.html'; } },
+      { k: 'coastal',   d: '→ coastal drive (racer)',        run: () => { location.href = 'game.html'; } },
+      { k: 'starfall',  d: '→ starfall (survivor)',          run: () => { location.href = 'starfall.html'; } },
+      { k: 'blog',      d: '↗ why nepal needs its own llms', run: () => { location.href = 'blog/why-nepal-needs-its-own-llms.html'; } },
       { k: 'github',    d: '↗ github.com/h4syy',            run: () => window.open('https://github.com/h4syy', '_blank') },
       { k: 'linkedin',  d: '↗ linkedin/yashpaudel',         run: () => window.open('https://www.linkedin.com/in/yashpaudel/', '_blank') },
       { k: 'instagram', d: '↗ @paudelyash',                 run: () => window.open('https://www.instagram.com/paudelyash/', '_blank') },
