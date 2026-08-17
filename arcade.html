@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>YP // Arcade</title>
+<meta name="description" content="The YP Arcade — a small cabinet of games built by Yash Paudel. Insert coin." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #05030f; --cy: #00e5ff; --pu: #a855f7; --pk: #ff2d78; --yl: #ffd86b; --gr: #7affd8;
+    --text: #eaf4ff; --dim: rgba(200,216,255,0.6);
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'JetBrains Mono', monospace; min-height: 100vh;
+    overflow-x: hidden; position: relative;
+  }
+  #bg { position: fixed; inset: 0; z-index: 0; }
+  .scanlines { position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.16) 0, rgba(0,0,0,0.16) 1px, transparent 2px, transparent 3px);
+    mix-blend-mode: multiply; opacity: 0.5; }
+  .content { position: relative; z-index: 2; }
+
+  /* NAV */
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem clamp(1.2rem, 5vw, 3rem);
+    background: linear-gradient(180deg, rgba(5,3,15,0.9), rgba(5,3,15,0)); }
+  .nav-logo { font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 0.8rem;
+    letter-spacing: 0.28em; color: var(--cy); text-decoration: none; text-shadow: 0 0 16px rgba(0,229,255,0.6); }
+  .nav-back { font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim);
+    text-decoration: none; transition: color 0.2s, text-shadow 0.2s; }
+  .nav-back:hover { color: var(--cy); text-shadow: 0 0 12px rgba(0,229,255,0.5); }
+
+  /* HERO */
+  header { text-align: center; padding: 9rem 1.5rem 2.5rem; }
+  .kicker { font-size: 0.6rem; letter-spacing: 0.5em; text-transform: uppercase; color: var(--cy);
+    text-shadow: 0 0 14px rgba(0,229,255,0.6); margin-bottom: 1.4rem; }
+  h1 { font-family: 'Orbitron', sans-serif; font-weight: 900;
+    font-size: clamp(2.8rem, 12vw, 7rem); line-height: 0.9; letter-spacing: 0.04em;
+    color: #fff; text-shadow: 0 0 34px rgba(0,229,255,0.5), 0 0 70px rgba(168,85,247,0.35); }
+  h1 .slash { color: var(--pk); text-shadow: 0 0 34px rgba(255,45,120,0.6); }
+  .tag { margin-top: 1.4rem; font-size: 0.82rem; letter-spacing: 0.1em; color: var(--dim); }
+  .coin { margin-top: 1.6rem; font-family: 'Orbitron', sans-serif; font-size: 0.72rem; letter-spacing: 0.28em;
+    color: var(--yl); text-transform: uppercase; animation: blink 1.2s steps(1) infinite; text-shadow: 0 0 16px rgba(255,216,107,0.5); }
+  @keyframes blink { 0%,60%{opacity:1;} 61%,100%{opacity:0.15;} }
+
+  /* GRID */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.6rem; max-width: 1080px; margin: 0 auto; padding: 1rem clamp(1.2rem, 5vw, 3rem) 3rem; }
+
+  .cab { position: relative; display: block; text-decoration: none; color: inherit;
+    border: 1px solid rgba(120,150,255,0.22); border-radius: 16px; overflow: hidden;
+    background: linear-gradient(165deg, rgba(14,18,42,0.82), rgba(6,8,24,0.9));
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s; }
+  .cab:hover { transform: translateY(-8px); border-color: var(--accent, var(--cy));
+    box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 40px var(--glow, rgba(0,229,255,0.28)); }
+  .cab.locked { opacity: 0.55; cursor: default; }
+  .cab.locked:hover { transform: none; border-color: rgba(120,150,255,0.22); box-shadow: none; }
+
+  .screen { position: relative; height: 170px; overflow: hidden; border-bottom: 1px solid rgba(120,150,255,0.18); }
+  .screen canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .screen .glare { position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(120deg, rgba(255,255,255,0.06) 0%, transparent 40%); }
+  .marquee { position: absolute; top: 10px; left: 12px; font-family: 'Orbitron', sans-serif; font-weight: 700;
+    font-size: 0.62rem; letter-spacing: 0.24em; text-transform: uppercase; color: var(--accent, var(--cy));
+    text-shadow: 0 0 12px var(--glow, rgba(0,229,255,0.5)); z-index: 2; }
+  .badge { position: absolute; top: 10px; right: 12px; z-index: 2; font-size: 0.5rem; letter-spacing: 0.18em;
+    text-transform: uppercase; color: #05030f; background: var(--accent, var(--cy)); padding: 2px 8px; border-radius: 20px; font-weight: 700; }
+
+  .body { padding: 1.1rem 1.2rem 1.3rem; }
+  .body h2 { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 1.15rem; color: #fff; letter-spacing: 0.02em; }
+  .body p { font-size: 0.76rem; color: var(--dim); line-height: 1.7; margin-top: 0.5rem; min-height: 2.6em; }
+  .meta { display: flex; gap: 1.2rem; margin-top: 1rem; flex-wrap: wrap; }
+  .stat .k { font-size: 0.46rem; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(190,210,255,0.45); }
+  .stat .v { font-family: 'Orbitron', sans-serif; font-size: 1rem; color: var(--accent, var(--cy)); margin-top: 2px; }
+  .play { margin-top: 1.1rem; display: inline-flex; align-items: center; gap: 0.5rem;
+    font-size: 0.66rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent, var(--cy)); }
+  .play .arr { transition: transform 0.2s; }
+  .cab:hover .play .arr { transform: translateX(5px); }
+
+  footer { text-align: center; padding: 1.5rem 1.5rem 4rem; font-size: 0.6rem; letter-spacing: 0.14em; color: rgba(190,210,255,0.4); }
+  footer a { color: var(--dim); text-decoration: none; border-bottom: 1px dotted rgba(120,150,255,0.3); }
+  footer a:hover { color: var(--cy); }
+  .robot { color: var(--gr); }
+
+  @media (max-width: 640px) { header { padding-top: 7rem; } }
+</style>
+</head>
+<body>
+  <canvas id="bg"></canvas>
+  <div class="scanlines"></div>
+
+  <div class="content">
+    <nav>
+      <a href="index.html" class="nav-logo">YP</a>
+      <a href="index.html" class="nav-back">← back to portfolio</a>
+    </nav>
+
+    <header>
+      <div class="kicker">Now Playing</div>
+      <h1>YP <span class="slash">//</span> ARCADE</h1>
+      <div class="tag">A small cabinet of games. All hand-built. No engines, no downloads — just press start.</div>
+      <div class="coin">▸ Insert Coin ◂</div>
+    </header>
+
+    <div class="grid" id="grid"></div>
+
+    <footer>
+      Built with a canvas and stubbornness ·
+      <span class="robot">assembled overnight by Claude 🤖</span> ·
+      <a href="index.html">yashpaudel.com.np</a>
+    </footer>
+  </div>
+
+<script>
+  // ── Synthwave background ──
+  (() => {
+    const c = document.getElementById('bg'), ctx = c.getContext('2d');
+    let W, H, DPR;
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      c.width = W * DPR; c.height = H * DPR; c.style.width = W + 'px'; c.style.height = H + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+    resize(); window.addEventListener('resize', resize);
+    const stars = []; for (let i = 0; i < 90; i++) stars.push({ x: Math.random(), y: Math.random(), s: Math.random() < 0.3 ? 2 : 1, p: Math.random() * 6.28 });
+    let scroll = 0;
+    function draw(t) {
+      requestAnimationFrame(draw);
+      const horizon = H * 0.52;
+      const sky = ctx.createLinearGradient(0, 0, 0, horizon);
+      sky.addColorStop(0, '#0a0620'); sky.addColorStop(0.7, '#1a0b33'); sky.addColorStop(1, '#3a1150');
+      ctx.fillStyle = sky; ctx.fillRect(0, 0, W, horizon);
+      ctx.fillStyle = '#05030f'; ctx.fillRect(0, horizon, W, H - horizon);
+      // stars
+      for (const st of stars) {
+        if (st.y * horizon > horizon - 6) continue;
+        const tw = 0.5 + 0.5 * Math.sin(t / 600 + st.p);
+        ctx.fillStyle = 'rgba(230,240,255,' + (0.7 * tw).toFixed(2) + ')';
+        ctx.fillRect(st.x * W, st.y * horizon, st.s, st.s);
+      }
+      // sun
+      const sx = W / 2, sy = horizon - 46, sr = Math.min(W, H) * 0.12;
+      const g = ctx.createLinearGradient(0, sy - sr, 0, sy + sr);
+      g.addColorStop(0, '#ffe37a'); g.addColorStop(0.5, '#ff7ac0'); g.addColorStop(1, '#a855f7');
+      ctx.save(); ctx.beginPath(); ctx.arc(sx, sy, sr, 0, 6.283); ctx.clip();
+      ctx.fillStyle = g; ctx.fillRect(sx - sr, sy - sr, sr * 2, sr * 2);
+      for (let i = 0; i < 7; i++) { ctx.fillStyle = '#05030f'; ctx.fillRect(sx - sr, sy + i * 6 - 2, sr * 2, 3 - i * 0.2); }
+      ctx.restore();
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      const gl = ctx.createRadialGradient(sx, sy, 0, sx, sy, sr * 2.6);
+      gl.addColorStop(0, 'rgba(255,120,180,0.28)'); gl.addColorStop(1, 'rgba(255,120,180,0)');
+      ctx.fillStyle = gl; ctx.fillRect(0, 0, W, horizon); ctx.restore();
+      // perspective grid
+      scroll = (scroll + 0.6) % 40;
+      ctx.strokeStyle = 'rgba(0,229,255,0.35)'; ctx.lineWidth = 1;
+      for (let i = 0; i < 22; i++) {
+        let z = i * 40 + (40 - scroll);
+        const y = horizon + (z * z) * 0.0016;
+        if (y > H) break;
+        ctx.globalAlpha = Math.max(0, 1 - (y - horizon) / (H - horizon));
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      const vanish = W / 2;
+      for (let i = -14; i <= 14; i++) {
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath(); ctx.moveTo(vanish + i * 14, horizon); ctx.lineTo(vanish + i * 220, H); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+    requestAnimationFrame(draw);
+  })();
+
+  // ── Game data ──
+  const g = (k, d) => { const v = +(localStorage.getItem(k) || 0); return v > 0 ? v : d; };
+  const coastalBest = g('coastal:best', 0);
+  const starBest = g('starfall:best', 0);
+  const starScore = g('starfall:bestscore', 0);
+
+  const GAMES = [
+    {
+      title: 'Coastal Drive', tag: 'Racer', href: 'game.html', accent: '#ffd86b', glow: 'rgba(255,216,107,0.35)',
+      badge: 'Play', desc: 'An endless cruise down a sunny coast. Ocean on your right, resort strip on your left, golden sunsets ahead.',
+      stats: [{ k: 'Best Distance', v: coastalBest ? coastalBest.toLocaleString() + ' m' : '—' }, { k: 'Controls', v: 'Steer' }],
+      preview: 'coastal',
+    },
+    {
+      title: 'Starfall', tag: 'Survivor', href: 'starfall.html', accent: '#00e5ff', glow: 'rgba(0,229,255,0.35)',
+      badge: 'New', desc: 'A neon bullet-heaven. One spark against the swarm — auto-firing guns, a reactive gravity grid, and level-up mayhem.',
+      stats: [{ k: 'Best Survival', v: starBest ? starBest + ' s' : '—' }, { k: 'Best Score', v: starScore ? starScore.toLocaleString() : '—' }],
+      preview: 'starfall',
+    },
+    {
+      title: '???', tag: 'Locked', href: null, accent: '#a855f7', glow: 'rgba(168,85,247,0.3)',
+      badge: 'Soon', desc: 'A prototype flickering to life in the lab. Come back — the cabinet fills up over time.',
+      stats: [{ k: 'Status', v: 'In the lab' }], preview: 'locked', locked: true,
+    },
+  ];
+
+  const grid = document.getElementById('grid');
+  GAMES.forEach((game, idx) => {
+    const el = document.createElement(game.href ? 'a' : 'div');
+    el.className = 'cab' + (game.locked ? ' locked' : '');
+    el.style.setProperty('--accent', game.accent);
+    el.style.setProperty('--glow', game.glow);
+    if (game.href) el.href = game.href;
+    el.innerHTML =
+      '<div class="screen"><canvas data-prev="' + game.preview + '"></canvas><div class="glare"></div>'
+      + '<span class="marquee">' + game.tag + '</span><span class="badge">' + game.badge + '</span></div>'
+      + '<div class="body"><h2>' + game.title + '</h2><p>' + game.desc + '</p>'
+      + '<div class="meta">' + game.stats.map(s => '<div class="stat"><div class="k">' + s.k + '</div><div class="v">' + s.v + '</div></div>').join('') + '</div>'
+      + (game.href ? '<div class="play">Press start <span class="arr">→</span></div>' : '<div class="play">Standby</div>')
+      + '</div>';
+    grid.appendChild(el);
+  });
+
+  // ── Mini animated previews ──
+  document.querySelectorAll('canvas[data-prev]').forEach(cv => {
+    const ctx = cv.getContext('2d');
+    let w, h;
+    function fit() { const r = cv.getBoundingClientRect(); const d = Math.min(window.devicePixelRatio || 1, 2); w = r.width; h = r.height; cv.width = w * d; cv.height = h * d; ctx.setTransform(d, 0, 0, d, 0, 0); }
+    const type = cv.getAttribute('data-prev');
+    const bits = [];
+    if (type === 'starfall') for (let i = 0; i < 26; i++) bits.push({ x: Math.random(), y: Math.random(), a: Math.random() * 6.28, s: 0.2 + Math.random() * 0.5, c: ['#00e5ff', '#ff2d78', '#a855f7', '#7affd8'][i % 4] });
+    if (type === 'coastal') for (let i = 0; i < 5; i++) bits.push({ x: Math.random(), s: 0.2 + Math.random() * 0.3 });
+    if (type === 'locked') for (let i = 0; i < 30; i++) bits.push({ x: Math.random(), y: Math.random() });
+
+    function draw(t) {
+      requestAnimationFrame(draw);
+      if (!w) { fit(); if (!w) return; }
+      if (type === 'coastal') {
+        const sky = ctx.createLinearGradient(0, 0, 0, h);
+        sky.addColorStop(0, '#54478f'); sky.addColorStop(0.5, '#ff9e6b'); sky.addColorStop(0.6, '#ff7a52'); sky.addColorStop(1, '#0a1622');
+        ctx.fillStyle = sky; ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = '#ffcf9a'; ctx.beginPath(); ctx.arc(w * 0.5, h * 0.5, h * 0.16, 0, 6.283); ctx.fill();
+        // road
+        const hz = h * 0.58;
+        ctx.fillStyle = '#5b5e66'; ctx.beginPath(); ctx.moveTo(w * 0.42, hz); ctx.lineTo(w * 0.58, hz); ctx.lineTo(w * 0.95, h); ctx.lineTo(w * 0.05, h); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#ffe9b0'; ctx.lineWidth = 2; ctx.setLineDash([8, 10]); ctx.lineDashOffset = -(t * 0.12 % 18);
+        ctx.beginPath(); ctx.moveTo(w * 0.5, hz); ctx.lineTo(w * 0.5, h); ctx.stroke(); ctx.setLineDash([]);
+        for (const b of bits) { b.x -= b.s * 0.004; if (b.x < 0.02) b.x = 0.98; const px = b.x * w, py = hz + (b.x) * (h - hz) * 0.3 + 4; ctx.fillStyle = '#2e9e5b'; ctx.beginPath(); ctx.arc(px, py, 3, 0, 6.283); ctx.fill(); }
+      } else if (type === 'starfall') {
+        ctx.fillStyle = '#04040f'; ctx.fillRect(0, 0, w, h);
+        ctx.strokeStyle = 'rgba(90,120,220,0.18)'; ctx.lineWidth = 1;
+        const sp = 22, off = (t * 0.02) % sp;
+        ctx.beginPath();
+        for (let x = -off; x < w; x += sp) { ctx.moveTo(x, 0); ctx.lineTo(x, h); }
+        for (let y = -off; y < h; y += sp) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
+        ctx.stroke();
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        for (const b of bits) { b.a += 0.02; const cx = w / 2 + Math.cos(b.a) * w * 0.3 * b.s * 2, cy = h / 2 + Math.sin(b.a * 1.3) * h * 0.32; ctx.fillStyle = b.c; ctx.shadowColor = b.c; ctx.shadowBlur = 8; ctx.beginPath(); ctx.arc(cx, cy, 2.2, 0, 6.283); ctx.fill(); }
+        ctx.restore();
+        // ship
+        ctx.fillStyle = '#eaf4ff'; ctx.strokeStyle = '#00e5ff'; ctx.lineWidth = 1.5; ctx.shadowColor = '#00e5ff'; ctx.shadowBlur = 10;
+        ctx.beginPath(); ctx.moveTo(w / 2, h / 2 - 8); ctx.lineTo(w / 2 + 6, h / 2 + 6); ctx.lineTo(w / 2, h / 2 + 3); ctx.lineTo(w / 2 - 6, h / 2 + 6); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
+      } else {
+        ctx.fillStyle = '#08061a'; ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = 'rgba(168,85,247,0.5)';
+        for (const b of bits) { if (Math.random() < 0.08) b.y = Math.random(); ctx.globalAlpha = Math.random() * 0.5; ctx.fillRect(b.x * w, b.y * h, 3, 1); }
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = 'rgba(168,85,247,0.8)'; ctx.font = "700 22px 'Orbitron', sans-serif"; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('? ? ?', w / 2, h / 2);
+      }
+    }
+    requestAnimationFrame(draw);
+  });
+</script>
+</body>
+</html>
