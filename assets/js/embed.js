@@ -1,3 +1,5 @@
+import { getJSON, setJSON } from './storage.js';
+
 const STOP = new Set('the a an and or of to in for on with is are be by as at from this that it its into your you their our we they he she them his her not no but if then so than also more most such can will just about over under between out up down off then once here there all any each few own same'.split(' '));
 
 export function bookText(b) {
@@ -73,14 +75,7 @@ export function lexicalGraph(books, { k = 3, threshold = 0.08 } = {}) {
   return { nodes, edges };
 }
 
-import { getJSON, setJSON } from './storage.js';
-
 const EMB_KEY = 'emb:minilm:';
-// Per-embedder in-memory cache: WeakMap<embedImpl, Map<bookKey, vector>>
-// This isolates caches between different embedImpl references (e.g. in tests)
-// while still persisting within a single embedder's lifetime.
-const _embedCache = new WeakMap();
-
 let _pipe = null;
 export async function defaultEmbedder(texts) {
   if (!_pipe) {
@@ -98,31 +93,16 @@ export async function defaultEmbedder(texts) {
 export async function similarityGraph(books, { k = 3, threshold = 0.35, embedImpl = defaultEmbedder } = {}) {
   try {
     const ids = books.map(bookId);
-    // Per-embedder in-memory cache (isolates test embedders from each other).
-    // Only the real defaultEmbedder also reads/writes persistent storage.
-    if (!_embedCache.has(embedImpl)) _embedCache.set(embedImpl, new Map());
-    const localCache = _embedCache.get(embedImpl);
-    const usePersist = embedImpl === defaultEmbedder;
     const need = [], needIdx = [];
     const vectors = books.map((b, i) => {
-      const key = EMB_KEY + bookId(b);
-      if (localCache.has(key)) return localCache.get(key);
-      if (usePersist) {
-        const cached = getJSON(key);
-        if (cached) { localCache.set(key, cached); return cached; }
-      }
+      const cached = getJSON(EMB_KEY + bookId(b));
+      if (cached) return cached;
       need.push(bookText(b)); needIdx.push(i); return null;
     });
     if (need.length) {
       const fresh = await embedImpl(need);
       if (!fresh || fresh.length !== need.length) throw new Error('bad embedder output');
-      fresh.forEach((vec, j) => {
-        const i = needIdx[j];
-        const key = EMB_KEY + bookId(books[i]);
-        vectors[i] = vec;
-        localCache.set(key, vec);
-        if (usePersist) setJSON(key, vec);
-      });
+      fresh.forEach((vec, j) => { const i = needIdx[j]; vectors[i] = vec; setJSON(EMB_KEY + bookId(books[i]), vec); });
     }
     const edges = topKEdges(ids, vectors, { k, threshold });
     const clusters = labelProp(ids, edges);
