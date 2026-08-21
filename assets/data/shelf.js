@@ -1,15 +1,4 @@
-export const profile = {
-  name: 'Yash Paudel',
-  role: 'Software engineer · Nepal',
-  tagline: 'I build reliable systems, and I read widely to understand how the ideas connect.',
-  about: 'Engineer working across backend, AI, and the messy glue between. Based in Nepal, focused on things that ship and hold up in production. Off the clock I read across engineering, cosmology, philosophy, and the occasional novel — the graph below is how those threads relate.',
-  links: {
-    github: 'https://github.com/h4syy',
-    linkedin: 'https://www.linkedin.com/in/yashpaudel/',
-    email: 'mailto:yashpaudel10@gmail.com',
-  },
-};
-
+// Book shelf. Profile/work now lives in ./profile.js.
 // status: 'reading' | 'read' | 'want'. Add rating (1–5)/review/finished when you like.
 // isbn (optional) fetches the cover from Open Library; omit it and the card shows a monogram.
 export const shelf = [

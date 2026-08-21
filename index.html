@@ -1,27 +1,66 @@
 <!DOCTYPE html><html lang="en"><head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Yash Paudel</title>
-  <meta name="description" content="Yash Paudel — software engineer in Nepal. Reading, reviews, and a knowledge graph of how the ideas connect.">
+  <meta name="description" content="Yash Paudel — software engineer in Nepal. Work, writing (FLUX), and a reading knowledge graph of how the ideas connect.">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/site.css">
 </head><body>
-  <header class="masthead"><div class="wrap">
-    <div class="id"><h1 id="name"></h1><p id="role" class="role"></p><p id="tagline" class="tagline"></p></div>
-    <nav id="links" class="links" aria-label="Social links"></nav>
-  </div></header>
-  <main class="wrap">
-    <section id="about" aria-label="About"><p id="about-body"></p><div id="stats" class="stats"></div></section>
-    <section id="reading" aria-label="Currently reading"><h2>Currently reading</h2><div id="cr"></div></section>
-    <section id="graph-section" aria-label="Knowledge graph">
-      <div class="section-head"><h2>How these connect</h2>
-        <div class="toggle"><button id="tab-graph" aria-pressed="true" class="is-active">Graph</button><button id="tab-list" aria-pressed="false">List</button></div>
+  <a class="skip" href="#name">Skip to content</a>
+
+  <header class="topbar">
+    <a href="#work" class="brand" data-view="work">Yash Paudel</a>
+    <nav class="mainnav" aria-label="Sections">
+      <a href="#work" data-view="work">Work</a>
+      <a href="#flux" data-view="flux">FLUX</a>
+      <a href="#reading" data-view="reading">Reading</a>
+    </nav>
+  </header>
+
+  <main id="main">
+
+    <!-- ── WORK ── -->
+    <section class="view" id="view-work" aria-label="Work">
+      <div class="wrap">
+        <div class="hero">
+          <h1 id="name"></h1>
+          <p id="role" class="role"></p>
+          <p id="tagline" class="tagline"></p>
+          <nav id="links" class="links" aria-label="Links"></nav>
+        </div>
+        <section class="block"><h2>About</h2><p id="about-body"></p></section>
+        <section class="block"><h2>Experience</h2><div id="experience" class="xp-list"></div></section>
+        <section class="block"><h2>Selected work</h2><div id="projects" class="project-grid"></div></section>
       </div>
-      <div id="graph-view"><canvas id="graph-canvas"></canvas><div id="graph-mode" class="mode-note"></div><div id="tooltip" class="tooltip" hidden></div></div>
-      <div id="list-view" hidden></div>
     </section>
+
+    <!-- ── FLUX ── -->
+    <section class="view" id="view-flux" aria-label="FLUX" hidden>
+      <div class="wrap">
+        <div class="view-head"><h1>FLUX</h1><p class="dim">Notes on AI, engineering, and building from Nepal.</p></div>
+        <div id="posts" class="post-list"></div>
+      </div>
+    </section>
+
+    <!-- ── READING ── -->
+    <section class="view" id="view-reading" aria-label="Reading" hidden>
+      <div class="wrap">
+        <div class="view-head"><h1>Reading</h1><p class="dim">What I’m reading, and how the ideas connect.</p></div>
+        <section class="block"><h2>Currently reading</h2><div id="cr"></div></section>
+        <div id="stats" class="stats"></div>
+        <section class="block" id="graph-section">
+          <div class="section-head"><h2>How these connect</h2>
+            <div class="toggle"><button id="tab-graph" aria-pressed="true" class="is-active">Graph</button><button id="tab-list" aria-pressed="false">List</button></div>
+          </div>
+          <div id="graph-view"><canvas id="graph-canvas"></canvas><div id="graph-mode" class="mode-note"></div><div id="tooltip" class="tooltip" hidden></div></div>
+          <div id="list-view" hidden></div>
+        </section>
+      </div>
+    </section>
+
   </main>
+
   <aside id="panel" class="panel" hidden aria-label="Book detail"></aside>
-  <footer class="wrap footer"><p>Vanilla JS · Google Books · on-device embeddings</p></footer>
+  <footer class="wrap footer"><p>Vanilla JS · Open Library covers · on-device embeddings</p></footer>
   <script type="module" src="assets/js/main.js"></script>
 </body></html>

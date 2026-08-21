@@ -1,122 +1,83 @@
 # yashpaudel.com.np
 
 Personal site of **Yash Paudel** — software engineer, Nepal. Static HTML, no build step,
-no framework. Deploys on Vercel.
+no framework, no backend. Deploys on Vercel.
 
 ---
 
-## What this site is
+## Three sections (one page, nav-switched views)
 
-A developer identity page centred on a **reading knowledge graph**. Open the site and you
-get:
+The site is a single page with a top nav that switches between three distinct views:
 
-| Section | What it is |
-| --- | --- |
-| **Masthead / About** | Name, role, tagline, and links (GitHub, LinkedIn, e-mail). |
-| **Currently Reading** | Auto-populated shelf of books whose status is `'reading'` in `shelf.js`. Covers are fetched at runtime from Google Books. |
-| **Knowledge Graph** | A force-directed canvas graph — every book is a node; edges connect books that share ideas (semantic similarity from on-device AI, or TF-IDF when the model is not yet loaded). Click any node to open a detail panel with the review. |
-| **List view** | A card grid grouped by status (Reading → Read → Want to read). Toggle between Graph and List with the button in the toolbar. |
+| View | What it is | Data |
+| --- | --- | --- |
+| **Work** | Identity, About, Experience, and Selected work. | `assets/data/profile.js` |
+| **FLUX** | The writing / blog index. Each post is a reskinned article under `/flux`. | `assets/data/posts.js` |
+| **Reading** | Currently reading + a force-directed **knowledge graph** of how the books relate (click a node for the review) with a Graph/List toggle. | `assets/data/shelf.js` |
+
+Navigation is hash-based (`#work` / `#flux` / `#reading`), so links and refreshes land on the
+right view. The graph initialises lazily the first time Reading is opened.
 
 ---
+
+## Editing content
+
+- **Work** — edit `assets/data/profile.js`: `profile` (name/role/location/tagline/about/links),
+  `experience[]`, and `projects[]`. Placeholders are marked — swap them for your real content.
+- **FLUX** — add an entry to `assets/data/posts.js` and a matching HTML file under `flux/`
+  (copy an existing post for the styling).
+- **Reading** — edit the `shelf` array in `assets/data/shelf.js`. Entries are title-first;
+  add an `isbn` to get a cover, plus optional `rating` / `review` / `finished` / `tags`.
+
+---
+
+## Book covers — Open Library, no API, no rate limits
+
+Covers are direct **Open Library** cover-image URLs by ISBN
+(`https://covers.openlibrary.org/b/isbn/<isbn>-M.jpg?default=false`), loaded by the browser
+as plain `<img>`. There is **no JSON API call** to rate-limit — the previous Google Books
+approach fired 20 concurrent requests and got 429'd. A book with no ISBN (or an unknown
+cover) shows a monogram tile instead; the image simply removes itself on error.
 
 ## The AI — free, on-device, no keys, no backend
 
-Edges in the graph are computed entirely in the browser using
-[Transformers.js](https://xenova.github.io/transformers.js/) running
-`Xenova/all-MiniLM-L6-v2` (a ~23 MB WASM model). This costs **$0**, requires no API keys,
-and sends zero data to a server.
-
-- **First load:** the model is lazy-loaded in the background while lexical TF-IDF edges
-  are shown immediately as a fallback.
-- **After load:** the graph upgrades to semantic cosine-similarity edges in place.
-- **Subsequent loads:** embedding vectors are cached in `localStorage` keyed by book ISBN /
-  title slug. The model is not downloaded again.
-
-If `localStorage` is unavailable (private browsing, storage quota) the module falls back
-to an in-memory cache for the session.
+Graph edges are computed in the browser with [Transformers.js](https://xenova.github.io/transformers.js/)
+running `Xenova/all-MiniLM-L6-v2` (~23 MB WASM model, lazy-loaded when the graph opens).
+Costs **$0**, no API keys, no data leaves the device. A lexical TF-IDF graph paints instantly
+and remains the fallback if the model can't load; embedding vectors are cached in `localStorage`.
+Similarity is computed from each book's `title + author + tags` (which clusters cleanly).
 
 ---
 
-## Book data — `assets/data/shelf.js`
-
-Add, edit, or remove books by editing the `shelf` array in `assets/data/shelf.js`. Entries
-are title-first; ISBN is optional (the lookup falls back to a `title + author` search
-against Google Books when no ISBN is present).
-
-```js
-// Minimal entry — Google Books will fill in cover, description, etc.
-{ title: 'Designing Data-Intensive Applications', author: 'Martin Kleppmann', status: 'reading', tags: ['distributed-systems', 'databases'] }
-
-// With ISBN — guarantees the exact edition is fetched
-{ title: 'Meditations', author: 'Marcus Aurelius', isbn: '9780140449334', status: 'read', rating: 5, review: 'A field manual for staying rational under pressure.', tags: ['philosophy', 'stoicism'] }
-```
-
-Valid fields:
-
-| Field | Type | Required | Notes |
-| --- | --- | --- | --- |
-| `title` | string | yes | Used as the graph node label and the Google Books search key. |
-| `author` | string | yes | Included in the search query. |
-| `isbn` | string | no | If present, searches by ISBN instead of title+author. |
-| `status` | `'reading' \| 'read' \| 'want'` | yes | Controls which section the book appears in. |
-| `rating` | 1–5 | no | Shown as filled stars in the detail panel and List view. |
-| `review` | string | no | Free-text shown in the detail panel. |
-| `tags` | string[] | no | Used for TF-IDF lexical similarity. |
-| `finished` | string | no | Date string shown in the detail panel. |
-
-Google Books covers are fetched at runtime and cached in `localStorage`. If the API is
-unreachable the book card degrades gracefully (monogram placeholder, title only).
-
----
-
-## Run locally
+## Run & test
 
 ```bash
-python -m http.server 8000
-# then open http://localhost:8000
+python -m http.server 8000        # then open http://localhost:8000
+node --test test/*.mjs            # NOTE: `node --test test/` is broken on Node 22 — use the glob
 ```
 
-No build or install step needed for the site itself.
-
----
-
-## Tests
-
-```bash
-node --test test/*.mjs
-```
-
-> **Note:** `node --test test/` is broken on Node 22 — always pass the glob `test/*.mjs`.
-
-The suite covers: `storage.js` persistence + fallback, `books.js` Google Books fetch +
-cache + degraded mode, `embed.js` lexical TF-IDF + semantic similarity + cache + fallback,
-`graph.js` force simulation + canvas renderer + node picking, `main.js` wiring
-(renderProfile, renderCurrentlyReading, initGraph, openPanel), and List view rendering.
+Tests cover `storage.js`, `books.js` (cover URLs + local mapping), `embed.js`
+(lexical + semantic + cache + fallback), `graph.js` (force sim + canvas renderer + picking),
+and `main.js` wiring (profile, currently-reading, list, graph, panel).
 
 ---
 
 ## File structure
 
 ```
-index.html              # the site — a single self-contained page
-404.html                # orphaned-node page (rendered when Vercel can't find a route)
+index.html              # the three-view shell
+404.html                # orphaned-node page
+flux/                    # blog posts (Carbon-styled articles)
 assets/
+  site.css
   data/
-    shelf.js            # book data + profile (edit this)
+    profile.js          # Work: identity + experience + projects
+    posts.js            # FLUX: post index
+    shelf.js            # Reading: book shelf
   js/
-    storage.js          # safe localStorage wrapper with in-memory fallback
-    books.js            # Google Books API fetch, cache, degraded mode
-    embed.js            # on-device embeddings (Transformers.js) + lexical TF-IDF fallback
-    graph.js            # force simulation + ForceGraph canvas renderer
-    main.js             # page wiring: masthead, reading strip, graph/list toggle, panel
-test/
-  *.mjs                 # Node --test suite (no browser needed)
+    storage.js  books.js  embed.js  graph.js  main.js
+test/  *.mjs             # node --test suite (no browser needed)
 ```
 
----
-
-## Notes on other files in the repo
-
-`game.html`, `arcade.html`, `starfall.html`, and `blog/` remain in the repository for
-history but are **not linked from the main site**. They are independent, self-contained
-pages that can be loaded directly by URL.
+`game.html`, `arcade.html`, `starfall.html`, and the old `blog/` essay remain in the repo but
+are unlinked from the site.

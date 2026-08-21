@@ -1,4 +1,6 @@
-import { profile, shelf } from '../data/shelf.js';
+import { shelf } from '../data/shelf.js';
+import { profile, experience, projects } from '../data/profile.js';
+import { posts } from '../data/posts.js';
 import { loadShelf, monogram } from './books.js';
 import { ForceGraph } from './graph.js';
 import { lexicalGraph, similarityGraph } from './embed.js';
@@ -20,7 +22,7 @@ export function renderProfile(p, nodes = {}) {
   const aboutEl = nodes.aboutEl || document.getElementById('about-body');
   const linksEl = nodes.linksEl || document.getElementById('links');
   if (nameEl) nameEl.textContent = p.name;
-  if (roleEl) roleEl.textContent = p.role;
+  if (roleEl) roleEl.textContent = p.location ? `${p.role} · ${p.location}` : p.role;
   if (tagEl) tagEl.textContent = p.tagline;
   if (aboutEl) aboutEl.textContent = p.about || '';
   if (linksEl) linksEl.innerHTML = Object.entries(p.links || {})
@@ -92,6 +94,43 @@ export function renderStats(books) {
   ].map(([label, value]) => `<div><span class="stat-value">${value}</span><span class="stat-label">${label}</span></div>`).join('');
 }
 
+export function renderExperience(items, el) {
+  el = el || document.getElementById('experience');
+  if (!el) return;
+  el.innerHTML = (items || []).map(x => `
+    <article class="xp">
+      <div class="xp-head"><h3>${esc(x.role)} <span class="dim">· ${esc(x.org)}</span></h3><span class="xp-period mono">${esc(x.period)}</span></div>
+      <p class="xp-summary">${esc(x.summary)}</p>
+      <div class="chips">${(x.tags||[]).map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>
+    </article>`).join('');
+}
+
+export function renderProjects(items, el) {
+  el = el || document.getElementById('projects');
+  if (!el) return;
+  el.innerHTML = (items || []).map(p => {
+    const inner = `<div class="proj-head"><h3>${esc(p.name)}</h3><span class="mono dim">${esc(p.year||'')}</span></div>`
+      + `<p class="proj-blurb">${esc(p.blurb)}</p>`
+      + `<div class="chips">${(p.tags||[]).map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>`;
+    return p.href
+      ? `<a class="proj" href="${esc(p.href)}"${p.href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${inner}</a>`
+      : `<div class="proj">${inner}</div>`;
+  }).join('');
+}
+
+export function renderFlux(items, el) {
+  el = el || document.getElementById('posts');
+  if (!el) return;
+  if (!(items && items.length)) { el.innerHTML = '<p class="dim">Nothing published yet — soon.</p>'; return; }
+  el.innerHTML = items.map(p => `
+    <a class="post" href="${esc(p.href)}">
+      <div class="post-meta mono"><span class="post-tags">${(p.tags||[]).map(esc).join(' · ')}</span><span class="dim">${esc(p.date)} · ${esc(p.readingTime)}</span></div>
+      <h3>${esc(p.title)}</h3>
+      <p class="post-excerpt dim">${esc(p.excerpt)}</p>
+      <span class="post-more">Read →</span>
+    </a>`).join('');
+}
+
 export async function initGraph(books, { canvas, onSelect, embedImpl } = {}) {
   canvas = canvas || document.getElementById('graph-canvas');
   _panelBooks = new Map(books.map(b => [b.key ?? b.isbn, b]));
@@ -122,57 +161,94 @@ function setMode(mode) {
   if (el) el.textContent = mode === 'lexical' ? 'lexical mode (semantic model unavailable)' : '';
 }
 
+let _books = [];
+let _graph = null;
+let _graphInited = false;
+let _currentView = null;
+const VIEWS = ['work', 'flux', 'reading'];
+
+// Single-page view switcher. Nav anchors are #work/#flux/#reading; hashchange drives this.
+function showView(name) {
+  if (!VIEWS.includes(name)) name = 'work';
+  // Pause the graph's animation loop when leaving Reading (no need to run while hidden).
+  if (_currentView === 'reading' && name !== 'reading' && _graph && _graph.stop) _graph.stop();
+  for (const v of VIEWS) {
+    const sec = document.getElementById('view-' + v);
+    if (sec) sec.hidden = v !== name;
+  }
+  const navs = document.querySelectorAll('[data-view]');
+  if (navs) navs.forEach(a => {
+    const on = a.getAttribute('data-view') === name;
+    a.classList.toggle('is-active', on);
+    if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+  });
+  // Graph inits lazily the first time Reading is shown, so the canvas has real dimensions
+  // (a hidden 0×0 canvas can't lay out or trigger the intersection-based semantic upgrade).
+  if (name === 'reading') {
+    if (!_graphInited) {
+      _graphInited = true;
+      const go = async () => { _graph = await initGraph(_books); };
+      if (typeof requestAnimationFrame !== 'undefined') requestAnimationFrame(go); else go();
+    } else if (_graph && _graph.start) {
+      _graph.start();
+    }
+  }
+  _currentView = name;
+  if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo(0, 0);
+}
+
 async function boot() {
+  // Work
   renderProfile(profile);
-  const books = await loadShelf(shelf);
+  renderExperience(experience);
+  renderProjects(projects);
+  // FLUX
+  renderFlux(posts);
+
+  // Reading
+  _books = await loadShelf(shelf);
   const cr = document.getElementById('cr');
-  if (cr) cr.innerHTML = renderCurrentlyReading(books);
+  if (cr) cr.innerHTML = renderCurrentlyReading(_books);
   const lv = document.getElementById('list-view');
-  if (lv) lv.innerHTML = renderList(books);
-  renderStats(books);
-  window.__books = books;
+  if (lv) lv.innerHTML = renderList(_books);
+  renderStats(_books);
+  window.__books = _books;
 
-  // Build key map for list-view click delegation
-  const keyMap = new Map(books.map(b => [b.key ?? b.isbn, b]));
+  const keyMap = new Map(_books.map(b => [b.key ?? b.isbn, b]));
 
-  // Graph | List tab toggle
   const tabGraph = document.getElementById('tab-graph');
   const tabList = document.getElementById('tab-list');
   const graphView = document.getElementById('graph-view');
   const listView = document.getElementById('list-view');
-
   function showTab(which) {
     if (tabGraph) { tabGraph.setAttribute('aria-pressed', which === 'graph' ? 'true' : 'false'); tabGraph.classList.toggle('is-active', which === 'graph'); }
     if (tabList) { tabList.setAttribute('aria-pressed', which === 'list' ? 'true' : 'false'); tabList.classList.toggle('is-active', which === 'list'); }
     if (graphView) graphView.hidden = which !== 'graph';
     if (listView) listView.hidden = which !== 'list';
   }
-
   if (tabGraph) tabGraph.addEventListener('click', () => showTab('graph'));
   if (tabList) tabList.addEventListener('click', () => showTab('list'));
 
-  // Delegate click/Enter on list-view [data-key] cards → openPanel
   if (listView) {
-    listView.addEventListener('click', e => {
-      const card = e.target.closest('[data-key]');
+    const fromCard = e => {
+      if (e.type === 'keydown' && e.key !== 'Enter') return;
+      const card = e.target.closest && e.target.closest('[data-key]');
       if (!card) return;
       const book = keyMap.get(card.dataset.key);
       if (book) openPanel(book);
-    });
-    listView.addEventListener('keydown', e => {
-      if (e.key !== 'Enter') return;
-      const card = e.target.closest('[data-key]');
-      if (!card) return;
-      const book = keyMap.get(card.dataset.key);
-      if (book) openPanel(book);
-    });
+    };
+    listView.addEventListener('click', fromCard);
+    listView.addEventListener('keydown', fromCard);
   }
 
-  // Esc closes panel
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
 
-  // Initialize graph
-  await initGraph(books);
+  const routeFromHash = () => {
+    const h = (typeof location !== 'undefined' && location.hash) ? location.hash.slice(1) : '';
+    showView(VIEWS.includes(h) ? h : 'work');
+  };
+  if (typeof window !== 'undefined' && window.addEventListener) window.addEventListener('hashchange', routeFromHash);
+  routeFromHash();
 }
 
 if (typeof document !== 'undefined') {

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Why Nepal’s Fintech Needs Its Own LLMs — Yash Paudel</title>
+  <meta name="description" content="Off-the-shelf models weren’t built for Nepali language, regulation, or user behaviour. What we learned trying to make them work — and why the answer isn’t prompting harder." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/site.css">
+  <style>
+    #progress { position: fixed; top: 0; left: 0; height: 2px; width: 0; background: var(--blue); z-index: 50; transition: width 0.08s linear; }
+    .article-nav { position: sticky; top: 0; z-index: 20; display: flex; justify-content: space-between; align-items: center;
+      padding: 0.9rem clamp(1.2rem, 5vw, 3rem); background: color-mix(in srgb, var(--bg) 85%, transparent);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+    .article-nav a { text-decoration: none; }
+    .a-back { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; letter-spacing: 0.06em; color: var(--dim); }
+    .a-back:hover { color: var(--blue); }
+    .a-logo { font-weight: 600; font-size: 0.9rem; color: var(--text); }
+    article { max-width: 680px; margin: 0 auto; padding: 3rem clamp(1.2rem, 5vw, 2rem) 5rem; }
+    .post-meta { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; margin-bottom: 1.6rem;
+      font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+    .post-tag { color: var(--blue); border: 1px solid color-mix(in srgb, var(--blue) 40%, transparent); border-radius: 100px; padding: 0.2rem 0.7rem; }
+    article h1 { font-size: clamp(1.8rem, 4.2vw, 2.6rem); font-weight: 600; line-height: 1.18; letter-spacing: -0.02em; margin-bottom: 1.4rem; }
+    .post-intro { font-size: 1.1rem; color: var(--dim); line-height: 1.75; font-style: italic;
+      margin-bottom: 2.4rem; padding-bottom: 2.4rem; border-bottom: 1px solid var(--line); }
+    article h2 { font-size: 1.2rem; font-weight: 600; margin: 2.6rem 0 1rem; padding-left: 0.9rem; border-left: 3px solid var(--blue); }
+    article p { font-size: 1rem; line-height: 1.85; color: var(--text); margin-bottom: 1.3rem; }
+    article strong { font-weight: 600; }
+    article em { font-style: italic; color: var(--dim); }
+    blockquote { margin: 2.2rem 0; padding: 1.3rem 1.5rem; background: var(--layer); border: 1px solid var(--line); border-left: 3px solid var(--blue); }
+    blockquote p { margin: 0; font-style: italic; }
+    code { font-family: 'IBM Plex Mono', monospace; font-size: 0.85em; background: var(--layer-2); padding: 0.1em 0.4em; border-radius: 3px; }
+    .section-break { border: none; height: 1px; background: var(--line); margin: 3rem 0; }
+    .post-author { display: flex; align-items: center; gap: 1rem; padding-top: 2rem; margin-top: 3rem; border-top: 1px solid var(--line); }
+    .author-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--blue); color: var(--bg);
+      display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 0.8rem; flex-shrink: 0; }
+    .author-name { font-weight: 600; font-size: 0.9rem; }
+    .author-role { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; color: var(--dim); }
+    .post-nav { display: flex; justify-content: space-between; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--line);
+      font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.06em; }
+    .post-nav a { color: var(--dim); text-decoration: none; }
+    .post-nav a:hover { color: var(--blue); }
+  </style>
+</head>
+<body>
+  <div id="progress"></div>
+  <nav class="article-nav">
+    <a href="../index.html#work" class="a-logo">Yash Paudel</a>
+    <a href="../index.html#flux" class="a-back">← FLUX</a>
+  </nav>
+
+  <article>
+    <div class="post-meta">
+      <span class="post-tag">GenAI</span>
+      <span>April 2026</span>
+      <span>· 8 min read</span>
+    </div>
+
+    <h1>Why Nepal’s Fintech Needs Its Own LLMs</h1>
+
+    <p class="post-intro">
+      Off-the-shelf models weren’t built for Nepali language, regulation, or user behavior.
+      Here’s what we learned trying to make them work — and why the answer isn’t prompting harder.
+    </p>
+
+    <h2>The assumption everyone makes</h2>
+    <p>
+      When most teams adopt AI, the default play is: pick a frontier model, write a good prompt,
+      call the API, ship. It works. Until it doesn’t.
+    </p>
+    <p>
+      The failure mode is subtle. The model <em>sounds</em> right. It produces fluent, confident
+      output. But it’s wrong in ways you don’t catch until a user does — or worse, a regulator.
+      And in fintech, that margin for error is close to zero.
+    </p>
+    <p>
+      I spent the better part of a year trying to make general-purpose LLMs work for a Nepali
+      fintech context. The core problem isn’t capability — GPT-4 and its peers are extraordinarily
+      capable. The problem is <strong>alignment to a context they’ve never seen</strong>.
+    </p>
+
+    <hr class="section-break">
+
+    <h2>Three things that don’t translate</h2>
+    <p>
+      <strong>Language.</strong> Nepali NLP is a low-resource problem. Most frontier models were
+      trained on datasets where Nepali is a rounding error. The result: transliterated text,
+      code-mixed sentences (Nepali written in Roman script), and colloquial terms used in mobile
+      banking — all produce degraded outputs. The model hallucinates, hedges, or switches to
+      English mid-sentence.
+    </p>
+    <p>
+      <strong>Regulatory context.</strong> Nepal Rastra Bank regulations, KYC norms, and PSP
+      compliance rules exist nowhere in the model’s training data in any meaningful density.
+      Ask a general-purpose LLM to help draft a customer notice about a transaction limit and
+      it will produce something that sounds legally sound but isn’t — for <em>this</em> jurisdiction.
+    </p>
+
+    <blockquote>
+      <p>“Sounds right” is the most dangerous failure mode in production AI. It bypasses every human review that would catch an obviously wrong answer.</p>
+    </blockquote>
+
+    <p>
+      <strong>User mental models.</strong> The way people think about digital wallets in Nepal
+      is shaped by specific onboarding flows, agent networks, and mobile-first behavior.
+      A general LLM trained on global fintech content has a very different mental model of
+      what a “wallet top-up” or “agent cashout” means. This creates friction in anything
+      from customer support automation to transaction categorization.
+    </p>
+
+    <hr class="section-break">
+
+    <h2>What we tried first</h2>
+    <p>
+      The first instinct — and the right one to try — is prompt engineering. You can get
+      remarkably far with good system prompts, retrieval-augmented generation (<code>RAG</code>),
+      and few-shot examples. We did all of this. It worked for simple, structured tasks.
+    </p>
+    <p>
+      But RAG has a ceiling. When the knowledge gap is systemic — when the model doesn’t
+      understand the <em>domain</em>, not just the <em>data</em> — retrieval only goes so far.
+      You end up stuffing enormous context windows with regulatory docs and hoping the model
+      reasons over them correctly. Sometimes it does. The variance is unacceptable.
+    </p>
+
+    <h2>The case for fine-tuning</h2>
+    <p>
+      Fine-tuning isn’t a silver bullet. I want to be honest about that upfront.
+      It’s expensive, it requires good data, and it introduces new failure modes
+      (catastrophic forgetting, distribution shift at inference time).
+    </p>
+    <p>
+      But it changes the nature of the problem. Instead of asking a general model
+      to perform in a specialized domain, you’re <strong>shifting the base distribution</strong>
+      toward your domain. The model doesn’t need to retrieve the right context — it starts
+      from a position that’s already closer to correct.
+    </p>
+    <p>
+      For us, fine-tuning on curated fintech-domain data — transaction logs, support
+      conversations, regulatory documents, internal SOPs — produced models that were
+      dramatically more reliable on the tasks that mattered. Not more capable in a general sense.
+      More <em>trustworthy</em> in our specific context.
+    </p>
+
+    <hr class="section-break">
+
+    <h2>The data problem is the real problem</h2>
+    <p>
+      Here’s the thing nobody tells you: the hard part of fine-tuning isn’t the training.
+      It’s the data. Specifically, getting <em>good</em> labeled data in a domain where
+      most knowledge lives in people’s heads, in unstructured PDFs, or in legacy systems
+      that predate modern data practices.
+    </p>
+    <p>
+      We spent more engineering time on data pipelines — collection, cleaning, annotation,
+      quality filtering — than on model training. By a large margin. If you’re planning to
+      go down this road, budget accordingly.
+    </p>
+    <p>
+      The other thing: evaluation is harder than training. You can tell when a model produces
+      a grammatically correct sentence. You can’t always tell when it produces a legally
+      incorrect one. Domain-specific evaluation sets, built by people who understand the
+      domain, are non-negotiable.
+    </p>
+
+    <h2>Where this leaves us</h2>
+    <p>
+      I’m not arguing that Nepal needs to train a frontier model from scratch — that’s
+      neither feasible nor necessary. What I’m arguing is that <strong>adaptation is not optional</strong>.
+      Whether through fine-tuning, RLHF on domain-specific feedback, or more sophisticated
+      RAG architectures, the work of making a model useful in a specific context is real work
+      that can’t be skipped.
+    </p>
+    <p>
+      The teams that figure this out first — that build the data flywheels, the evaluation
+      infrastructure, the domain-adapted models — will have a durable advantage over those
+      that are still prompt-engineering their way through 2026.
+    </p>
+    <p>
+      We’re early. Nepal’s AI ecosystem is thin. But that also means the surface area for
+      impact is enormous. The models that understand how money moves here, in this language,
+      under these regulations — those don’t exist yet. That’s the opportunity.
+    </p>
+
+    <div class="post-author">
+      <div class="author-avatar">YP</div>
+      <div>
+        <div class="author-name">Yash Paudel</div>
+        <div class="author-role">Software Engineer · Nepal</div>
+      </div>
+    </div>
+
+    <div class="post-nav">
+      <a href="../index.html#flux">← Back to FLUX</a>
+      <a href="../index.html#work">yashpaudel.com.np</a>
+    </div>
+  </article>
+
+  <script>
+    const bar = document.getElementById('progress');
+    function upd() {
+      const h = document.documentElement;
+      const p = h.scrollTop / (h.scrollHeight - h.clientHeight || 1);
+      bar.style.width = Math.min(100, p * 100) + '%';
+    }
+    addEventListener('scroll', upd, { passive: true });
+    upd();
+  </script>
+</body>
+</html>
