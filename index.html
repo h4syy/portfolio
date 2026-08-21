@@ -45,16 +45,10 @@
     <!-- ── READING ── -->
     <section class="view" id="view-reading" aria-label="Reading" hidden>
       <div class="wrap">
-        <div class="view-head"><h1>Reading</h1><p class="dim">What I’m reading, and how the ideas connect.</p></div>
+        <div class="view-head"><h1>Reading</h1><p class="dim">What I’m reading, and what stuck.</p></div>
         <section class="block"><h2>Currently reading</h2><div id="cr"></div></section>
         <div id="stats" class="stats"></div>
-        <section class="block" id="graph-section">
-          <div class="section-head"><h2>How these connect</h2>
-            <div class="toggle"><button id="tab-graph" aria-pressed="true" class="is-active">Graph</button><button id="tab-list" aria-pressed="false">List</button></div>
-          </div>
-          <div id="graph-view"><canvas id="graph-canvas"></canvas><div id="graph-mode" class="mode-note"></div><div id="tooltip" class="tooltip" hidden></div></div>
-          <div id="list-view" hidden></div>
-        </section>
+        <section class="block"><h2>Bookshelf</h2><div id="list-view"></div></section>
       </div>
     </section>
 

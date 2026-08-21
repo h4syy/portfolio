@@ -2,8 +2,6 @@ import { shelf } from '../data/shelf.js';
 import { profile, experience, projects } from '../data/profile.js';
 import { posts } from '../data/posts.js';
 import { loadShelf, monogram } from './books.js';
-import { ForceGraph } from './graph.js';
-import { lexicalGraph, similarityGraph } from './embed.js';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -57,8 +55,6 @@ export function renderList(books) {
     return `<div class="group"><h3 class="group-h">${label}</h3><div class="card-grid">${cards}</div></div>`;
   }).join('');
 }
-
-let _panelBooks = new Map();
 
 export function openPanel(book, nodes = {}) {
   const panel = nodes.panelEl || document.getElementById('panel');
@@ -131,47 +127,12 @@ export function renderFlux(items, el) {
     </a>`).join('');
 }
 
-export async function initGraph(books, { canvas, onSelect, embedImpl } = {}) {
-  canvas = canvas || document.getElementById('graph-canvas');
-  _panelBooks = new Map(books.map(b => [b.key ?? b.isbn, b]));
-  const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const pick = id => { const b = _panelBooks.get(id); if (b) (onSelect || openPanel)(b); };
-  const graph = new ForceGraph(canvas, lexicalGraph(books), { onSelect: pick, reducedMotion: reduce });
-  graph.start && graph.start();
-  const upgrade = async () => {
-    try {
-      const g = await similarityGraph(books, embedImpl ? { embedImpl } : {});
-      graph.setData(g);
-      setMode(g.mode);
-    } catch {
-      // upgrade failed, stay on lexical
-    }
-  };
-  if (typeof IntersectionObserver !== 'undefined') {
-    const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); upgrade(); } });
-    io.observe(canvas);
-  } else {
-    upgrade();
-  }
-  return graph;
-}
-
-function setMode(mode) {
-  const el = document.getElementById('graph-mode');
-  if (el) el.textContent = mode === 'lexical' ? 'lexical mode (semantic model unavailable)' : '';
-}
-
 let _books = [];
-let _graph = null;
-let _graphInited = false;
-let _currentView = null;
 const VIEWS = ['work', 'flux', 'reading'];
 
 // Single-page view switcher. Nav anchors are #work/#flux/#reading; hashchange drives this.
 function showView(name) {
   if (!VIEWS.includes(name)) name = 'work';
-  // Pause the graph's animation loop when leaving Reading (no need to run while hidden).
-  if (_currentView === 'reading' && name !== 'reading' && _graph && _graph.stop) _graph.stop();
   for (const v of VIEWS) {
     const sec = document.getElementById('view-' + v);
     if (sec) sec.hidden = v !== name;
@@ -182,18 +143,6 @@ function showView(name) {
     a.classList.toggle('is-active', on);
     if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   });
-  // Graph inits lazily the first time Reading is shown, so the canvas has real dimensions
-  // (a hidden 0×0 canvas can't lay out or trigger the intersection-based semantic upgrade).
-  if (name === 'reading') {
-    if (!_graphInited) {
-      _graphInited = true;
-      const go = async () => { _graph = await initGraph(_books); };
-      if (typeof requestAnimationFrame !== 'undefined') requestAnimationFrame(go); else go();
-    } else if (_graph && _graph.start) {
-      _graph.start();
-    }
-  }
-  _currentView = name;
   if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo(0, 0);
 }
 
@@ -216,19 +165,8 @@ async function boot() {
 
   const keyMap = new Map(_books.map(b => [b.key ?? b.isbn, b]));
 
-  const tabGraph = document.getElementById('tab-graph');
-  const tabList = document.getElementById('tab-list');
-  const graphView = document.getElementById('graph-view');
+  // Bookshelf cards open the detail panel (click or Enter)
   const listView = document.getElementById('list-view');
-  function showTab(which) {
-    if (tabGraph) { tabGraph.setAttribute('aria-pressed', which === 'graph' ? 'true' : 'false'); tabGraph.classList.toggle('is-active', which === 'graph'); }
-    if (tabList) { tabList.setAttribute('aria-pressed', which === 'list' ? 'true' : 'false'); tabList.classList.toggle('is-active', which === 'list'); }
-    if (graphView) graphView.hidden = which !== 'graph';
-    if (listView) listView.hidden = which !== 'list';
-  }
-  if (tabGraph) tabGraph.addEventListener('click', () => showTab('graph'));
-  if (tabList) tabList.addEventListener('click', () => showTab('list'));
-
   if (listView) {
     const fromCard = e => {
       if (e.type === 'keydown' && e.key !== 'Enter') return;
