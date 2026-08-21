@@ -1,6 +1,7 @@
 import { profile, shelf } from '../data/shelf.js';
 import { loadShelf } from './books.js';
-// graph + panel wiring arrive in Tasks 8–9.
+import { ForceGraph } from './graph.js';
+import { lexicalGraph, similarityGraph } from './embed.js';
 
 export function renderProfile(p, nodes = {}) {
   const nameEl = nodes.nameEl || document.getElementById('name');
@@ -45,6 +46,59 @@ export function renderList(books) {
   }).join('');
 }
 
+let _panelBooks = new Map();
+
+export function openPanel(book, nodes = {}) {
+  const panel = nodes.panelEl || document.getElementById('panel');
+  if (!panel) return;
+  panel.innerHTML = `
+    <button class="panel-close" aria-label="Close">✕</button>
+    ${book.cover ? `<img src="${book.cover}" alt="" class="panel-cover">` : ''}
+    <h3>${book.title}</h3><p class="dim">${book.authors||''}</p>
+    <p class="rating">${'★'.repeat(book.rating||0)}</p>
+    <p class="panel-review">${book.review || book.note || ''}</p>
+    <div class="chips">${(book.categories||[]).map(c=>`<span class="chip">${c}</span>`).join('')}</div>
+    <a class="panel-link" target="_blank" rel="noopener" href="${book.isbn ? `https://books.google.com/books?vid=ISBN${book.isbn}` : `https://www.google.com/search?tbm=bks&q=${encodeURIComponent(book.title + ' ' + (book.authors||''))}`}">View on Google Books →</a>`;
+  panel.hidden = false;
+  const close = panel.querySelector('.panel-close');
+  if (close) close.addEventListener('click', () => closePanel(nodes));
+}
+
+export function closePanel(nodes = {}) {
+  const panel = nodes.panelEl || document.getElementById('panel');
+  if (panel) panel.hidden = true;
+}
+
+export async function initGraph(books, { canvas, onSelect, embedImpl } = {}) {
+  canvas = canvas || document.getElementById('graph-canvas');
+  _panelBooks = new Map(books.map(b => [b.key ?? b.isbn, b]));
+  const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const pick = id => { const b = _panelBooks.get(id); if (b) (onSelect || openPanel)(b); };
+  const graph = new ForceGraph(canvas, lexicalGraph(books), { onSelect: pick, reducedMotion: reduce });
+  graph.start && graph.start();
+  const upgrade = async () => {
+    try {
+      const g = await similarityGraph(books, embedImpl ? { embedImpl } : {});
+      graph.setData(g);
+      setMode(g.mode);
+    } catch {
+      // upgrade failed, stay on lexical
+    }
+  };
+  if (typeof IntersectionObserver !== 'undefined') {
+    const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); upgrade(); } });
+    io.observe(canvas);
+  } else {
+    upgrade();
+  }
+  return graph;
+}
+
+function setMode(mode) {
+  const el = document.getElementById('graph-mode');
+  if (el) el.textContent = mode === 'lexical' ? 'lexical mode (semantic model unavailable)' : '';
+}
+
 async function boot() {
   renderProfile(profile);
   const books = await loadShelf(shelf);
@@ -52,8 +106,51 @@ async function boot() {
   if (cr) cr.innerHTML = renderCurrentlyReading(books);
   const lv = document.getElementById('list-view');
   if (lv) lv.innerHTML = renderList(books);
-  window.__books = books; // handed to Task 8/9 wiring
+  window.__books = books;
+
+  // Build key map for list-view click delegation
+  const keyMap = new Map(books.map(b => [b.key ?? b.isbn, b]));
+
+  // Graph | List tab toggle
+  const tabGraph = document.getElementById('tab-graph');
+  const tabList = document.getElementById('tab-list');
+  const graphView = document.getElementById('graph-view');
+  const listView = document.getElementById('list-view');
+
+  function showTab(which) {
+    if (tabGraph) tabGraph.setAttribute('aria-selected', which === 'graph' ? 'true' : 'false');
+    if (tabList) tabList.setAttribute('aria-selected', which === 'list' ? 'true' : 'false');
+    if (graphView) graphView.hidden = which !== 'graph';
+    if (listView) listView.hidden = which !== 'list';
+  }
+
+  if (tabGraph) tabGraph.addEventListener('click', () => showTab('graph'));
+  if (tabList) tabList.addEventListener('click', () => showTab('list'));
+
+  // Delegate click/Enter on list-view [data-key] cards → openPanel
+  if (listView) {
+    listView.addEventListener('click', e => {
+      const card = e.target.closest('[data-key]');
+      if (!card) return;
+      const book = keyMap.get(card.dataset.key);
+      if (book) openPanel(book);
+    });
+    listView.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const card = e.target.closest('[data-key]');
+      if (!card) return;
+      const book = keyMap.get(card.dataset.key);
+      if (book) openPanel(book);
+    });
+  }
+
+  // Esc closes panel
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
+
+  // Initialize graph
+  await initGraph(books);
 }
+
 if (typeof document !== 'undefined') {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 }

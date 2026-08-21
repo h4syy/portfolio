@@ -402,6 +402,77 @@ main.wrap > section:last-child { border-bottom: none; }
   overflow-y: auto;
   padding: 1.5rem;
   z-index: 100;
+  transform: translateX(0);
+  transition: transform 0.25s ease;
+}
+
+.panel[hidden] {
+  display: none !important;
+}
+
+.panel-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: var(--dim);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.25rem 0.5rem;
+  border-radius: 2px;
+  transition: color 0.15s ease;
+}
+
+.panel-close:hover { color: var(--text); }
+
+.panel-cover {
+  width: 80px;
+  height: auto;
+  margin-bottom: 1rem;
+  border: 1px solid var(--line);
+}
+
+.panel-review {
+  font-size: 0.875rem;
+  color: var(--dim);
+  font-style: italic;
+  margin-block: 0.5rem;
+}
+
+.panel-link {
+  display: inline-block;
+  margin-top: 1rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.8125rem;
+  color: var(--blue);
+}
+
+.panel-link:hover { text-decoration: underline; }
+
+/* ── Category chips ────────────────────────────────────────────────────────── */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-block: 0.5rem;
+}
+
+.chip {
+  display: inline-block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--dim);
+  background: var(--layer-2);
+  border: 1px solid var(--line);
+  padding: 0.15rem 0.5rem;
+  border-radius: 2px;
+}
+
+/* ── Reduced motion: disable panel slide ───────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .panel { transition: none; }
 }
 
 /* ── Footer ────────────────────────────────────────────────────────────────── */
