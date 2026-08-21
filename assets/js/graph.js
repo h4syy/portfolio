@@ -202,9 +202,21 @@ export class ForceGraph {
       if (isHovered || isSelected) {
         const label = n.label || n.id;
         ctx.font = '12px system-ui, sans-serif';
-        ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
-        ctx.fillText(label, n.x, n.y - r - 5);
+        const metrics = ctx.measureText(label);
+        const tw = metrics.width;
+        const th = 12;
+        const px = 6, py = 3;
+        const bx = n.x - tw / 2 - px;
+        const by = n.y - r - 5 - th - py;
+        const bw = tw + px * 2;
+        const bh = th + py * 2;
+        ctx.fillStyle = 'rgba(18,20,24,0.82)';
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(bx, by, bw, bh, 3) : ctx.rect(bx, by, bw, bh);
+        ctx.fill();
+        ctx.fillStyle = '#f4f4f4';
+        ctx.fillText(label, n.x, n.y - r - 5 - py);
       }
     }
   }

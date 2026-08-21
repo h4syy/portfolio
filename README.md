@@ -83,7 +83,6 @@ No build or install step needed for the site itself.
 ## Tests
 
 ```bash
-npm install   # installs the test-only devDeps (Node built-ins, no bundler)
 node --test test/*.mjs
 ```
 

@@ -245,7 +245,8 @@ main.wrap > section:last-child { border-bottom: none; }
 
 .toggle button:hover { color: var(--text); }
 
-.toggle button[aria-selected="true"] {
+.toggle button[aria-pressed="true"],
+.toggle button.is-active {
   color: var(--blue);
   border-bottom-color: var(--blue);
   background: var(--layer);
@@ -361,11 +362,9 @@ main.wrap > section:last-child { border-bottom: none; }
 
 /* ── List view ─────────────────────────────────────────────────────────────── */
 #list-view {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1px;
-  background: var(--line);
-  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
   margin-top: 1rem;
 }
 
