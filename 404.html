@@ -3,213 +3,230 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>404 · signal lost</title>
+  <title>404 — no connections</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/site.css">
   <style>
-    :root {
-      --bg: #07070c;
-      --bg2: #0e0f1a;
-      --cy: #00e5ff;
-      --cy-dim: rgba(0,229,255,0.35);
-      --ink: #eaf4ff;
-      --ink-dim: rgba(234,244,255,0.55);
-      --muted: rgba(234,244,255,0.28);
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
-      width: 100%; min-height: 100%;
-      background: radial-gradient(ellipse at center, var(--bg2), var(--bg));
-      color: var(--ink);
-      font-family: 'JetBrains Mono', monospace;
+      width: 100%;
+      height: 100%;
       overflow: hidden;
     }
 
-    canvas#static {
-      position: fixed; inset: 0;
-      z-index: 0;
-      opacity: 0.45;
-    }
-
-    .wrap {
-      position: relative; z-index: 2;
-      min-height: 100vh;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 2rem;
-    }
-
-    .code {
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 900;
-      font-size: clamp(5rem, 20vw, 12rem);
-      letter-spacing: 0.05em;
-      color: var(--cy);
-      text-shadow: 0 0 30px rgba(0,229,255,0.5), 0 0 60px rgba(0,229,255,0.2);
-      line-height: 1;
+    .page-404 {
       position: relative;
-      animation: glitch 5s infinite steps(1);
+      width: 100vw;
+      height: 100vh;
     }
-    .code::before, .code::after {
-      content: attr(data-text);
+
+    #canvas-404 {
       position: absolute;
-      top: 0; left: 0;
+      inset: 0;
       width: 100%;
-    }
-    .code::before {
-      color: rgba(255, 60, 150, 0.6);
-      transform: translate(-3px, 0);
-      mix-blend-mode: screen;
-      animation: glitch-a 3.2s infinite steps(1);
-    }
-    .code::after {
-      color: rgba(120, 220, 255, 0.6);
-      transform: translate(3px, 0);
-      mix-blend-mode: screen;
-      animation: glitch-b 2.8s infinite steps(1);
-    }
-    @keyframes glitch {
-      0%, 94%, 100% { transform: translate(0,0); }
-      95% { transform: translate(-2px, 1px); }
-      96% { transform: translate(2px, -1px); }
-      97% { transform: translate(0, 0); }
-    }
-    @keyframes glitch-a {
-      0%, 92%, 100% { opacity: 0.3; transform: translate(-3px, 0); }
-      93% { opacity: 1; transform: translate(-6px, 2px); }
-      94% { opacity: 0.3; transform: translate(-3px, 0); }
-    }
-    @keyframes glitch-b {
-      0%, 92%, 100% { opacity: 0.3; transform: translate(3px, 0); }
-      93% { opacity: 1; transform: translate(6px, -2px); }
-      94% { opacity: 0.3; transform: translate(3px, 0); }
+      height: 100%;
+      display: block;
     }
 
-    .label {
-      margin-top: 1rem;
-      font-size: 0.7rem;
-      color: var(--cy);
-      letter-spacing: 0.5em;
-      text-transform: uppercase;
-    }
-    .msg {
-      margin-top: 2.5rem;
-      text-align: center;
-      max-width: 520px;
-      color: var(--ink-dim);
-      font-size: 0.85rem;
-      line-height: 1.8;
-      letter-spacing: 0.06em;
-    }
-    .msg b { color: var(--ink); font-weight: 500; }
-    .trace {
-      margin-top: 2.5rem;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.65rem;
-      color: var(--muted);
-      letter-spacing: 0.15em;
-      text-align: left;
-      max-width: 420px;
-      background: rgba(14,15,26,0.5);
-      border: 1px solid rgba(0,229,255,0.15);
-      padding: 1rem 1.2rem;
-      line-height: 1.9;
-    }
-    .trace .ok  { color: rgba(120, 255, 180, 0.8); }
-    .trace .err { color: rgba(255, 90, 130, 0.85); }
-    .trace .dim { color: var(--muted); }
-
-    .cta {
-      margin-top: 2.5rem;
-      display: inline-flex;
+    .overlay-404 {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 0.8rem;
-      padding: 0.8rem 1.6rem;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: var(--cy);
-      text-decoration: none;
-      border: 1px solid var(--cy-dim);
-      background: rgba(0,229,255,0.04);
-      transition: all 0.22s ease;
+      justify-content: center;
+      gap: 0.75rem;
+      pointer-events: none;
+      z-index: 2;
     }
-    .cta:hover {
-      background: rgba(0,229,255,0.12);
-      border-color: var(--cy);
-      box-shadow: 0 0 28px rgba(0,229,255,0.3);
-    }
-    .cta .arr { transition: transform 0.22s ease; }
-    .cta:hover .arr { transform: translateX(4px); }
 
-    @media (max-width: 600px) {
-      .code { font-size: 5rem; }
-      .msg { font-size: 0.78rem; }
-      .trace { font-size: 0.6rem; }
+    .overlay-404 h1 {
+      font-size: clamp(5rem, 18vw, 10rem);
+      font-weight: 600;
+      line-height: 1;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .overlay-404 p {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.9rem;
+      color: var(--dim);
+      letter-spacing: 0.04em;
+    }
+
+    .overlay-404 a {
+      pointer-events: auto;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--blue);
+      margin-top: 0.5rem;
+      transition: opacity 0.15s ease;
+    }
+
+    .overlay-404 a:hover {
+      opacity: 0.75;
     }
   </style>
 </head>
 <body>
-  <canvas id="static"></canvas>
-
-  <div class="wrap">
-    <div class="code" data-text="404">404</div>
-    <div class="label">signal lost</div>
-
-    <div class="msg">
-      the neuron you were trying to reach didn't fire.
-      <br><br>
-      <b>either it never existed, or it was pruned</b>
+  <div class="page-404">
+    <canvas id="canvas-404"></canvas>
+    <div class="overlay-404">
+      <h1>404</h1>
+      <p>this page has no connections.</p>
+      <a href="/">cd ~ →</a>
     </div>
-
-    <div class="trace">
-      <div><span class="ok">✓</span> dns resolved</div>
-      <div><span class="ok">✓</span> tcp handshake</div>
-      <div><span class="ok">✓</span> tls negotiated</div>
-      <div><span class="err">✗</span> neural path: <span class="dim">no gradient</span></div>
-      <div><span class="err">✗</span> fallback: <span class="dim">404</span></div>
-    </div>
-
-    <a href="/" class="cta">go home <span class="arr">→</span></a>
   </div>
 
-<script>
-// Static / scanline noise canvas
-(() => {
-  const c = document.getElementById('static');
-  const ctx = c.getContext('2d');
-  let W, H, buf;
-  function resize() {
-    W = c.width  = window.innerWidth;
-    H = c.height = window.innerHeight;
-    buf = ctx.createImageData(W, H);
-  }
-  resize();
-  window.addEventListener('resize', resize);
+  <script type="module">
+    import { ForceGraph, clusterColor, initLayout, settle } from './assets/js/graph.js';
 
-  function draw() {
-    requestAnimationFrame(draw);
-    const d = buf.data;
-    const len = W * H;
-    for (let i = 0; i < len; i++) {
-      const v = Math.random() < 0.03 ? (Math.random() * 255) | 0 : 0;
-      const j = i * 4;
-      d[j] = 0;                // r
-      d[j+1] = v * 0.9 | 0;    // g (cyan-ish)
-      d[j+2] = v | 0;          // b
-      d[j+3] = v ? 120 : 0;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Background nodes with edges (faint cluster)
+    const bgNodes = [
+      { id: 'n1', r: 9,  cluster: 0 },
+      { id: 'n2', r: 7,  cluster: 2 },
+      { id: 'n3', r: 11, cluster: 4 },
+      { id: 'n4', r: 8,  cluster: 1 },
+      { id: 'n5', r: 6,  cluster: 3 },
+      { id: 'n6', r: 9,  cluster: 5 },
+    ];
+
+    const bgEdges = [
+      { a: 'n1', b: 'n2', w: 0.7 },
+      { a: 'n2', b: 'n3', w: 0.5 },
+      { a: 'n3', b: 'n4', w: 0.6 },
+      { a: 'n4', b: 'n5', w: 0.4 },
+      { a: 'n5', b: 'n6', w: 0.8 },
+      { a: 'n1', b: 'n4', w: 0.3 },
+    ];
+
+    // The orphan 404 node — no edges
+    const orphan = { id: 'e404', r: 18, cluster: 0 };
+
+    // All nodes; orphan placed last so it draws on top
+    const allNodes = [...bgNodes, orphan];
+    const allEdges = bgEdges; // orphan has zero edges
+
+    const canvas = document.getElementById('canvas-404');
+
+    // Custom draw — we need to render the bg nodes faint and the orphan prominent.
+    // We use ForceGraph for simulation + the lower-level primitives for a custom look.
+    // Strategy: use a single ForceGraph with all nodes, then override with a custom
+    // post-draw pass is not possible from outside. Instead, draw manually using
+    // initLayout + settle + requestAnimationFrame so we control opacity per node.
+
+    const W = () => canvas.offsetWidth;
+    const H = () => canvas.offsetHeight;
+
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width  = W() * dpr;
+      canvas.height = H() * dpr;
     }
-    ctx.putImageData(buf, 0, 0);
 
-    // Scanline
-    const y = (performance.now() * 0.12) % H;
-    ctx.fillStyle = 'rgba(0, 229, 255, 0.04)';
-    ctx.fillRect(0, y, W, 2);
-  }
-  requestAnimationFrame(draw);
-})();
-</script>
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Initialise node positions
+    initLayout(allNodes, W(), H(), 42);
+
+    // Settle the bg cluster together (edges only connect bg nodes, so orphan drifts free)
+    settle(allNodes, allEdges, { W: W(), H: H(), repel: 1200, gravity: 0.012 }, 400);
+
+    // After settling, nudge orphan to a corner-ish position so it's visually apart
+    orphan.x = W() * 0.72;
+    orphan.y = H() * 0.38;
+    orphan.vx = reducedMotion ? 0 : 0.35;
+    orphan.vy = reducedMotion ? 0 : -0.18;
+
+    const ctx = canvas.getContext('2d');
+
+    function draw(t = 0) {
+      const dpr = window.devicePixelRatio || 1;
+      const cw = W(), ch = H();
+
+      // Guard: resize if canvas backing changed
+      if (canvas.width !== cw * dpr || canvas.height !== ch * dpr) {
+        canvas.width  = cw * dpr;
+        canvas.height = ch * dpr;
+      }
+
+      ctx.save();
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, cw, ch);
+
+      // Draw bg edges (very faint)
+      for (const e of bgEdges) {
+        const a = allNodes.find(n => n.id === e.a);
+        const b = allNodes.find(n => n.id === e.b);
+        if (!a || !b) continue;
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(160,170,190,${0.12 + (e.w || 0) * 0.18})`;
+        ctx.lineWidth = 1;
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+
+      // Draw bg nodes (faint)
+      for (const n of bgNodes) {
+        ctx.save();
+        ctx.globalAlpha = 0.22;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fillStyle = clusterColor(n.cluster);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Draw orphan node (prominent) with a gentle pulse glow
+      const phase = t * 0.0018;
+      const pulse = orphan.r + 5 + Math.sin(phase) * 3;
+
+      // Outer glow
+      const grd = ctx.createRadialGradient(orphan.x, orphan.y, orphan.r * 0.4, orphan.x, orphan.y, pulse * 2.2);
+      grd.addColorStop(0, clusterColor(orphan.cluster) + '55');
+      grd.addColorStop(1, 'transparent');
+      ctx.beginPath();
+      ctx.arc(orphan.x, orphan.y, pulse * 2.2, 0, Math.PI * 2);
+      ctx.fillStyle = grd;
+      ctx.fill();
+
+      // Core
+      ctx.beginPath();
+      ctx.arc(orphan.x, orphan.y, orphan.r, 0, Math.PI * 2);
+      ctx.fillStyle = clusterColor(orphan.cluster);
+      ctx.globalAlpha = 0.88;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      ctx.restore();
+    }
+
+    if (reducedMotion) {
+      // Single static settled frame — no animation
+      draw(0);
+    } else {
+      // Gentle drift: only move the orphan, let bg stay settled
+      function loop(t) {
+        // Slowly drift orphan with soft boundary bounce
+        orphan.x += orphan.vx;
+        orphan.y += orphan.vy;
+
+        const cw = W(), ch = H();
+        const margin = orphan.r + 20;
+        if (orphan.x < margin || orphan.x > cw - margin) orphan.vx *= -1;
+        if (orphan.y < margin || orphan.y > ch - margin) orphan.vy *= -1;
+
+        draw(t);
+        requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+    }
+  </script>
 </body>
 </html>
