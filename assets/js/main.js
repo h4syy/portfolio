@@ -1,9 +1,17 @@
 import { profile, shelf } from '../data/shelf.js';
-import { loadShelf } from './books.js';
+import { loadShelf, monogram } from './books.js';
 import { ForceGraph } from './graph.js';
 import { lexicalGraph, similarityGraph } from './embed.js';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// Cover = a monogram tile with the real cover image layered on top; if the image fails to
+// load (unknown ISBN, offline) it removes itself and the monogram shows through. No JS fetch.
+function coverHTML(book, cls = '', large = false) {
+  const src = large ? (book.coverLarge || book.cover) : book.cover;
+  return `<div class="cover${cls ? ' ' + cls : ''}"><span class="cover-mono mono">${esc(monogram(book.title))}</span>`
+    + `${src ? `<img src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">` : ''}</div>`;
+}
 
 export function renderProfile(p, nodes = {}) {
   const nameEl = nodes.nameEl || document.getElementById('name');
@@ -24,7 +32,7 @@ export function renderCurrentlyReading(books) {
   if (!reading.length) return '<p class="dim">Nothing on the desk right now.</p>';
   return reading.map(b => `
     <article class="cr-card">
-      ${b.cover ? `<img src="${b.cover}" alt="" class="cover">` : `<div class="cover mono">${esc((b.title||'?').slice(0,2).toUpperCase())}</div>`}
+      ${coverHTML(b)}
       <div><h3>${esc(b.title)}</h3><p class="dim">${esc(b.authors || '')}</p>
       ${Number.isFinite(b.progress) ? `<div class="progress"><i style="width:${Math.round(b.progress*100)}%"></i></div>` : ''}
       ${b.note ? `<p class="note">${esc(b.note)}</p>` : ''}</div>
@@ -39,7 +47,7 @@ export function renderList(books) {
     if (!items.length) return '';
     const cards = items.map(b => `
       <article class="book-card" data-key="${esc(b.key ?? '')}" tabindex="0" role="button" aria-label="${esc(b.title)}">
-        ${b.cover ? `<img src="${b.cover}" alt="" class="cover">` : `<div class="cover mono">${esc((b.title||'?').slice(0,2).toUpperCase())}</div>`}
+        ${coverHTML(b)}
         <div class="bc-body"><h4>${esc(b.title)}</h4><p class="dim">${esc(b.authors||'')}</p>
         <p class="rating" aria-label="${b.rating||0} out of 5">${stars(b.rating)}</p>
         <p class="review">${esc(b.review || b.note || '')}</p></div>
@@ -55,7 +63,7 @@ export function openPanel(book, nodes = {}) {
   if (!panel) return;
   panel.innerHTML = `
     <button class="panel-close" aria-label="Close">✕</button>
-    ${book.cover ? `<img src="${book.cover}" alt="" class="panel-cover">` : ''}
+    ${coverHTML(book, 'panel-cover', true)}
     <h3>${esc(book.title)}</h3><p class="dim">${esc(book.authors||'')}</p>
     <p class="rating">${'★'.repeat(book.rating||0)}</p>
     <p class="panel-review">${esc(book.review || book.note || '')}</p>

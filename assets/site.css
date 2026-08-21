@@ -166,24 +166,39 @@ main.wrap > section:last-child { border-bottom: none; }
   padding: 1rem;
 }
 
+/* Cover = monogram tile with the real image layered on top (see coverHTML in main.js).
+   If the <img> fails to load it removes itself and the monogram shows through. */
+.cover {
+  position: relative;
+  overflow: hidden;
+  background: var(--layer-2);
+  border: 1px solid var(--line);
+}
+.cover img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.cover-mono {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dim);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 .cr-card .cover {
   flex-shrink: 0;
   width: 60px;
   height: 88px;
-  object-fit: cover;
-  background: var(--layer-2);
-  border: 1px solid var(--line);
 }
-
-.cr-card .cover.mono {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--dim);
-}
+.cr-card .cover-mono { font-size: 1rem; }
 
 .cr-card h3 { font-size: 0.9rem; margin-bottom: 0.2rem; }
 
@@ -319,19 +334,9 @@ main.wrap > section:last-child { border-bottom: none; }
 .book-card .cover {
   width: 56px;
   aspect-ratio: 2/3;
-  object-fit: cover;
-  background: var(--layer-2);
 }
 
-.book-card .cover.mono {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--dim);
-}
+.book-card .cover-mono { font-size: 0.875rem; }
 
 .book-card h4 { font-size: 0.875rem; font-weight: 600; margin-bottom: 0.15rem; }
 .book-card .dim { font-size: 0.75rem; color: var(--dim); margin-bottom: 0.25rem; }
@@ -427,10 +432,10 @@ main.wrap > section:last-child { border-bottom: none; }
 .panel-close:hover { color: var(--text); }
 
 .panel-cover {
-  width: 80px;
+  width: 96px;
+  aspect-ratio: 2 / 3;
   height: auto;
   margin-bottom: 1rem;
-  border: 1px solid var(--line);
 }
 
 .panel-review {
