@@ -80,7 +80,9 @@ accessible fallback and the no-model / no-canvas path.
 
 ## Data model — `assets/data/shelf.js`
 
-Single source of truth Yash maintains. ISBN-13 is the key; Google Books fills the rest.
+Single source of truth Yash maintains, **title-first** (he thinks in titles, not ISBNs).
+Google Books is queried by title (+author); an optional `isbn` overrides the lookup. Each
+book's stable id is `key = isbn || slug(title)`.
 
 ```js
 export const profile = {
@@ -237,9 +239,9 @@ DOM/canvas/`localStorage`):
 - **Untouched, unlinked, retained:** `game.html`, `arcade.html`, `starfall.html`, `blog/`.
   Deleted only on explicit request.
 
-## Open questions
+## Open questions (resolved)
 
-- Exact starting book list (ISBNs + ratings/reviews) — Yash to supply, or we seed with a
-  handful he names and he edits `shelf.js` after.
-- Whether to surface the existing blog essay under a small "Writing" link later (deferred;
-  not in this scope).
+- Starting book list — **provided** (2026-08-21): 7 currently-reading, 13 finished, seeded
+  title-first into `shelf.js`; Yash edits ratings/reviews after. Data is title-first, so the
+  layer queries Google Books by title/author rather than ISBN.
+- Surfacing the existing blog essay under a "Writing" link — deferred, not in scope.

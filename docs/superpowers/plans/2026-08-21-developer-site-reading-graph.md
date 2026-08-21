@@ -40,17 +40,20 @@
 | `test/dom-stub.mjs` | Reusable DOM/canvas/IntersectionObserver stub factory for browser-glue smokes. |
 | `test/*.test.mjs` | Node tests. |
 
+**Shelf entries are title-first.** Yash maintains a list of `{ title, author?, status, rating?, review?, note?, progress?, finished?, tags?, isbn? }`. Google Books is queried by **title (+author)** unless an `isbn` override is present. Every book gets a stable `key = isbn || slug(title)` used as the graph node id and all cache keys.
+
 **Book type (shared shape):**
 ```
 Book = {
-  isbn: string, status: 'reading'|'read'|'want',
+  key: string,                       // isbn || slug(title) — stable id used everywhere
+  isbn: string|null, status: 'reading'|'read'|'want',
   title: string, authors: string, cover: string|null, description: string,
   categories: string[], pageCount: number|null,
   rating: number|null, review: string, note: string,
   progress: number|null, started: string|null, finished: string|null,
   tags: string[], degraded: boolean
 }
-GraphNode = { id: string, label: string, authors: string, r: number, cluster: number, status: string, x?: number, y?: number, vx?: number, vy?: number }
+GraphNode = { id: string, label: string, authors: string, r: number, cluster: number, status: string, x?: number, y?: number, vx?: number, vy?: number }  // id === book.key
 GraphEdge = { a: string, b: string, w: number }   // a,b are node ids; w in 0..1
 ```
 
@@ -150,9 +153,12 @@ git commit -m "[CLAUDE] storage.js — safe persistence with in-memory fallback"
 **Interfaces:**
 - Consumes: `storage.getJSON/setJSON`.
 - Produces:
-  - `parseVolume(json, entry) -> Book` — maps a Google Books `volumes?q=isbn` response (or a single volume) onto the `Book` shape, merging the shelf `entry` (personal fields + fallback title/authors). Pure.
+  - `slug(title) -> string` — lowercase, non-alphanumerics to `-`, trimmed. Pure.
+  - `bookKey(entry) -> string` — `entry.isbn || slug(entry.title)`. Pure.
+  - `queryUrl(entry) -> string` — `q=isbn:<isbn>` when an isbn override exists, else `q=intitle:<title>` (+ `+inauthor:<author>` when present). Pure.
+  - `parseVolume(json, entry) -> Book` — maps a Google Books `volumes` response (first item) onto the `Book` shape, merging the shelf `entry` (personal fields + fallback `title`/`author`), setting `key`. Pure.
   - `monogram(title) -> string` — 1–2 uppercase initials. Pure.
-  - `fetchBook(entry, { fetchImpl } = {}) -> Promise<Book>` — cache-first; on network/parse failure returns a `degraded:true` Book built from the entry's local fields. `fetchImpl` defaults to `(...a) => fetch(...a)`.
+  - `fetchBook(entry, { fetchImpl } = {}) -> Promise<Book>` — cache-first by `key`; on network/parse failure returns a `degraded:true` Book from the entry's local fields. `fetchImpl` defaults to `(...a) => fetch(...a)`.
   - `loadShelf(shelf, opts) -> Promise<Book[]>` — maps `fetchBook` over entries (preserving order); failures never reject the whole batch.
 
 - [ ] **Step 1: Write the failing test**
@@ -161,7 +167,7 @@ Create `test/books.test.mjs`:
 ```js
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseVolume, monogram, fetchBook, loadShelf } from '../assets/js/books.js';
+import { parseVolume, monogram, fetchBook, loadShelf, slug, bookKey, queryUrl } from '../assets/js/books.js';
 
 const VOL = { totalItems: 1, items: [{ volumeInfo: {
   title: 'Designing Data-Intensive Applications', authors: ['Martin Kleppmann'],
@@ -169,22 +175,35 @@ const VOL = { totalItems: 1, items: [{ volumeInfo: {
   categories: ['Computers'], pageCount: 616,
   imageLinks: { thumbnail: 'http://books.example/ddia.jpg' } } }] };
 
-test('parseVolume maps fields and upgrades http cover to https', () => {
-  const b = parseVolume(VOL, { isbn: '9781449373320', status: 'reading', progress: 0.6 });
+test('slug and bookKey derive a stable id from title when no isbn', () => {
+  assert.equal(slug('The Art of War'), 'the-art-of-war');
+  assert.equal(bookKey({ title: 'The Art of War' }), 'the-art-of-war');
+  assert.equal(bookKey({ title: 'x', isbn: '123' }), '123');
+});
+
+test('queryUrl searches by title+author, or by isbn override', () => {
+  assert.ok(queryUrl({ title: 'Sapiens', author: 'Harari' }).includes('intitle:'));
+  assert.ok(queryUrl({ title: 'Sapiens', author: 'Harari' }).includes('inauthor:'));
+  assert.ok(queryUrl({ title: 'x', isbn: '123' }).includes('isbn:123'));
+});
+
+test('parseVolume maps fields, sets key, upgrades http cover to https', () => {
+  const b = parseVolume(VOL, { title: 'Designing Data-Intensive Applications', author: 'Martin Kleppmann', status: 'reading', progress: 0.6 });
   assert.equal(b.title, 'Designing Data-Intensive Applications');
   assert.equal(b.authors, 'Martin Kleppmann');
+  assert.equal(b.key, 'designing-data-intensive-applications');
   assert.equal(b.pageCount, 616);
   assert.ok(b.cover.startsWith('https://'));
   assert.equal(b.status, 'reading');
-  assert.equal(b.progress, 0.6);
   assert.equal(b.degraded, false);
 });
 
-test('parseVolume falls back to entry title/authors on empty result', () => {
-  const b = parseVolume({ totalItems: 0, items: [] }, { isbn: 'x', title: 'Local', authors: 'Me' });
+test('parseVolume falls back to entry title/author on empty result', () => {
+  const b = parseVolume({ totalItems: 0, items: [] }, { title: 'Local', author: 'Me' });
   assert.equal(b.title, 'Local');
   assert.equal(b.authors, 'Me');
   assert.equal(b.cover, null);
+  assert.equal(b.degraded, true);
 });
 
 test('monogram returns initials', () => {
@@ -193,7 +212,7 @@ test('monogram returns initials', () => {
 });
 
 test('fetchBook returns degraded book when fetch throws', async () => {
-  const b = await fetchBook({ isbn: 'x', title: 'Offline Title', authors: 'A' },
+  const b = await fetchBook({ title: 'Offline Title', author: 'A' },
     { fetchImpl: async () => { throw new Error('network'); } });
   assert.equal(b.degraded, true);
   assert.equal(b.title, 'Offline Title');
@@ -202,7 +221,7 @@ test('fetchBook returns degraded book when fetch throws', async () => {
 test('loadShelf preserves order and never rejects', async () => {
   const fetchImpl = async () => ({ ok: true, json: async () => VOL });
   const out = await loadShelf(
-    [{ isbn: 'a', status: 'read' }, { isbn: 'b', status: 'want' }], { fetchImpl });
+    [{ title: 'One', status: 'read' }, { title: 'Two', status: 'want' }], { fetchImpl });
   assert.equal(out.length, 2);
   assert.equal(out[0].title, 'Designing Data-Intensive Applications');
 });
@@ -220,7 +239,16 @@ Create `assets/js/books.js`:
 import { getJSON, setJSON } from './storage.js';
 
 const CACHE = 'books:v1:';
-const ENDPOINT = 'https://www.googleapis.com/books/v1/volumes?q=isbn:';
+const BASE = 'https://www.googleapis.com/books/v1/volumes?q=';
+
+export function slug(title) { return (title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+export function bookKey(entry) { return entry.isbn || slug(entry.title); }
+export function queryUrl(entry) {
+  if (entry.isbn) return BASE + 'isbn:' + encodeURIComponent(entry.isbn);
+  let q = 'intitle:' + encodeURIComponent(entry.title);
+  if (entry.author) q += '+inauthor:' + encodeURIComponent(entry.author);
+  return BASE + q;
+}
 
 export function monogram(title) {
   const words = (title || '?').trim().split(/\s+/).filter(Boolean);
@@ -232,20 +260,20 @@ export function monogram(title) {
 export function parseVolume(json, entry) {
   const info = json && json.items && json.items[0] && json.items[0].volumeInfo;
   const base = {
-    isbn: entry.isbn, status: entry.status || 'read',
+    key: bookKey(entry), isbn: entry.isbn || null, status: entry.status || 'read',
     rating: entry.rating ?? null, review: entry.review || '', note: entry.note || '',
     progress: entry.progress ?? null, started: entry.started || null, finished: entry.finished || null,
     tags: entry.tags || [], degraded: false,
   };
   if (!info) {
-    return { ...base, title: entry.title || entry.isbn, authors: entry.authors || '',
+    return { ...base, title: entry.title || entry.isbn || '?', authors: entry.author || '',
       cover: null, description: '', categories: [], pageCount: null, degraded: true };
   }
   const cover = info.imageLinks && (info.imageLinks.thumbnail || info.imageLinks.smallThumbnail);
   return {
     ...base,
-    title: info.title || entry.title || entry.isbn,
-    authors: (info.authors && info.authors.join(', ')) || entry.authors || '',
+    title: info.title || entry.title || '?',
+    authors: (info.authors && info.authors.join(', ')) || entry.author || '',
     cover: cover ? cover.replace(/^http:/, 'https:') : null,
     description: info.description || '',
     categories: info.categories || [],
@@ -254,11 +282,11 @@ export function parseVolume(json, entry) {
 }
 
 export async function fetchBook(entry, { fetchImpl = (...a) => fetch(...a) } = {}) {
-  const key = CACHE + entry.isbn;
+  const key = CACHE + bookKey(entry);
   const cached = getJSON(key);
-  if (cached) return { ...cached, ...personalFields(entry) }; // refresh personal fields from shelf
+  if (cached) return { ...cached, ...personalFields(entry), key: bookKey(entry) };
   try {
-    const res = await fetchImpl(ENDPOINT + encodeURIComponent(entry.isbn));
+    const res = await fetchImpl(queryUrl(entry));
     const json = await res.json();
     const book = parseVolume(json, entry);
     if (!book.degraded) setJSON(key, stripPersonal(book));
@@ -278,8 +306,8 @@ function personalFields(e) {
     finished: e.finished || null, tags: e.tags || [] };
 }
 function stripPersonal(b) {
-  const { title, authors, cover, description, categories, pageCount, isbn } = b;
-  return { title, authors, cover, description, categories, pageCount, isbn };
+  const { title, authors, cover, description, categories, pageCount, isbn, key } = b;
+  return { title, authors, cover, description, categories, pageCount, isbn, key };
 }
 ```
 
@@ -430,12 +458,14 @@ export function labelProp(ids, edges, iters = 8) {
   return label;
 }
 
+export function bookId(b) { return b.key ?? b.isbn; }
+
 export function lexicalGraph(books, { k = 3, threshold = 0.08 } = {}) {
-  const ids = books.map(b => b.isbn);
+  const ids = books.map(bookId);
   const vectors = tfidf(books.map(b => tokenize(bookText(b))));
   const edges = topKEdges(ids, vectors, { k, threshold });
   const clusters = labelProp(ids, edges);
-  const nodes = books.map(b => ({ id: b.isbn, label: b.title, authors: b.authors, r: nodeRadius(b), cluster: clusters.get(b.isbn), status: b.status }));
+  const nodes = books.map(b => ({ id: bookId(b), label: b.title, authors: b.authors, r: nodeRadius(b), cluster: clusters.get(bookId(b)), status: b.status }));
   return { nodes, edges };
 }
 ```
@@ -464,7 +494,7 @@ git commit -m "[CLAUDE] embed.js — lexical TF-IDF relatedness + clustering" -m
 - Consumes: `Book[]`, `storage`, `cosine/topKEdges/labelProp/nodeRadius/bookText` (from Task 3).
 - Produces:
   - `defaultEmbedder(texts) -> Promise<number[][]>` — lazy-imports transformers.js from CDN and returns normalized 384-dim vectors. Browser-only (throws in Node — that's expected; tests inject a fake).
-  - `similarityGraph(books, { k=3, threshold=0.35, embedImpl=defaultEmbedder } = {}) -> Promise<{ nodes, edges, mode }>` — embeds only uncached ISBNs (cache key `emb:minilm:<isbn>`), builds edges/clusters like `lexicalGraph`, sets `mode:'semantic'`. On any failure falls back to `lexicalGraph(books)` with `mode:'lexical'`.
+  - `similarityGraph(books, { k=3, threshold=0.35, embedImpl=defaultEmbedder } = {}) -> Promise<{ nodes, edges, mode }>` — embeds only uncached books (cache key `emb:minilm:<key>`), builds edges/clusters like `lexicalGraph`, sets `mode:'semantic'`. On any failure falls back to `lexicalGraph(books)` with `mode:'lexical'`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -533,21 +563,21 @@ export async function defaultEmbedder(texts) {
 
 export async function similarityGraph(books, { k = 3, threshold = 0.35, embedImpl = defaultEmbedder } = {}) {
   try {
-    const ids = books.map(b => b.isbn);
+    const ids = books.map(bookId);
     const need = [], needIdx = [];
     const vectors = books.map((b, i) => {
-      const cached = getJSON(EMB_KEY + b.isbn);
+      const cached = getJSON(EMB_KEY + bookId(b));
       if (cached) return cached;
       need.push(bookText(b)); needIdx.push(i); return null;
     });
     if (need.length) {
       const fresh = await embedImpl(need);
       if (!fresh || fresh.length !== need.length) throw new Error('bad embedder output');
-      fresh.forEach((vec, j) => { const i = needIdx[j]; vectors[i] = vec; setJSON(EMB_KEY + books[i].isbn, vec); });
+      fresh.forEach((vec, j) => { const i = needIdx[j]; vectors[i] = vec; setJSON(EMB_KEY + bookId(books[i]), vec); });
     }
     const edges = topKEdges(ids, vectors, { k, threshold });
     const clusters = labelProp(ids, edges);
-    const nodes = books.map(b => ({ id: b.isbn, label: b.title, authors: b.authors, r: nodeRadius(b), cluster: clusters.get(b.isbn), status: b.status }));
+    const nodes = books.map(b => ({ id: bookId(b), label: b.title, authors: b.authors, r: nodeRadius(b), cluster: clusters.get(bookId(b)), status: b.status }));
     return { nodes, edges, mode: 'semantic' };
   } catch {
     return { ...lexicalGraph(books, { k }), mode: 'lexical' };
@@ -807,8 +837,8 @@ git commit -m "[CLAUDE] graph.js — ForceGraph canvas renderer + DOM stub harne
 export const profile = {
   name: 'Yash Paudel',
   role: 'Software engineer · Nepal',
-  tagline: 'I build reliable systems and study how the ideas behind them connect.',
-  about: 'Engineer working across backend, AI, and the messy glue between. Based in Nepal, focused on things that ship and hold up in production.',
+  tagline: 'I build reliable systems, and I read widely to understand how the ideas connect.',
+  about: 'Engineer working across backend, AI, and the messy glue between. Based in Nepal, focused on things that ship and hold up in production. Off the clock I read across engineering, cosmology, philosophy, and the occasional novel — the graph below is how those threads relate.',
   links: {
     github: 'https://github.com/h4syy',
     linkedin: 'https://www.linkedin.com/in/yashpaudel/',
@@ -816,12 +846,30 @@ export const profile = {
   },
 };
 
+// status: 'reading' | 'read' | 'want'. Add rating (1–5)/review/finished when you like.
 export const shelf = [
-  { isbn: '9781449373320', title: 'Designing Data-Intensive Applications', authors: 'Martin Kleppmann', status: 'reading', progress: 0.62, started: '2026-08', note: 'the mental model I keep returning to', tags: ['distributed-systems','databases'] },
-  { isbn: '9780134494166', title: 'Clean Architecture', authors: 'Robert C. Martin', status: 'read', rating: 4, finished: '2026-06', review: 'Boundaries and dependency rule — the parts that stuck.', tags: ['architecture'] },
-  { isbn: '9780262035613', title: 'Deep Learning', authors: 'Ian Goodfellow', status: 'read', rating: 4, finished: '2026-05', review: 'Dense, but the foundations chapter alone is worth it.', tags: ['ml','ai'] },
-  { isbn: '9780374533557', title: 'Thinking, Fast and Slow', authors: 'Daniel Kahneman', status: 'read', rating: 5, finished: '2026-03', review: 'Changed how I reason about my own reasoning.', tags: ['cognition','decisions'] },
-  { isbn: '9780201835953', title: 'The Mythical Man-Month', authors: 'Frederick P. Brooks Jr.', status: 'want', tags: ['software','teams'] },
+  // — currently reading —
+  { title: 'Designing Data-Intensive Applications', author: 'Martin Kleppmann', status: 'reading', tags: ['distributed-systems','databases','engineering'] },
+  { title: 'Project Hail Mary', author: 'Andy Weir', status: 'reading', tags: ['fiction','sci-fi','space'] },
+  { title: 'Co-Intelligence', author: 'Ethan Mollick', status: 'reading', tags: ['ai','technology','work'] },
+  { title: 'Homo Deus', author: 'Yuval Noah Harari', status: 'reading', tags: ['history','future','society'] },
+  { title: 'Eat That Frog', author: 'Brian Tracy', status: 'reading', tags: ['productivity','self-help'] },
+  { title: 'High Output Management', author: 'Andrew S. Grove', status: 'reading', tags: ['management','business'] },
+  { title: 'Norwegian Wood', author: 'Haruki Murakami', status: 'reading', tags: ['fiction','literary'] },
+  // — finished —
+  { title: 'Meditations', author: 'Marcus Aurelius', status: 'read', tags: ['philosophy','stoicism'] },
+  { title: 'How to Survive a Black Hole', author: '', status: 'read', tags: ['space','physics','science'] },
+  { title: 'The Grand Design', author: 'Stephen Hawking', status: 'read', tags: ['physics','cosmology','science'] },
+  { title: 'Atomic Habits', author: 'James Clear', status: 'read', tags: ['productivity','habits','self-help'] },
+  { title: 'The Art of War', author: 'Sun Tzu', status: 'read', tags: ['strategy','philosophy'] },
+  { title: 'Sapiens', author: 'Yuval Noah Harari', status: 'read', tags: ['history','society'] },
+  { title: 'Ikigai', author: 'Héctor García', status: 'read', tags: ['philosophy','life','self-help'] },
+  { title: 'The 48 Laws of Power', author: 'Robert Greene', status: 'read', tags: ['strategy','power','psychology'] },
+  { title: 'Leaders Eat Last', author: 'Simon Sinek', status: 'read', tags: ['leadership','management'] },
+  { title: 'The Personal MBA', author: 'Josh Kaufman', status: 'read', tags: ['business','self-help'] },
+  { title: 'Black Holes', author: 'Brian Cox', status: 'read', tags: ['physics','cosmology','science'] },
+  { title: 'To Infinity and Beyond', author: 'Neil deGrasse Tyson', status: 'read', tags: ['space','cosmology','science'] },
+  { title: 'Infinite Cosmos', author: 'Ethan Siegel', status: 'read', tags: ['space','cosmology','science'] },
 ];
 ```
 
@@ -922,8 +970,8 @@ export function renderCurrentlyReading(books) {
     <article class="cr-card">
       ${b.cover ? `<img src="${b.cover}" alt="" class="cover">` : `<div class="cover mono">${(b.title||'?').slice(0,2).toUpperCase()}</div>`}
       <div><h3>${b.title}</h3><p class="dim">${b.authors || ''}</p>
-      <div class="progress"><i style="width:${Math.round((b.progress||0)*100)}%"></i></div>
-      <p class="note">${b.note || ''}</p></div>
+      ${Number.isFinite(b.progress) ? `<div class="progress"><i style="width:${Math.round(b.progress*100)}%"></i></div>` : ''}
+      ${b.note ? `<p class="note">${b.note}</p>` : ''}</div>
     </article>`).join('');
 }
 
@@ -1003,7 +1051,7 @@ export function renderList(books) {
     const items = books.filter(b => b.status === key);
     if (!items.length) return '';
     const cards = items.map(b => `
-      <article class="book-card" data-isbn="${b.isbn}" tabindex="0" role="button" aria-label="${b.title}">
+      <article class="book-card" data-key="${b.key ?? ''}" tabindex="0" role="button" aria-label="${b.title}">
         ${b.cover ? `<img src="${b.cover}" alt="" class="cover">` : `<div class="cover mono">${(b.title||'?').slice(0,2).toUpperCase()}</div>`}
         <div class="bc-body"><h4>${b.title}</h4><p class="dim">${b.authors||''}</p>
         <p class="rating" aria-label="${b.rating||0} out of 5">${stars(b.rating)}</p>
@@ -1090,7 +1138,7 @@ export function openPanel(book, nodes = {}) {
     <p class="rating">${'★'.repeat(book.rating||0)}</p>
     <p class="panel-review">${book.review || book.note || ''}</p>
     <div class="chips">${(book.categories||[]).map(c=>`<span class="chip">${c}</span>`).join('')}</div>
-    ${book.isbn ? `<a class="panel-link" target="_blank" rel="noopener" href="https://books.google.com/books?vid=ISBN${book.isbn}">View on Google Books →</a>` : ''}`;
+    <a class="panel-link" target="_blank" rel="noopener" href="${book.isbn ? `https://books.google.com/books?vid=ISBN${book.isbn}` : `https://www.google.com/search?tbm=bks&q=${encodeURIComponent(book.title + ' ' + (book.authors||''))}`}">View on Google Books →</a>`;
   panel.hidden = false;
   const close = panel.querySelector('.panel-close');
   if (close) close.addEventListener('click', () => closePanel(nodes));
@@ -1099,7 +1147,7 @@ export function closePanel(nodes = {}) { const panel = nodes.panelEl || document
 
 export async function initGraph(books, { canvas, onSelect, embedImpl } = {}) {
   canvas = canvas || document.getElementById('graph-canvas');
-  _panelBooks = new Map(books.map(b => [b.isbn, b]));
+  _panelBooks = new Map(books.map(b => [b.key ?? b.isbn, b]));
   const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const pick = id => { const b = _panelBooks.get(id); if (b) (onSelect || openPanel)(b); };
   const graph = new ForceGraph(canvas, lexicalGraph(books), { onSelect: pick, reducedMotion: reduce });
@@ -1113,7 +1161,7 @@ export async function initGraph(books, { canvas, onSelect, embedImpl } = {}) {
 }
 function setMode(mode) { const el = document.getElementById('graph-mode'); if (el) el.textContent = mode === 'lexical' ? 'lexical mode (semantic model unavailable)' : ''; }
 ```
-In `boot`, after rendering: wire the `Graph | List` tabs to toggle `#graph-view`/`#list-view` `hidden` and `aria-selected`, then `await initGraph(books)`; Esc closes the panel.
+In `boot`, after rendering: wire the `Graph | List` tabs to toggle `#graph-view`/`#list-view` `hidden` and `aria-selected`; delegate click/Enter on `#list-view [data-key]` to `openPanel(map.get(key))` (same `books`-by-key map `initGraph` builds); then `await initGraph(books)`; Esc closes the panel.
 
 - [ ] **Step 4: Add panel/tooltip/toggle CSS** to `site.css`: `.panel` slide-in (transform + transition, disabled under reduced-motion), `.panel-close` top-right, `.chip` mono pill on `--layer-2`, `.tooltip` follows pointer, `.toggle button[aria-selected="true"]` blue underline.
 
