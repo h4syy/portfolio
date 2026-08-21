@@ -289,6 +289,76 @@ main.wrap > section:last-child { border-bottom: none; }
   z-index: 10;
 }
 
+/* ── Card grid / book cards (list view) ────────────────────────────────────── */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.book-card {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 12px;
+  padding: 12px;
+  background: var(--layer);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.book-card:hover,
+.book-card:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.book-card .cover {
+  width: 56px;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  background: var(--layer-2);
+}
+
+.book-card .cover.mono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--dim);
+}
+
+.book-card h4 { font-size: 0.875rem; font-weight: 600; margin-bottom: 0.15rem; }
+.book-card .dim { font-size: 0.75rem; color: var(--dim); margin-bottom: 0.25rem; }
+
+.rating {
+  color: var(--blue);
+  letter-spacing: 2px;
+  font-size: 0.8rem;
+}
+
+.book-card .review {
+  font-size: 0.75rem;
+  color: var(--dim);
+  font-style: italic;
+  margin-top: 0.25rem;
+}
+
+.group { margin-bottom: 2rem; }
+
+.group-h {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  margin-bottom: 0.75rem;
+}
+
 /* ── List view ─────────────────────────────────────────────────────────────── */
 #list-view {
   display: grid;
