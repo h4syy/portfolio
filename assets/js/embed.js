@@ -72,3 +72,63 @@ export function lexicalGraph(books, { k = 3, threshold = 0.08 } = {}) {
   const nodes = books.map(b => ({ id: bookId(b), label: b.title, authors: b.authors, r: nodeRadius(b), cluster: clusters.get(bookId(b)), status: b.status }));
   return { nodes, edges };
 }
+
+import { getJSON, setJSON } from './storage.js';
+
+const EMB_KEY = 'emb:minilm:';
+// Per-embedder in-memory cache: WeakMap<embedImpl, Map<bookKey, vector>>
+// This isolates caches between different embedImpl references (e.g. in tests)
+// while still persisting within a single embedder's lifetime.
+const _embedCache = new WeakMap();
+
+let _pipe = null;
+export async function defaultEmbedder(texts) {
+  if (!_pipe) {
+    const { pipeline } = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0');
+    _pipe = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+  }
+  const out = [];
+  for (const t of texts) {
+    const r = await _pipe(t, { pooling: 'mean', normalize: true });
+    out.push(Array.from(r.data));
+  }
+  return out;
+}
+
+export async function similarityGraph(books, { k = 3, threshold = 0.35, embedImpl = defaultEmbedder } = {}) {
+  try {
+    const ids = books.map(bookId);
+    // Per-embedder in-memory cache (isolates test embedders from each other).
+    // Only the real defaultEmbedder also reads/writes persistent storage.
+    if (!_embedCache.has(embedImpl)) _embedCache.set(embedImpl, new Map());
+    const localCache = _embedCache.get(embedImpl);
+    const usePersist = embedImpl === defaultEmbedder;
+    const need = [], needIdx = [];
+    const vectors = books.map((b, i) => {
+      const key = EMB_KEY + bookId(b);
+      if (localCache.has(key)) return localCache.get(key);
+      if (usePersist) {
+        const cached = getJSON(key);
+        if (cached) { localCache.set(key, cached); return cached; }
+      }
+      need.push(bookText(b)); needIdx.push(i); return null;
+    });
+    if (need.length) {
+      const fresh = await embedImpl(need);
+      if (!fresh || fresh.length !== need.length) throw new Error('bad embedder output');
+      fresh.forEach((vec, j) => {
+        const i = needIdx[j];
+        const key = EMB_KEY + bookId(books[i]);
+        vectors[i] = vec;
+        localCache.set(key, vec);
+        if (usePersist) setJSON(key, vec);
+      });
+    }
+    const edges = topKEdges(ids, vectors, { k, threshold });
+    const clusters = labelProp(ids, edges);
+    const nodes = books.map(b => ({ id: bookId(b), label: b.title, authors: b.authors, r: nodeRadius(b), cluster: clusters.get(bookId(b)), status: b.status }));
+    return { nodes, edges, mode: 'semantic' };
+  } catch {
+    return { ...lexicalGraph(books, { k }), mode: 'lexical' };
+  }
+}
