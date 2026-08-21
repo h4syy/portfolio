@@ -20,7 +20,7 @@ export function install() {
   const doc = { getElementById: () => makeEl(), createElement: makeEl, querySelector: () => makeEl(), querySelectorAll: () => [], addEventListener(){}, body: makeEl(), hidden:false };
   let raf = null;
   const win = { innerWidth:800, innerHeight:600, devicePixelRatio:1, addEventListener(){}, matchMedia:()=>({matches:false, addEventListener(){}, addListener(){}}), IntersectionObserver: class { constructor(cb){ this.cb=cb; } observe(){ this.cb([{isIntersecting:true}]); } disconnect(){} unobserve(){} } };
-  const G = { window: win, document: doc, requestAnimationFrame: cb => { raf = cb; return 1; }, cancelAnimationFrame(){}, IntersectionObserver: win.IntersectionObserver, devicePixelRatio: 1 };
+  const G = { window: win, document: doc, requestAnimationFrame: cb => { raf = cb; return 1; }, cancelAnimationFrame(){}, IntersectionObserver: win.IntersectionObserver, devicePixelRatio: 1, fetch: async () => ({ ok: true, json: async () => ({ totalItems: 0, items: [] }) }) };
   for (const k in G) Object.defineProperty(globalThis, k, { value: G[k], writable: true, configurable: true });
   return { makeEl, ctx, tick: (t=16) => raf && raf(t) };
 }
