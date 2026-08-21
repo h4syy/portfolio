@@ -62,6 +62,7 @@ export class ForceGraph {
     this.#ctx = canvas.getContext('2d');
     this.#onSelect = onSelect;
     this.#reducedMotion = reducedMotion;
+    this.resize();
     this.#initData(nodes, edges);
     this.#bindPointer();
   }
@@ -70,23 +71,21 @@ export class ForceGraph {
 
   setData({ nodes, edges }) {
     this.#initData(nodes, edges);
-    if (!this.#reducedMotion && this.#rafId !== null) {
-      // reset energy so the loop picks up simulation again
-      this.#energy = Infinity;
-    }
-    this.#draw();
   }
 
   start() {
+    if (this.#reducedMotion) {
+      // Static mode: settled frame already drawn by constructor; no animation loop.
+      this.#draw();
+      return;
+    }
     if (this.#rafId !== null) return;
     this.#energy = Infinity;
     const loop = (t) => {
-      if (!this.#reducedMotion) {
-        if (this.#energy > this.#EPSILON) {
-          this.#energy = simulateStep(this.#nodes, this.#edges, { W: this.#W, H: this.#H });
-        }
-        this.#phase = t * 0.003;
+      if (this.#energy > this.#EPSILON) {
+        this.#energy = simulateStep(this.#nodes, this.#edges, { W: this.#W, H: this.#H });
       }
+      this.#phase = t * 0.003;
       this.#draw();
       this.#rafId = requestAnimationFrame(loop);
     };
@@ -122,8 +121,7 @@ export class ForceGraph {
   selectById(id) {
     this.#selected = this.#nodes.find(n => n.id === id) || null;
     this.#onSelect(id);
-    if (!this.#reducedMotion) this.#draw();
-    else this.#draw();
+    this.#draw();
   }
 
   // ── Private ────────────────────────────────────────────────────────────────
@@ -131,11 +129,8 @@ export class ForceGraph {
   #initData(nodes, edges) {
     this.#nodes = nodes.map(n => ({ ...n }));
     this.#edges = edges.map(e => ({ ...e }));
-    const rect = this.#canvas.getBoundingClientRect();
-    this.#W = rect.width || 800;
-    this.#H = rect.height || 600;
-    const dpr = (typeof devicePixelRatio !== 'undefined' ? devicePixelRatio : 1) || 1;
-    this.#dpr = dpr;
+    this.#selected = null;
+    this.#hovered = null;
     initLayout(this.#nodes, this.#W, this.#H);
     if (this.#reducedMotion) {
       settle(this.#nodes, this.#edges, { W: this.#W, H: this.#H });
