@@ -3,13 +3,29 @@ export const profile = {
   name: 'Yash Paudel',
   role: 'AI Engineering Lead',
   location: 'Lalitpur, Nepal',
-  tagline: 'I build reliable systems — and reach for AI when it makes the work better, not because it is the headline.',
-  about: 'AI Engineering Lead at Khalti, working on applied AI and LLM systems for Nepal’s fintech — from adapting models to Nepali language and regulation to the backend that actually ships them. 3+ years building software end to end, from Nepal.',
+  tagline: 'I ship production systems — Python, FastAPI, Docker — and bring AI in where it earns its place.',
+  about: 'AI Engineering Lead at Khalti. I build and ship real production systems — Python / FastAPI backends, Dockerised and deployed — and bring LLMs in where they actually earn their place: adapted to Nepali language, regulation, and users. 3+ years shipping software end to end. I’m genuinely open to interesting problems — production AI, hard backend work, or something neither of us has seen yet.',
   links: {
     github: 'https://github.com/h4syy',
     linkedin: 'https://www.linkedin.com/in/yashpaudel/',
     email: 'mailto:yashpaudel10@gmail.com',
   },
+  stack: ['Python', 'FastAPI', 'Docker', 'LLMs / fine-tuning', 'Node.js', 'Production / DevOps', 'Fintech / KYC'],
+};
+
+// "Where I can help" — the operational substance that does the lead-gen.
+export const capabilities = [
+  { title: 'Backend & APIs', blurb: 'Python and FastAPI services built to hold up — clean APIs, sane data flow, typed and tested.' },
+  { title: 'Ship & operate', blurb: 'Dockerised, deployed, observable. Getting things into production and keeping them healthy under real load.' },
+  { title: 'Production AI & LLMs', blurb: 'Fine-tuning and adapting models to a real domain — plus the evaluation and data work that make them trustworthy.' },
+  { title: 'Fintech & KYC', blurb: 'Payments-grade constraints: KYC onboarding, compliance, and the zero-margin-for-error details.' },
+];
+
+// The contact call-to-action.
+export const cta = {
+  headline: 'Open to interesting problems.',
+  line: 'To collaborate, I either need to Learn or need to Earn — choose which side you want me on.',
+  sub: 'Shipping AI to production, a gnarly backend, or something neither of us has seen yet — I’m easy to reach and up for a conversation.',
 };
 
 // Most recent first.
@@ -18,8 +34,8 @@ export const experience = [
     role: 'AI Engineering Lead',
     org: 'Khalti',
     period: 'Present',
-    summary: 'Leading applied-AI work at one of Nepal’s largest digital wallets — LLM-backed features, AI services, and the engineering to run them reliably inside a regulated fintech product.',
-    tags: ['AI / LLMs', 'Backend', 'Fintech'],
+    summary: 'Leading applied-AI work at one of Nepal’s largest digital wallets — LLM-backed features and the Python/FastAPI services, Docker deployments, and evaluation behind them, running reliably inside a regulated fintech product.',
+    tags: ['AI / LLMs', 'Python · FastAPI', 'Docker', 'Production'],
   },
   {
     role: 'AI Research Lead',
@@ -33,11 +49,11 @@ export const experience = [
 // Things you’ve built.
 export const projects = [
   {
-    name: 'Reading Knowledge Graph',
+    name: 'This site',
     year: '2026',
-    blurb: 'This site. An on-device-AI graph of how the books I read relate — vanilla JS, no backend, embeddings computed in the browser.',
+    blurb: 'A no-backend personal site — vanilla JS, static on Vercel, book covers straight from Open Library. Built to stay simple and fast.',
     href: '#reading',
-    tags: ['Canvas', 'On-device AI', 'Vanilla JS'],
+    tags: ['Vanilla JS', 'Static', 'Vercel'],
   },
   {
     name: 'Domain-adapted LLMs for Nepali fintech',

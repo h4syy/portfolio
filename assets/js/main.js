@@ -1,5 +1,5 @@
 import { shelf } from '../data/shelf.js';
-import { profile, experience, projects } from '../data/profile.js';
+import { profile, capabilities, cta, experience, projects } from '../data/profile.js';
 import { posts } from '../data/posts.js';
 import { loadShelf, monogram } from './books.js';
 
@@ -25,6 +25,37 @@ export function renderProfile(p, nodes = {}) {
   if (aboutEl) aboutEl.textContent = p.about || '';
   if (linksEl) linksEl.innerHTML = Object.entries(p.links || {})
     .map(([k, href]) => `<a href="${href}"${href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${k}</a>`).join('');
+  const stackEl = nodes.stackEl || document.getElementById('stack');
+  if (stackEl && p.stack) stackEl.innerHTML = p.stack.map(s => `<span class="chip">${esc(s)}</span>`).join('');
+}
+
+export function renderCapabilities(items, el) {
+  el = el || document.getElementById('capabilities');
+  if (!el) return;
+  el.innerHTML = (items || []).map(c => `<div class="cap"><h3>${esc(c.title)}</h3><p class="dim">${esc(c.blurb)}</p></div>`).join('');
+}
+
+export function renderContact(cta, links = {}, nodes = {}) {
+  const head = nodes.headEl || document.getElementById('cta-headline');
+  const lineEl = nodes.lineEl || document.getElementById('cta-line');
+  const sub = nodes.subEl || document.getElementById('cta-sub');
+  const actions = nodes.actionsEl || document.getElementById('cta-actions');
+  if (head) head.textContent = cta.headline;
+  if (lineEl && cta.line) {
+    // highlight the words "Learn" and "Earn" without trusting raw HTML
+    lineEl.innerHTML = esc(cta.line)
+      .replace(/\bLearn\b/g, '<b class="accent">Learn</b>')
+      .replace(/\bEarn\b/g, '<b class="accent">Earn</b>');
+  }
+  if (sub) sub.textContent = cta.sub;
+  if (actions) {
+    const items = [];
+    if (links.email) items.push(['Email me', links.email, true]);
+    if (links.linkedin) items.push(['LinkedIn', links.linkedin, false]);
+    if (links.github) items.push(['GitHub', links.github, false]);
+    actions.innerHTML = items.map(([label, href, primary]) =>
+      `<a class="cta-btn${primary ? ' cta-btn--primary' : ''}" href="${esc(href)}"${href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${esc(label)}</a>`).join('');
+  }
 }
 
 export function renderCurrentlyReading(books) {
@@ -149,8 +180,12 @@ function showView(name) {
 async function boot() {
   // Work
   renderProfile(profile);
+  renderCapabilities(capabilities);
   renderExperience(experience);
   renderProjects(projects);
+  renderContact(cta, profile.links);
+  const talk = document.getElementById('talk');
+  if (talk && profile.links && profile.links.email) talk.setAttribute('href', profile.links.email);
   // FLUX
   renderFlux(posts);
 
