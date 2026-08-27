@@ -3,230 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>404 — no connections</title>
+  <title>404 · not found</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/site.css">
   <style>
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-    }
-
-    .page-404 {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-    }
-
-    #canvas-404 {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-
-    .overlay-404 {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 0.75rem;
-      pointer-events: none;
-      z-index: 2;
-    }
-
-    .overlay-404 h1 {
-      font-size: clamp(5rem, 18vw, 10rem);
-      font-weight: 600;
-      line-height: 1;
-      color: var(--text);
-      letter-spacing: -0.02em;
-    }
-
-    .overlay-404 p {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 0.9rem;
-      color: var(--dim);
-      letter-spacing: 0.04em;
-    }
-
-    .overlay-404 a {
-      pointer-events: auto;
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 0.85rem;
-      color: var(--blue);
-      margin-top: 0.5rem;
-      transition: opacity 0.15s ease;
-    }
-
-    .overlay-404 a:hover {
-      opacity: 0.75;
-    }
+    .wrap404 { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; text-align: center; padding: 2rem; }
+    .wrap404 h1 { font-size: clamp(5rem, 20vw, 11rem); font-weight: 600; line-height: 1; letter-spacing: -0.03em; }
+    .wrap404 p { font-family: 'IBM Plex Mono', monospace; color: var(--dim); font-size: 0.9rem; letter-spacing: 0.04em; }
+    .wrap404 a { font-family: 'IBM Plex Mono', monospace; color: var(--blue); font-size: 0.9rem; margin-top: 0.5rem; }
+    .wrap404 a:hover { opacity: 0.8; }
   </style>
 </head>
 <body>
-  <div class="page-404">
-    <canvas id="canvas-404"></canvas>
-    <div class="overlay-404">
-      <h1>404</h1>
-      <p>this page has no connections.</p>
-      <a href="/">cd ~ →</a>
-    </div>
+  <div class="wrap404">
+    <h1>404</h1>
+    <p>that route doesn’t exist.</p>
+    <a href="/">cd ~ →</a>
   </div>
-
-  <script type="module">
-    import { ForceGraph, clusterColor, initLayout, settle } from './assets/js/graph.js';
-
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    // Background nodes with edges (faint cluster)
-    const bgNodes = [
-      { id: 'n1', r: 9,  cluster: 0 },
-      { id: 'n2', r: 7,  cluster: 2 },
-      { id: 'n3', r: 11, cluster: 4 },
-      { id: 'n4', r: 8,  cluster: 1 },
-      { id: 'n5', r: 6,  cluster: 3 },
-      { id: 'n6', r: 9,  cluster: 5 },
-    ];
-
-    const bgEdges = [
-      { a: 'n1', b: 'n2', w: 0.7 },
-      { a: 'n2', b: 'n3', w: 0.5 },
-      { a: 'n3', b: 'n4', w: 0.6 },
-      { a: 'n4', b: 'n5', w: 0.4 },
-      { a: 'n5', b: 'n6', w: 0.8 },
-      { a: 'n1', b: 'n4', w: 0.3 },
-    ];
-
-    // The orphan 404 node — no edges
-    const orphan = { id: 'e404', r: 18, cluster: 0 };
-
-    // All nodes; orphan placed last so it draws on top
-    const allNodes = [...bgNodes, orphan];
-    const allEdges = bgEdges; // orphan has zero edges
-
-    const canvas = document.getElementById('canvas-404');
-
-    // Custom draw — we need to render the bg nodes faint and the orphan prominent.
-    // We use ForceGraph for simulation + the lower-level primitives for a custom look.
-    // Strategy: use a single ForceGraph with all nodes, then override with a custom
-    // post-draw pass is not possible from outside. Instead, draw manually using
-    // initLayout + settle + requestAnimationFrame so we control opacity per node.
-
-    const W = () => canvas.offsetWidth;
-    const H = () => canvas.offsetHeight;
-
-    function resize() {
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width  = W() * dpr;
-      canvas.height = H() * dpr;
-    }
-
-    resize();
-    window.addEventListener('resize', resize);
-
-    // Initialise node positions
-    initLayout(allNodes, W(), H(), 42);
-
-    // Settle the bg cluster together (edges only connect bg nodes, so orphan drifts free)
-    settle(allNodes, allEdges, { W: W(), H: H(), repel: 1200, gravity: 0.012 }, 400);
-
-    // After settling, nudge orphan to a corner-ish position so it's visually apart
-    orphan.x = W() * 0.72;
-    orphan.y = H() * 0.38;
-    orphan.vx = reducedMotion ? 0 : 0.35;
-    orphan.vy = reducedMotion ? 0 : -0.18;
-
-    const ctx = canvas.getContext('2d');
-
-    function draw(t = 0) {
-      const dpr = window.devicePixelRatio || 1;
-      const cw = W(), ch = H();
-
-      // Guard: resize if canvas backing changed
-      if (canvas.width !== cw * dpr || canvas.height !== ch * dpr) {
-        canvas.width  = cw * dpr;
-        canvas.height = ch * dpr;
-      }
-
-      ctx.save();
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, cw, ch);
-
-      // Draw bg edges (very faint)
-      for (const e of bgEdges) {
-        const a = allNodes.find(n => n.id === e.a);
-        const b = allNodes.find(n => n.id === e.b);
-        if (!a || !b) continue;
-        ctx.beginPath();
-        ctx.strokeStyle = `rgba(160,170,190,${0.12 + (e.w || 0) * 0.18})`;
-        ctx.lineWidth = 1;
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
-        ctx.stroke();
-      }
-
-      // Draw bg nodes (faint)
-      for (const n of bgNodes) {
-        ctx.save();
-        ctx.globalAlpha = 0.22;
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-        ctx.fillStyle = clusterColor(n.cluster);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      // Draw orphan node (prominent) with a gentle pulse glow
-      const phase = t * 0.0018;
-      const pulse = orphan.r + 5 + Math.sin(phase) * 3;
-
-      // Outer glow
-      const grd = ctx.createRadialGradient(orphan.x, orphan.y, orphan.r * 0.4, orphan.x, orphan.y, pulse * 2.2);
-      grd.addColorStop(0, clusterColor(orphan.cluster) + '55');
-      grd.addColorStop(1, 'transparent');
-      ctx.beginPath();
-      ctx.arc(orphan.x, orphan.y, pulse * 2.2, 0, Math.PI * 2);
-      ctx.fillStyle = grd;
-      ctx.fill();
-
-      // Core
-      ctx.beginPath();
-      ctx.arc(orphan.x, orphan.y, orphan.r, 0, Math.PI * 2);
-      ctx.fillStyle = clusterColor(orphan.cluster);
-      ctx.globalAlpha = 0.88;
-      ctx.fill();
-      ctx.globalAlpha = 1;
-
-      ctx.restore();
-    }
-
-    if (reducedMotion) {
-      // Single static settled frame — no animation
-      draw(0);
-    } else {
-      // Gentle drift: only move the orphan, let bg stay settled
-      function loop(t) {
-        // Slowly drift orphan with soft boundary bounce
-        orphan.x += orphan.vx;
-        orphan.y += orphan.vy;
-
-        const cw = W(), ch = H();
-        const margin = orphan.r + 20;
-        if (orphan.x < margin || orphan.x > cw - margin) orphan.vx *= -1;
-        if (orphan.y < margin || orphan.y > ch - margin) orphan.vy *= -1;
-
-        draw(t);
-        requestAnimationFrame(loop);
-      }
-      requestAnimationFrame(loop);
-    }
-  </script>
 </body>
 </html>

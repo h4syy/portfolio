@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Why Nepal’s Fintech Needs Its Own LLMs — Yash Paudel</title>
-  <meta name="description" content="Off-the-shelf models weren’t built for Nepali language, regulation, or user behaviour. What we learned trying to make them work — and why the answer isn’t prompting harder." />
+  <title>Why Nepal’s Fintech Needs Its Own LLMs, Yash Paudel</title>
+  <meta name="description" content="Off-the-shelf models weren’t built for Nepali language, regulation, or user behaviour. What we learned trying to make them work, and why the answer isn’t prompting harder." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -62,7 +62,7 @@
 
     <p class="post-intro">
       Off-the-shelf models weren’t built for Nepali language, regulation, or user behavior.
-      Here’s what we learned trying to make them work — and why the answer isn’t prompting harder.
+      Here’s what we learned trying to make them work, and why the answer isn’t prompting harder.
     </p>
 
     <h2>The assumption everyone makes</h2>
@@ -72,12 +72,12 @@
     </p>
     <p>
       The failure mode is subtle. The model <em>sounds</em> right. It produces fluent, confident
-      output. But it’s wrong in ways you don’t catch until a user does — or worse, a regulator.
+      output. But it’s wrong in ways you don’t catch until a user does, or worse, a regulator.
       And in fintech, that margin for error is close to zero.
     </p>
     <p>
       I spent the better part of a year trying to make general-purpose LLMs work for a Nepali
-      fintech context. The core problem isn’t capability — GPT-4 and its peers are extraordinarily
+      fintech context. The core problem isn’t capability, GPT-4 and its peers are extraordinarily
       capable. The problem is <strong>alignment to a context they’ve never seen</strong>.
     </p>
 
@@ -88,14 +88,14 @@
       <strong>Language.</strong> Nepali NLP is a low-resource problem. Most frontier models were
       trained on datasets where Nepali is a rounding error. The result: transliterated text,
       code-mixed sentences (Nepali written in Roman script), and colloquial terms used in mobile
-      banking — all produce degraded outputs. The model hallucinates, hedges, or switches to
+      banking, all produce degraded outputs. The model hallucinates, hedges, or switches to
       English mid-sentence.
     </p>
     <p>
       <strong>Regulatory context.</strong> Nepal Rastra Bank regulations, KYC norms, and PSP
       compliance rules exist nowhere in the model’s training data in any meaningful density.
       Ask a general-purpose LLM to help draft a customer notice about a transaction limit and
-      it will produce something that sounds legally sound but isn’t — for <em>this</em> jurisdiction.
+      it will produce something that sounds legally sound but isn’t, for <em>this</em> jurisdiction.
     </p>
 
     <blockquote>
@@ -114,13 +114,13 @@
 
     <h2>What we tried first</h2>
     <p>
-      The first instinct — and the right one to try — is prompt engineering. You can get
+      The first instinct, and the right one to try, is prompt engineering. You can get
       remarkably far with good system prompts, retrieval-augmented generation (<code>RAG</code>),
       and few-shot examples. We did all of this. It worked for simple, structured tasks.
     </p>
     <p>
-      But RAG has a ceiling. When the knowledge gap is systemic — when the model doesn’t
-      understand the <em>domain</em>, not just the <em>data</em> — retrieval only goes so far.
+      But RAG has a ceiling. When the knowledge gap is systemic, when the model doesn’t
+      understand the <em>domain</em>, not just the <em>data</em>, retrieval only goes so far.
       You end up stuffing enormous context windows with regulatory docs and hoping the model
       reasons over them correctly. Sometimes it does. The variance is unacceptable.
     </p>
@@ -134,12 +134,12 @@
     <p>
       But it changes the nature of the problem. Instead of asking a general model
       to perform in a specialized domain, you’re <strong>shifting the base distribution</strong>
-      toward your domain. The model doesn’t need to retrieve the right context — it starts
+      toward your domain. The model doesn’t need to retrieve the right context, it starts
       from a position that’s already closer to correct.
     </p>
     <p>
-      For us, fine-tuning on curated fintech-domain data — transaction logs, support
-      conversations, regulatory documents, internal SOPs — produced models that were
+      For us, fine-tuning on curated fintech-domain data, transaction logs, support
+      conversations, regulatory documents, internal SOPs, produced models that were
       dramatically more reliable on the tasks that mattered. Not more capable in a general sense.
       More <em>trustworthy</em> in our specific context.
     </p>
@@ -154,8 +154,8 @@
       that predate modern data practices.
     </p>
     <p>
-      We spent more engineering time on data pipelines — collection, cleaning, annotation,
-      quality filtering — than on model training. By a large margin. If you’re planning to
+      We spent more engineering time on data pipelines, collection, cleaning, annotation,
+      quality filtering, than on model training. By a large margin. If you’re planning to
       go down this road, budget accordingly.
     </p>
     <p>
@@ -167,21 +167,21 @@
 
     <h2>Where this leaves us</h2>
     <p>
-      I’m not arguing that Nepal needs to train a frontier model from scratch — that’s
+      I’m not arguing that Nepal needs to train a frontier model from scratch, that’s
       neither feasible nor necessary. What I’m arguing is that <strong>adaptation is not optional</strong>.
       Whether through fine-tuning, RLHF on domain-specific feedback, or more sophisticated
       RAG architectures, the work of making a model useful in a specific context is real work
       that can’t be skipped.
     </p>
     <p>
-      The teams that figure this out first — that build the data flywheels, the evaluation
-      infrastructure, the domain-adapted models — will have a durable advantage over those
+      The teams that figure this out first, that build the data flywheels, the evaluation
+      infrastructure, the domain-adapted models, will have a durable advantage over those
       that are still prompt-engineering their way through 2026.
     </p>
     <p>
       We’re early. Nepal’s AI ecosystem is thin. But that also means the surface area for
       impact is enormous. The models that understand how money moves here, in this language,
-      under these regulations — those don’t exist yet. That’s the opportunity.
+      under these regulations, those don’t exist yet. That’s the opportunity.
     </p>
 
     <div class="post-author">

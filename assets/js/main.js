@@ -1,5 +1,5 @@
 import { shelf } from '../data/shelf.js';
-import { profile, capabilities, cta, experience, projects } from '../data/profile.js';
+import { profile, capabilities, cta, experience } from '../data/profile.js';
 import { posts } from '../data/posts.js';
 import { loadShelf, monogram } from './books.js';
 
@@ -70,7 +70,8 @@ export function renderCurrentlyReading(books) {
     </article>`).join('');
 }
 
-const GROUPS = [['reading','Reading'],['read','Read'],['want','Want to read']];
+// Currently-reading has its own section above the shelf, so the bookshelf is just the rest.
+const GROUPS = [['read','Read'],['want','Want to read']];
 function stars(r) { return r ? '★'.repeat(r) + '☆'.repeat(5 - r) : ''; }
 export function renderList(books) {
   return GROUPS.map(([key, label]) => {
@@ -132,23 +133,10 @@ export function renderExperience(items, el) {
     </article>`).join('');
 }
 
-export function renderProjects(items, el) {
-  el = el || document.getElementById('projects');
-  if (!el) return;
-  el.innerHTML = (items || []).map(p => {
-    const inner = `<div class="proj-head"><h3>${esc(p.name)}</h3><span class="mono dim">${esc(p.year||'')}</span></div>`
-      + `<p class="proj-blurb">${esc(p.blurb)}</p>`
-      + `<div class="chips">${(p.tags||[]).map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>`;
-    return p.href
-      ? `<a class="proj" href="${esc(p.href)}"${p.href.startsWith('http') ? ' target="_blank" rel="noopener"' : ''}>${inner}</a>`
-      : `<div class="proj">${inner}</div>`;
-  }).join('');
-}
-
 export function renderFlux(items, el) {
   el = el || document.getElementById('posts');
   if (!el) return;
-  if (!(items && items.length)) { el.innerHTML = '<p class="dim">Nothing published yet — soon.</p>'; return; }
+  if (!(items && items.length)) { el.innerHTML = '<p class="dim">Nothing published yet. Soon.</p>'; return; }
   el.innerHTML = items.map(p => `
     <a class="post" href="${esc(p.href)}">
       <div class="post-meta mono"><span class="post-tags">${(p.tags||[]).map(esc).join(' · ')}</span><span class="dim">${esc(p.date)} · ${esc(p.readingTime)}</span></div>
@@ -182,7 +170,6 @@ async function boot() {
   renderProfile(profile);
   renderCapabilities(capabilities);
   renderExperience(experience);
-  renderProjects(projects);
   renderContact(cta, profile.links);
   const talk = document.getElementById('talk');
   if (talk && profile.links && profile.links.email) talk.setAttribute('href', profile.links.email);

@@ -1,24 +1,13 @@
 /* ── Design tokens ─────────────────────────────────────────────────────────── */
+/* Midnight — dark by default (chosen palette). */
 :root {
-  --bg:      #f4f4f4;
-  --layer:   #ffffff;
-  --layer-2: #ededed;
-  --text:    #161616;
-  --dim:     #6f6f6f;
-  --line:    #e0e0e0;
-  --blue:    #4589ff;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg:      #161616;
-    --layer:   #262626;
-    --layer-2: #393939;
-    --text:    #f4f4f4;
-    --dim:     #a8a8a8;
-    --line:    #393939;
-    --blue:    #78a9ff;
-  }
+  --bg:      #0f1216;
+  --layer:   #171b21;
+  --layer-2: #232a33;
+  --text:    #e6edf3;
+  --dim:     #8b97a6;
+  --line:    #262d36;
+  --blue:    #58a6ff;
 }
 
 /* ── Reset / base ──────────────────────────────────────────────────────────── */

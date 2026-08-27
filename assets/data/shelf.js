@@ -2,7 +2,7 @@
 // status: 'reading' | 'read' | 'want'. Add rating (1–5)/review/finished when you like.
 // isbn (optional) fetches the cover from Open Library; omit it and the card shows a monogram.
 export const shelf = [
-  // — currently reading —
+  // currently reading
   { title: 'Designing Data-Intensive Applications', author: 'Martin Kleppmann', isbn: '9781449373320', status: 'reading', tags: ['distributed-systems','databases','engineering'] },
   { title: 'Project Hail Mary', author: 'Andy Weir', isbn: '9780593135204', status: 'reading', tags: ['fiction','sci-fi','space'] },
   { title: 'Co-Intelligence', author: 'Ethan Mollick', isbn: '9780593716717', status: 'reading', tags: ['ai','technology','work'] },
@@ -10,7 +10,7 @@ export const shelf = [
   { title: 'Eat That Frog', author: 'Brian Tracy', isbn: '9781626569416', status: 'reading', tags: ['productivity','self-help'] },
   { title: 'High Output Management', author: 'Andrew S. Grove', isbn: '9780679762881', status: 'reading', tags: ['management','business'] },
   { title: 'Norwegian Wood', author: 'Haruki Murakami', isbn: '9780375704024', status: 'reading', tags: ['fiction','literary'] },
-  // — finished —
+  // finished
   { title: 'Meditations', author: 'Marcus Aurelius', isbn: '9780140449334', status: 'read', tags: ['philosophy','stoicism'] },
   { title: 'How to Survive a Black Hole', author: '', status: 'read', tags: ['space','physics','science'] },
   { title: 'The Grand Design', author: 'Stephen Hawking', isbn: '9780553805376', status: 'read', tags: ['physics','cosmology','science'] },
