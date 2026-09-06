@@ -1,8 +1,8 @@
 // Your identity + work. Edit this freely; it drives the Work view.
 export const profile = {
   name: 'Yash Paudel',
-  role: 'AI Engineering Lead',
-  location: 'Lalitpur, Nepal',
+  role: 'Lead, AI Center of Excellence',
+  location: 'IME Khalti Limited / Nepal',
   tagline: 'I build intelligent systems for the real world.',
   about: 'Three years working in KYC and biometrics have shaped how I think about engineering. Identity is the front door of a fintech: a mistake at entry can become a much bigger problem downstream. That responsibility stays with me as I build systems that can converse, use tools, and act.',
   links: {
@@ -15,9 +15,10 @@ export const profile = {
 
 // "Where I can help": the operational substance that does the lead-gen.
 export const capabilities = [
+  { title: 'Agent harness engineering', blurb: 'Building the systems around AI agents: connecting models, context, and tools so they can do useful work. A focus of my engineering over the last six months.' },
+  { title: 'Frontier & locally deployed models', blurb: 'Working with frontier models through APIs and models deployed locally. Integrating model capabilities into the systems I build.' },
+  { title: 'Full-duplex voice AI', blurb: 'Engineering autonomous voice systems that can listen and speak simultaneously, without a human operator in the loop.' },
   { title: 'Data harnessing', blurb: 'The foundation beneath AI systems: preparing, connecting, and evaluating the data that models and agents depend on.' },
-  { title: 'Full-duplex voice AI', blurb: 'My current focus: engineering autonomous voice AI with full-duplex interaction, without a human operator in the loop.' },
-  { title: 'Agentic harness engineering', blurb: 'Over the last six months, my work has expanded into the engineering around agents: building the systems that let AI use tools and act.' },
 ];
 
 // The contact call-to-action.
@@ -30,17 +31,17 @@ export const cta = {
 // Most recent first.
 export const experience = [
   {
-    role: 'AI Engineering Lead',
-    org: 'Khalti',
+    role: 'Lead, AI Center of Excellence',
+    org: 'IME Khalti Limited',
     period: 'Present',
-    summary: 'Leading applied-AI and identity work at one of Nepal’s largest digital wallets: the Python and FastAPI services, Docker deployments, KYC and identity flows, and evaluation behind features that run reliably inside a regulated fintech product.',
+    summary: 'Leading the AI Center of Excellence at IME Khalti Limited. My engineering expertise spans AI agents, model integration, autonomous voice, and KYC and biometrics.',
     tags: ['Python · FastAPI', 'Docker', 'KYC / Identity', 'Applied AI'],
   },
   {
     role: 'AI Research Lead',
     org: 'IME Pay',
     period: 'Previously',
-    summary: 'Owned AI and identity projects at a national payment wallet: the architecture for a new biometric KYC onboarding flow, adapting LLMs to real business use-cases, third-party AI integration, and backend in Node.js.',
+    summary: 'Worked across AI research, KYC and biometrics, model adaptation, API integration, and backend engineering in fintech.',
     tags: ['Biometric KYC', 'Applied LLMs', 'Node.js', 'Fintech'],
   },
 ];

@@ -608,3 +608,8 @@ a.proj:hover { background: var(--layer-2); }
   .rollout { grid-template-columns: 1fr; }
   .hero { padding-top: 1rem; }
 }
+
+/* Expertise-led work section */
+.expertise-intro { max-width: 65ch; color: var(--dim); line-height: 1.8; margin: 1rem 0 1.5rem; }
+.current-work .cap-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 600px) { .current-work .cap-grid { grid-template-columns: 1fr; } }
