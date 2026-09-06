@@ -3,22 +3,21 @@ export const profile = {
   name: 'Yash Paudel',
   role: 'AI Engineering Lead',
   location: 'Lalitpur, Nepal',
-  tagline: 'I ship production systems in Python, FastAPI and Docker, and the identity, KYC and AI layers fintech runs on.',
-  about: 'AI Engineering Lead at Khalti. I build and ship real production systems: Python and FastAPI backends, Dockerised and deployed. My pull is toward the hard fintech edges, biometric KYC and identity, and bringing AI into products where it actually earns its place. 3+ years shipping software end to end. I’m genuinely open to interesting problems, whether that’s production engineering, identity, AI, or something neither of us has seen yet.',
+  tagline: 'I build intelligent systems for the real world.',
+  about: 'Three years working in KYC and biometrics have shaped how I think about engineering. Identity is the front door of a fintech: a mistake at entry can become a much bigger problem downstream. That responsibility stays with me as I build systems that can converse, use tools, and act.',
   links: {
     github: 'https://github.com/h4syy',
     linkedin: 'https://www.linkedin.com/in/yashpaudel/',
     email: 'mailto:yashpaudel10@gmail.com',
   },
-  stack: ['Python', 'FastAPI', 'Docker', 'Biometrics / KYC', 'LLMs', 'Node.js'],
+  stack: ['KYC & biometrics', 'Agentic systems', 'Full-duplex voice'],
 };
 
 // "Where I can help": the operational substance that does the lead-gen.
 export const capabilities = [
-  { title: 'Backend & APIs', blurb: 'Python and FastAPI services built to hold up. Clean APIs, sane data flow, typed and tested.' },
-  { title: 'Docker & deploy', blurb: 'Containerised with Docker and shipped to production. Getting a service off my machine and running for real.' },
-  { title: 'Biometrics & KYC', blurb: 'Where identity meets engineering: liveness and face-match, document checks, and onboarding flows that satisfy compliance without wrecking the UX.' },
-  { title: 'Applied AI', blurb: 'Bringing LLMs into real products where they earn their place. The integration, evaluation, and guardrails that make them trustworthy, not a demo.' },
+  { title: 'Data harnessing', blurb: 'The foundation beneath AI systems: preparing, connecting, and evaluating the data that models and agents depend on.' },
+  { title: 'Full-duplex voice AI', blurb: 'My current focus: engineering autonomous voice AI with full-duplex interaction, without a human operator in the loop.' },
+  { title: 'Agentic harness engineering', blurb: 'Over the last six months, my work has expanded into the engineering around agents: building the systems that let AI use tools and act.' },
 ];
 
 // The contact call-to-action.

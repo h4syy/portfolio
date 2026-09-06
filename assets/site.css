@@ -579,3 +579,32 @@ a.proj:hover { background: var(--layer-2); }
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Work narrative */
+.hero { padding-block: 2rem 3.5rem; }
+.hero h1 { font-size: 1.15rem; letter-spacing: 0; }
+.hero .tagline { font-family: 'IBM Plex Sans', sans-serif; font-size: clamp(2.4rem, 6vw, 4.2rem); font-weight: 500; line-height: 1.12; letter-spacing: -0.045em; color: var(--text); max-width: 16ch; margin-top: 2rem; }
+.hero-intro { max-width: 55ch; color: var(--dim); margin-top: 1.4rem; font-size: 1.05rem; }
+.eyebrow { font-family: 'IBM Plex Mono', monospace; color: var(--blue); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; margin-bottom: .7rem; }
+.current-work h2, .foundation h2 { font-size: clamp(1.6rem, 3vw, 2rem); letter-spacing: -.025em; }
+.flagship { padding: 2rem; border: 1px solid var(--line); border-top: 2px solid var(--blue); background: var(--layer); margin: 1.5rem 0 1rem; }
+.flagship-top { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.status { color: #abd9c5; font-family: 'IBM Plex Mono', monospace; font-size: .7rem; }
+.flagship h3 { font-size: clamp(1.4rem, 3vw, 1.85rem); margin: .8rem 0 1rem; letter-spacing: -.02em; }
+.flagship > p { color: var(--dim); max-width: 70ch; line-height: 1.8; }
+.rollout { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; border-top: 1px solid var(--line); margin-top: 2rem; padding-top: 1.4rem; }
+.step-label { display: block; font: .68rem 'IBM Plex Mono', monospace; color: var(--blue); margin-bottom: .6rem; }
+.rollout strong { font-size: .85rem; font-weight: 500; }
+.current-work .cap-grid { gap: 16px; background: transparent; border: 0; }
+.current-work .cap { border: 1px solid var(--line); padding: 1.5rem; }
+.foundation { margin-bottom: 3rem; }
+.foundation #about-body { font-size: 1.1rem; margin-top: 1.2rem; }
+.foundation-note { color: var(--dim); }
+@media (max-width: 600px) {
+  .topbar { align-items: flex-start; flex-direction: column; gap: .75rem; }
+  .mainnav { width: 100%; justify-content: space-between; gap: .6rem; align-items: center; }
+  .mainnav a { font-size: .7rem; }
+  .flagship { padding: 1.3rem; }
+  .rollout { grid-template-columns: 1fr; }
+  .hero { padding-top: 1rem; }
+}
