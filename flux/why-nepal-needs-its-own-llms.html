@@ -9,49 +9,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../assets/site.css">
-  <style>
-    #progress { position: fixed; top: 0; left: 0; height: 2px; width: 0; background: var(--blue); z-index: 50; transition: width 0.08s linear; }
-    .article-nav { position: sticky; top: 0; z-index: 20; display: flex; justify-content: space-between; align-items: center;
-      padding: 0.9rem clamp(1.2rem, 5vw, 3rem); background: color-mix(in srgb, var(--bg) 85%, transparent);
-      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
-    .article-nav a { text-decoration: none; }
-    .a-back { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; letter-spacing: 0.06em; color: var(--dim); }
-    .a-back:hover { color: var(--blue); }
-    .a-logo { font-weight: 600; font-size: 0.9rem; color: var(--text); }
-    article { max-width: 680px; margin: 0 auto; padding: 3rem clamp(1.2rem, 5vw, 2rem) 5rem; }
-    .post-meta { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; margin-bottom: 1.6rem;
-      font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
-    .post-tag { color: var(--blue); border: 1px solid color-mix(in srgb, var(--blue) 40%, transparent); border-radius: 100px; padding: 0.2rem 0.7rem; }
-    article h1 { font-size: clamp(1.8rem, 4.2vw, 2.6rem); font-weight: 600; line-height: 1.18; letter-spacing: -0.02em; margin-bottom: 1.4rem; }
-    .post-intro { font-size: 1.1rem; color: var(--dim); line-height: 1.75; font-style: italic;
-      margin-bottom: 2.4rem; padding-bottom: 2.4rem; border-bottom: 1px solid var(--line); }
-    article h2 { font-size: 1.2rem; font-weight: 600; margin: 2.6rem 0 1rem; padding-left: 0.9rem; border-left: 3px solid var(--blue); }
-    article p { font-size: 1rem; line-height: 1.85; color: var(--text); margin-bottom: 1.3rem; }
-    article strong { font-weight: 600; }
-    article em { font-style: italic; color: var(--dim); }
-    blockquote { margin: 2.2rem 0; padding: 1.3rem 1.5rem; background: var(--layer); border: 1px solid var(--line); border-left: 3px solid var(--blue); }
-    blockquote p { margin: 0; font-style: italic; }
-    code { font-family: 'IBM Plex Mono', monospace; font-size: 0.85em; background: var(--layer-2); padding: 0.1em 0.4em; border-radius: 3px; }
-    .section-break { border: none; height: 1px; background: var(--line); margin: 3rem 0; }
-    .post-author { display: flex; align-items: center; gap: 1rem; padding-top: 2rem; margin-top: 3rem; border-top: 1px solid var(--line); }
-    .author-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--blue); color: var(--bg);
-      display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 0.8rem; flex-shrink: 0; }
-    .author-name { font-weight: 600; font-size: 0.9rem; }
-    .author-role { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; color: var(--dim); }
-    .post-nav { display: flex; justify-content: space-between; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--line);
-      font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.06em; }
-    .post-nav a { color: var(--dim); text-decoration: none; }
-    .post-nav a:hover { color: var(--blue); }
-  </style>
 </head>
-<body>
+<body class="article-page">
+  <a class="skip" href="#article">Skip to article</a>
   <div id="progress"></div>
-  <nav class="article-nav">
+  <nav class="article-nav" aria-label="Article navigation">
     <a href="../index.html#work" class="a-logo">Yash Paudel</a>
     <a href="../index.html#flux" class="a-back">← FLUX</a>
   </nav>
 
-  <article>
+  <main id="article" tabindex="-1"><article>
     <div class="post-meta">
       <span class="post-tag">GenAI</span>
       <span>April 2026</span>
@@ -196,7 +163,7 @@
       <a href="../index.html#flux">← Back to FLUX</a>
       <a href="../index.html#work">yashpaudel.com.np</a>
     </div>
-  </article>
+  </article></main>
 
   <script>
     const bar = document.getElementById('progress');

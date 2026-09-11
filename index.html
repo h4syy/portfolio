@@ -1,15 +1,15 @@
 <!DOCTYPE html><html lang="en"><head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Yash Paudel</title>
+  <title>Yash Paudel — Applied AI &amp; Engineering</title>
   <meta name="description" content="Yash Paudel, Lead of the AI Center of Excellence at IME Khalti Limited in Nepal. KYC and biometrics, agentic systems, and autonomous full-duplex voice AI. Building intelligent systems for the real world.">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/site.css">
 </head><body>
-  <a class="skip" href="#name">Skip to content</a>
+  <a class="skip" href="#main">Skip to content</a>
 
   <header class="topbar">
-    <a href="#work" class="brand" data-view="work">Yash Paudel</a>
+    <a href="#work" class="brand" data-view="work"><span class="brand-mark" aria-hidden="true">yp.</span> Yash Paudel</a>
     <nav class="mainnav" aria-label="Sections">
       <a href="#work" data-view="work">Work</a>
       <a href="#flux" data-view="flux">FLUX</a>
@@ -18,28 +18,51 @@
     </nav>
   </header>
 
-  <main id="main">
+  <main id="main" tabindex="-1">
 
     <!-- ── WORK ── -->
     <section class="view" id="view-work" aria-label="Work">
       <div class="wrap">
         <div class="hero">
-          <h1 id="name"></h1>
-          <p id="role" class="role"></p>
-          <p id="tagline" class="tagline"></p>
-          <p class="hero-intro">I lead the AI Center of Excellence at IME Khalti Limited. My focus is agent harness engineering, frontier and locally deployed models, and autonomous voice, grounded in three years of KYC and biometrics engineering.</p>
-          <div id="stack" class="stack-row"></div>
-          <nav id="links" class="links" aria-label="Links"></nav>
+          <div class="hero-main">
+            <p class="eyebrow"><span id="name">Yash Paudel</span> <span class="eyebrow-divider">/</span> Applied AI &amp; engineering</p>
+            <h1 id="tagline" class="tagline">I build intelligent systems for the real world.</h1>
+            <p class="hero-intro">From identity and biometrics to agents that listen, reason, and act. I build the systems that make AI useful beyond a demo.</p>
+            <nav id="links" class="links" aria-label="Connect with Yash"></nav>
+          </div>
+          <aside class="hero-context" aria-label="Current work">
+            <p class="eyebrow">Currently</p>
+            <p id="role" class="role"></p>
+            <div class="context-focus">
+              <p class="eyebrow">Working across</p>
+              <div id="stack" class="stack-row"></div>
+            </div>
+            <p class="context-location">Based in Nepal</p>
+          </aside>
         </div>
-        <section class="block current-work" aria-labelledby="current-heading">
-          <p class="eyebrow">Engineering expertise</p>
-          <h2 id="current-heading">Making AI work beyond the model.</h2>
-          <p class="expertise-intro">My work spans the models, data, tools, and harnesses that come together in an AI system.</p>
-          <div id="capabilities" class="cap-grid"></div>
+        <section class="block section-grid current-work" aria-labelledby="current-heading">
+          <div class="section-label"><span class="section-number">01</span><p class="eyebrow">The practice</p></div>
+          <div class="section-content">
+            <h2 id="current-heading">Making AI work<br> beyond the model.</h2>
+            <p class="expertise-intro">Models are one part of the system. My work connects them to the data, tools, and context they need.</p>
+            <div id="capabilities" class="cap-grid"></div>
+          </div>
         </section>
-        <section class="block foundation"><p class="eyebrow">The foundation / KYC &amp; biometrics</p><h2>Identity is the front door.</h2><p id="about-body"></p><p class="foundation-note">This remains a core part of my work as I move deeper into agentic AI.</p></section>
-        <section class="block"><h2>Experience</h2><div id="experience" class="xp-list"></div></section>
+        <section class="block section-grid foundation" aria-labelledby="foundation-heading">
+          <div class="section-label"><span class="section-number">02</span><p class="eyebrow">The foundation</p></div>
+          <div class="section-content foundation-content">
+            <p class="eyebrow">KYC &amp; biometrics</p>
+            <h2 id="foundation-heading">Identity is<br> the front door.</h2>
+            <p id="about-body"></p>
+            <p class="foundation-note">That same care now shapes how I build agentic AI.</p>
+          </div>
+        </section>
+        <section class="block section-grid" aria-labelledby="experience-heading">
+          <div class="section-label"><span class="section-number">03</span><p class="eyebrow">The experience</p></div>
+          <div class="section-content"><h2 id="experience-heading">Where I’ve been building.</h2><div id="experience" class="xp-list"></div></div>
+        </section>
         <section class="contact" id="contact">
+          <p class="eyebrow">Have something in mind?</p>
           <h2 id="cta-headline"></h2>
           <p id="cta-line" class="cta-line"></p>
           <p id="cta-sub" class="dim"></p>
@@ -51,7 +74,7 @@
     <!-- ── FLUX ── -->
     <section class="view" id="view-flux" aria-label="FLUX" hidden>
       <div class="wrap">
-        <div class="view-head"><h1>FLUX</h1><p class="dim">Notes on AI, engineering, and building from Nepal.</p></div>
+        <div class="view-head flux-head"><p class="eyebrow">Ideas in motion</p><h1>FLUX<span aria-hidden="true">.</span></h1><p class="dim">Notes on AI, engineering, and building from Nepal.</p></div>
         <div id="posts" class="post-list"></div>
       </div>
     </section>
@@ -59,16 +82,16 @@
     <!-- ── READING ── -->
     <section class="view" id="view-reading" aria-label="Reading" hidden>
       <div class="wrap">
-        <div class="view-head"><h1>Reading</h1><p class="dim">What I’m reading, and what stuck.</p></div>
-        <section class="block"><h2>Currently reading</h2><div id="cr"></div></section>
-        <div id="stats" class="stats"></div>
-        <section class="block"><h2>Bookshelf</h2><div id="list-view"></div></section>
+        <div class="view-head reading-head"><div><p class="eyebrow">Away from the keyboard</p><h1>Reading<span aria-hidden="true">.</span></h1><p class="dim">What I’m reading, and what stuck.</p></div><div id="stats" class="stats"></div></div>
+        <section class="reading-section"><div class="section-head"><h2>Currently reading</h2><span class="mono dim">On the desk</span></div><div id="cr"></div></section>
+        <section class="reading-section"><h2>Bookshelf</h2><div id="list-view"></div></section>
       </div>
     </section>
 
   </main>
 
-  <aside id="panel" class="panel" hidden aria-label="Book detail"></aside>
-  <footer class="wrap footer"><p>From Nepal, with curiosity.</p></footer>
+  <div id="panel-backdrop" class="panel-backdrop" hidden></div>
+  <aside id="panel" class="panel" hidden role="dialog" aria-modal="true" aria-label="Book detail" tabindex="-1"></aside>
+  <footer class="wrap footer"><p>Yash Paudel <span class="footer-divider">/</span> From Nepal, with curiosity.</p><a href="https://github.com/h4syy/portfolio" target="_blank" rel="noopener">View source <span aria-hidden="true">↗</span></a></footer>
   <script type="module" src="assets/js/main.js"></script>
 </body></html>
