@@ -10,6 +10,7 @@ export const shelf = [
   { title: 'Eat That Frog', author: 'Brian Tracy', isbn: '9781626569416', status: 'reading', tags: ['productivity','self-help'] },
   { title: 'High Output Management', author: 'Andrew S. Grove', isbn: '9780679762881', status: 'reading', tags: ['management','business'] },
   { title: 'Norwegian Wood', author: 'Haruki Murakami', isbn: '9780375704024', status: 'reading', tags: ['fiction','literary'] },
+  { title: 'Leaders Eat Last', author: 'Simon Sinek', isbn: '9781591848011', status: 'reading', tags: ['leadership','management'] },
   // finished
   { title: 'Meditations', author: 'Marcus Aurelius', isbn: '9780140449334', status: 'read', tags: ['philosophy','stoicism'] },
   { title: 'How to Survive a Black Hole', author: '', status: 'read', tags: ['space','physics','science'] },
@@ -19,7 +20,6 @@ export const shelf = [
   { title: 'Sapiens', author: 'Yuval Noah Harari', isbn: '9780062316097', status: 'read', tags: ['history','society'] },
   { title: 'Ikigai', author: 'Héctor García', isbn: '9780143130727', status: 'read', tags: ['philosophy','life','self-help'] },
   { title: 'The 48 Laws of Power', author: 'Robert Greene', isbn: '9780140280197', status: 'read', tags: ['strategy','power','psychology'] },
-  { title: 'Leaders Eat Last', author: 'Simon Sinek', isbn: '9781591848011', status: 'read', tags: ['leadership','management'] },
   { title: 'The Personal MBA', author: 'Josh Kaufman', isbn: '9781591845577', status: 'read', tags: ['business','self-help'] },
   { title: 'Black Holes', author: 'Brian Cox', isbn: '9780008390686', status: 'read', tags: ['physics','cosmology','science'] },
   { title: 'To Infinity and Beyond', author: 'Neil deGrasse Tyson', status: 'read', tags: ['space','cosmology','science'] },
