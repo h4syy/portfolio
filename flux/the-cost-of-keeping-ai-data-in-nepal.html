@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Cost of Keeping AI Data in Nepal, Yash Paudel</title>
+  <meta name="description" content="Cheap inference, expensive geography, and the GPU bill I get to explain while building fintech in Nepal." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body class="article-page">
+  <a class="skip" href="#article">Skip to article</a>
+  <div id="progress"></div>
+  <nav class="article-nav" aria-label="Article navigation">
+    <a href="../index.html#work" class="a-logo">Yash Paudel</a>
+    <a href="../index.html#flux" class="a-back">← FLUX</a>
+  </nav>
+
+  <main id="article" tabindex="-1"><article>
+    <div class="post-meta">
+      <span class="post-tag">AI Infrastructure</span>
+      <span>September 2026</span>
+      <span>· 1 min read</span>
+    </div>
+
+    <h1>The Cost of Keeping AI Data in Nepal</h1>
+
+    <p>
+      Every time I look at a cheap inference API, my rented GPUs start looking like an expensive
+      hobby. Then I remember I’m building fintech in Nepal, where “where does the data go?”
+      belongs in the same spreadsheet as “what does it cost?” The boundary I design for is
+      <strong>sensitive customer data staying inside Nepal’s borders, including during AI
+      processing</strong>, unless there is an approved basis to do otherwise.
+      <a href="https://www.nrb.org.np/psd/नेपाल-राष्ट्र-बैंकबाट-भु-3/">NRB requirements</a>
+      and the institution’s approvals help determine which options I can actually use.
+      <a href="https://console.groq.com/docs/your-data">“Zero retention”</a> does not make a
+      foreign server Nepali. Geography has declined our request for a workaround.
+    </p>
+
+    <p>
+      So this is the small comedy I get to manage every day: make the chatbot useful, make
+      the infrastructure cheaper, and keep customer data within the boundary we have to
+      respect. A rented GPU can spend the afternoon doing absolutely nothing and still
+      cost exactly the same. Keeping it for another project does not make its bill disappear,
+      and saying “compliance” does not turn idle capacity into good engineering. I still
+      have to measure the work, improve the setup, and explain the spend. The model may
+      hallucinate. The invoice does not.
+    </p>
+
+    <div class="post-author">
+      <div class="author-avatar">YP</div>
+      <div>
+        <div class="author-name">Yash Paudel</div>
+        <div class="author-role">AI Software Engineer · Nepal</div>
+      </div>
+    </div>
+
+    <div class="post-nav">
+      <a href="../index.html#flux">← Back to FLUX</a>
+      <a href="../index.html#work">yashpaudel.com.np</a>
+    </div>
+  </article></main>
+
+  <script>
+    const bar = document.getElementById('progress');
+    function upd() {
+      const h = document.documentElement;
+      const p = h.scrollTop / (h.scrollHeight - h.clientHeight || 1);
+      bar.style.width = Math.min(100, p * 100) + '%';
+    }
+    addEventListener('scroll', upd, { passive: true });
+    upd();
+  </script>
+</body>
+</html>
