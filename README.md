@@ -43,6 +43,12 @@ cover) shows a monogram tile instead; the image simply removes itself on error.
 
 ## Run & test
 
+Vercel Web Analytics is loaded through `assets/js/analytics.js` on the two production
+domain names only. Local and Vercel preview visits are excluded. The hash-switched
+Work, FLUX, and Reading views appear as `/`, `/flux`, and `/reading` in analytics;
+these are reporting paths, not additional website routes. Article and game visits use
+their actual paths. Web Analytics must be enabled for the Vercel project.
+
 ```bash
 python -m http.server 8000        # then open http://localhost:8000
 node --test test/*.mjs            # NOTE: `node --test test/` is broken on Node 22 — use the glob
